@@ -1,0 +1,23 @@
+﻿@if (item.Activo)
+{
+    <li class="nav-item nav-item-active">
+        <button @onclick="@(()=>Activar.InvokeAsync(item.Id))" class="nav-link a-menu" href="@item.URLItem">
+            <i class="fa-solid @item.Icono icon-active-menu"></i>
+            <span class="nav-link-text span-menu">@item.NombreItem</span>
+        </button>
+    </li>
+}
+else
+{
+    <li class="nav-item">
+        <button @onclick="@(()=>Activar.InvokeAsync(item.Id))" class="nav-link a-menu" href="@item.URLItem">
+            <i class="fa-solid @item.Icono icon-menu"></i>
+            <span class="nav-link-text span-menu">@item.NombreItem</span>
+        </button>
+    </li>
+}
+
+@code {
+    [Parameter] public ItemMenu item { get; set; }
+    [Parameter] public EventCallback<Guid> Activar { get; set; }
+}

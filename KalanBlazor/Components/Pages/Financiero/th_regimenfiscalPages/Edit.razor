@@ -1,0 +1,116 @@
+﻿@page "/th_regimenfiscals/edit"
+@inject KalanDB DB
+@inject NavigationManager NavigationManager
+@using Microsoft.EntityFrameworkCore
+
+<PageTitle>Edit</PageTitle>
+
+<h1>Editar</h1>
+
+<h4>Régimen Fiscal</h4>
+<hr />
+@if (th_regimenfiscal is null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <div class="row">
+        <div class="col-md-4">
+            <EditForm method="post" Model="th_regimenfiscal" OnValidSubmit="Updateth_regimenfiscal" FormName="edit" Enhance>
+                <DataAnnotationsValidator />
+                <ValidationSummary />
+                <input type="hidden" name="th_regimenfiscal.Id" value="@th_regimenfiscal.Id" />
+                <div class="mb-3">
+                    <label for="regimen" class="form-label">Regimen:</label>
+                    <InputText id="regimen" @bind-Value="th_regimenfiscal.Regimen" class="form-control" />
+                    <ValidationMessage For="() => th_regimenfiscal.Regimen" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="activo" class="form-label">Activo:</label>
+                    <InputCheckbox id="activo" @bind-Value="th_regimenfiscal.Activo" class="form-check-input" />
+                    <ValidationMessage For="() => th_regimenfiscal.Activo" class="text-danger" />
+                </div>
+                <div class="mb-3 Ocultar">
+                    <label for="usuariocreacion" class="form-label">UsuarioCreacion:</label>
+                    <InputText id="usuariocreacion" @bind-Value="th_regimenfiscal.UsuarioCreacion" class="form-control" />
+                    <ValidationMessage For="() => th_regimenfiscal.UsuarioCreacion" class="text-danger" />
+                </div>
+                <div class="mb-3 Ocultar">
+                    <label for="fechacreacion" class="form-label">FechaCreacion:</label>
+                    <InputDate id="fechacreacion" @bind-Value="th_regimenfiscal.FechaCreacion" class="form-control" />
+                    <ValidationMessage For="() => th_regimenfiscal.FechaCreacion" class="text-danger" />
+                </div>
+                <div class="mb-3 Ocultar">
+                    <label for="usuariomodifica" class="form-label">UsuarioModifica:</label>
+                    <InputText id="usuariomodifica" @bind-Value="th_regimenfiscal.UsuarioModifica" class="form-control" />
+                    <ValidationMessage For="() => th_regimenfiscal.UsuarioModifica" class="text-danger" />
+                </div>
+                <div class="mb-3 Ocultar">
+                    <label for="fechamodifica" class="form-label">FechaModifica:</label>
+                    <InputDate id="fechamodifica" @bind-Value="th_regimenfiscal.FechaModifica" class="form-control" />
+                    <ValidationMessage For="() => th_regimenfiscal.FechaModifica" class="text-danger" />
+                </div>
+                <button type="submit" class="btn btn-primary">Guardar</button>
+            </EditForm>
+        </div>
+    </div>
+}
+
+<div>
+    <a href="/th_regimenfiscals"><i class="fa-solid fa-arrow-left"></i> Regresar al Index</a>
+</div>
+
+@code {
+    [SupplyParameterFromQuery]
+    public string Id { get; set; }
+
+    [SupplyParameterFromForm]
+    public th_regimenfiscal? th_regimenfiscal { get; set; }
+    [CascadingParameter] private Task<AuthenticationState> authenticationStateTask { get; set; }
+    protected override async Task OnInitializedAsync()
+    {
+        th_regimenfiscal ??= await DB.th_regimenfiscal.FirstOrDefaultAsync(m => m.Id == Id);
+
+        if (th_regimenfiscal is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+        }
+        th_regimenfiscal.FechaModifica = DateTime.Now;
+    }
+
+    // To protect from overposting attacks, enable the specific properties you want to bind to.
+    // For more details, see https://aka.ms/RazorPagesCRUD.
+    public async Task Updateth_regimenfiscal()
+    {
+        var _authState = await authenticationStateTask;
+        var user = _authState.User;
+        var correo = ((System.Security.Claims.ClaimsIdentity)user.Identity).Name;
+        th_regimenfiscal.FechaModifica = DateTime.Now;
+        th_regimenfiscal.UsuarioModifica = correo;
+        DB.Attach(th_regimenfiscal!).State = EntityState.Modified;
+
+        try
+        {
+            await DB.SaveChangesAsync();
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            if (!th_regimenfiscalExists(th_regimenfiscal!.Id))
+            {
+                NavigationManager.NavigateTo("notfound");
+            }
+            else
+            {
+                throw;
+            }
+        }
+
+        NavigationManager.NavigateTo("/th_regimenfiscals");
+    }
+
+    bool th_regimenfiscalExists(string id)
+    {
+        return DB.th_regimenfiscal.Any(e => e.Id == id);
+    }
+}

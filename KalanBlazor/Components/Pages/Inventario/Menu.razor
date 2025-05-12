@@ -1,0 +1,26 @@
+﻿@page "/inventario/menu"
+@inject NavigationManager NavigationManager
+@rendermode InteractiveServer
+<h1>Modulo de Inventario</h1>
+
+
+<div class="row">
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Artículos</h5> 
+                <button @onclick="@(()=>Navegar("/inventario/tipos/listado"))" class="btn btn-primary">Tipos de Artículos</button> 
+                <button @onclick="@(()=>Navegar("/inventario/unidad/listado"))" class="btn btn-primary">Unidades de Medida</button>
+                <button @onclick="@(()=>Navegar("/inventario/articulos/listado"))" class="btn btn-primary">Artículos</button>
+                <button @onclick="@(()=>Navegar("/inventario/articulosproveedor/listado"))" class="btn btn-primary">Relacionar Artículos con Proveedor</button>
+            </div>
+        </div>
+    </div>
+
+</div>
+@code {
+    private void Navegar(string url)
+    {
+        NavigationManager.NavigateTo(url, true);
+    }
+}

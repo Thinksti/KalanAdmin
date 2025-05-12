@@ -1,0 +1,37 @@
+﻿@page "/th_terminos"
+
+@inject KalanDB DB
+@inject NavigationManager NavigationManager
+@rendermode InteractiveServer
+
+<PageTitle>Index</PageTitle>
+
+<h1>Términos de Crédito</h1>
+
+<p>
+    <a href="th_terminos/create"><i class="fas fa-plus"></i> Crear nuevo Registro</a>
+</p>
+
+<QuickGrid Class="table" Items="DB.th_condicionescredito">
+    <TemplateColumn Context="th_condicionescredito">
+        <button class="btn btn-outline-warning" @onclick="@(()=>Navegar($"th_terminos/edit?id={th_condicionescredito.Id}"))"><i class="fa-solid fa-pen-to-square"></i></button>
+        <button class="btn btn-outline-info" @onclick="@(()=>Navegar($"th_terminos/details?id={th_condicionescredito.Id}"))"><i class="fas fa-info"></i></button>
+        <button class="btn btn-outline-danger" @onclick="@(()=>Navegar($"th_terminos/delete?id={th_condicionescredito.Id}"))"><i class="fas fa-trash"></i></button>
+    </TemplateColumn>
+    <PropertyColumn Property="th_condicionescredito => th_condicionescredito.Condicion" />
+    <PropertyColumn Property="th_condicionescredito => th_condicionescredito.Descripcion" />
+    <PropertyColumn Property="th_condicionescredito => th_condicionescredito.Dias" />
+    <PropertyColumn Property="th_condicionescredito => th_condicionescredito.Activo" />
+    <PropertyColumn Property="th_condicionescredito => th_condicionescredito.UsuarioCreacion" />
+    <PropertyColumn Property="th_condicionescredito => th_condicionescredito.FechaCreacion" />
+    <PropertyColumn Property="th_condicionescredito => th_condicionescredito.UsuarioModifica" />
+    <PropertyColumn Property="th_condicionescredito => th_condicionescredito.FechaModifica" />
+
+
+</QuickGrid>
+@code {
+    private void Navegar(string url)
+    {
+        NavigationManager.NavigateTo(url, true);
+    }
+}

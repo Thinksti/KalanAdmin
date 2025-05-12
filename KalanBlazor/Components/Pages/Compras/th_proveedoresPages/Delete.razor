@@ -1,0 +1,108 @@
+﻿@page "/th_proveedores/delete"
+@inject KalanDB DB
+@inject SweetAlertService Swal
+@inject NavigationManager NavigationManager
+@using Microsoft.EntityFrameworkCore
+@rendermode InteractiveServer
+<PageTitle>Delete</PageTitle>
+
+<h1>Borrar registro</h1>
+
+<h3>¿Estas seguro de borrar el registro?</h3>
+<div>
+    <h4>Proveedores</h4>
+    <hr />
+    @if (th_proveedores is null)
+    {
+        <p><em>Loading...</em></p>
+    }
+    else {
+        <dl class="row">
+            <dt class="col-sm-2">NombreCorto</dt>
+            <dd class="col-sm-10">@th_proveedores.NombreCorto</dd>
+        </dl>
+        <dl class="row">
+            <dt class="col-sm-2">RazonSocial</dt>
+            <dd class="col-sm-10">@th_proveedores.RazonSocial</dd>
+        </dl>
+        <dl class="row">
+            <dt class="col-sm-2">RFC</dt>
+            <dd class="col-sm-10">@th_proveedores.RFC</dd>
+        </dl>
+        <dl class="row">
+            <dt class="col-sm-2">CodigoPostal</dt>
+            <dd class="col-sm-10">@th_proveedores.CodigoPostal</dd>
+        </dl>
+        <dl class="row">
+            <dt class="col-sm-2">Direccion</dt>
+            <dd class="col-sm-10">@th_proveedores.Direccion</dd>
+        </dl>
+        <dl class="row">
+            <dt class="col-sm-2">regimenfiscal_Id</dt>
+            <dd class="col-sm-10">@th_proveedores.regimenfiscal_Id</dd>
+        </dl>
+        <dl class="row">
+            <dt class="col-sm-2">usocfdi_Id</dt>
+            <dd class="col-sm-10">@th_proveedores.usocfdi_Id</dd>
+        </dl>
+        <dl class="col-sm-10">
+            <KalanBlazor.Components.Pages.Financiero.Cuentas.CuentaContable Disabled="true" Etiqueta="Cuenta Contable Proveedor" @bind-Value="th_proveedores.cuentacontable_id"></KalanBlazor.Components.Pages.Financiero.Cuentas.CuentaContable>
+        </dl>
+        <dl class="row">
+            <dt class="col-sm-2">Activo</dt>
+            <dd class="col-sm-10">@th_proveedores.Activo</dd>
+        </dl>
+        <dl class="row">
+            <dt class="col-sm-2">UsuarioCreacion</dt>
+            <dd class="col-sm-10">@th_proveedores.UsuarioCreacion</dd>
+        </dl>
+        <dl class="row">
+            <dt class="col-sm-2">FechaCreacion</dt>
+            <dd class="col-sm-10">@th_proveedores.FechaCreacion</dd>
+        </dl>
+        <dl class="row">
+            <dt class="col-sm-2">UsuarioModifica</dt>
+            <dd class="col-sm-10">@th_proveedores.UsuarioModifica</dd>
+        </dl>
+        <dl class="row">
+            <dt class="col-sm-2">FechaModifica</dt>
+            <dd class="col-sm-10">@th_proveedores.FechaModifica</dd>
+        </dl>
+        <EditForm method="post" Model="th_proveedores" OnValidSubmit="Deleteth_proveedores" FormName="delete" Enhance>
+            <button type="submit" class="btn btn-danger" disabled="@(th_proveedores is null)">Borrar</button> |
+            <a href="/th_proveedores"><i class="fa-solid fa-arrow-left"></i> Regresar al Index</a>
+        </EditForm>
+    }
+</div>
+
+@code {
+    th_proveedores? th_proveedores;
+
+    [SupplyParameterFromQuery]
+    public string Id { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        th_proveedores = await DB.th_proveedores.FirstOrDefaultAsync(m => m.Id == Id);
+
+        if (th_proveedores is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+        }
+    }
+
+    public async Task Deleteth_proveedores()
+    {
+        try
+        {
+            DB.th_proveedores.Remove(th_proveedores!);
+            await DB.SaveChangesAsync();
+            NavigationManager.NavigateTo("/th_proveedores");
+        }
+        catch (Exception ex)
+        {
+            await Swal.FireAsync("Error", "Imposible borrar el proveedor", SweetAlertIcon.Error);
+        }
+
+    }
+}

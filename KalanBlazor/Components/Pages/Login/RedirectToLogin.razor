@@ -1,0 +1,11 @@
+﻿@inject NavigationManager NavigationManager
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        if (NavigationManager.Uri.EndsWith("Login") == false)
+        {
+            NavigationManager.NavigateTo($"/Login", forceLoad: true);
+        }
+    }
+}

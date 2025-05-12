@@ -1,0 +1,146 @@
+﻿@page "/th_proveedores/create"
+
+@rendermode InteractiveServer
+@inject KalanDB DB;
+@inject NavigationManager NavigationManager; 
+@inject SweetAlertService Swal
+
+<PageTitle>Create</PageTitle>
+<Contenido Titulo="Crear Registro de Proveedores">
+     
+        <div class="row">
+            <div class="col-md-4">
+                <div class="mb-3">
+                    <Texto Etiqueta="Nombre Corto" MaxLength="15" @bind-Value="th_proveedores.NombreCorto"></Texto>
+                </div>
+                <div class="mb-3">
+                    <Texto Etiqueta="Razón Social" MaxLength="250" @bind-Value="th_proveedores.RazonSocial"></Texto>
+
+                </div>
+                <div class="mb-3">
+                    <Texto Etiqueta="RFC" MaxLength="13" @bind-Value="th_proveedores.RFC"></Texto>
+                </div>
+                <div class="mb-3">
+                    <Texto Etiqueta="Código Postal" MaxLength="5" @bind-Value="th_proveedores.CodigoPostal"></Texto>
+                </div>
+                <div class="mb-3">
+                     <Texto Etiqueta="Dirección" MaxLength="250" @bind-Value="th_proveedores.Direccion"></Texto>
+                </div>
+                <div class="mb-3">
+                    <Combo Etiqueta="Régimen Fiscal"
+                           @bind-Value="th_proveedores.regimenfiscal_Id"
+                           ItemValue="Id"
+                           TextValue="Regimen"
+                           Items="kalanDB.th_regimenfiscal.ToList()">
+                    </Combo>
+                </div>
+                <div class="mb-3">
+                    <Combo Etiqueta="Uso de CFDi"
+                           @bind-Value="th_proveedores.usocfdi_Id"
+                           ItemValue="Id"
+                           TextValue="UsoCFDi"
+                           Items="kalanDB.th_usocfdi.ToList()">
+                    </Combo>
+                </div>
+                <div class="mb-3">
+                    <div class="form-floating">                         
+                        <Combo Etiqueta="Plan de Impuestos"
+                               @bind-Value="th_proveedores.planimpuestos_id"
+                               ItemValue="Id"
+                               TextValue="NombreCorto"
+                               Items="kalanDB.th_plan_impuestos.ToList()">
+                        </Combo>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <CuentaContable Etiqueta="Cuenta Contable Proveedor" @bind-Value="th_proveedores.cuentacontable_id"></CuentaContable>
+                </div>
+                <div class="mb-3">
+                    <Switch Etiqueta="Activo" @bind-Value="th_proveedores.Activo"></Switch>
+                </div>
+                <div class="mb-3 Ocultar">
+                    <label for="usuariocreacion" class="form-label">UsuarioCreacion:</label>
+                    <InputText id="usuariocreacion" @bind-Value="th_proveedores.UsuarioCreacion" class="form-control" />
+                </div>
+                <div class="mb-3 Ocultar">
+                    <label for="fechacreacion" class="form-label">FechaCreacion:</label>
+                    <InputDate id="fechacreacion" @bind-Value="th_proveedores.FechaCreacion" class="form-control" />
+         
+                </div>
+
+                <button @onclick="Addth_proveedores" class="btn btn-primary">Create</button>
+            
+            </div>
+        </div>
+
+        <div>
+            <a href="/th_proveedores"><i class="fa-solid fa-arrow-left"></i> Regresar al Index</a>
+        </div>
+   
+</Contenido>
+
+@code {
+
+    [SupplyParameterFromForm]
+    public th_proveedores th_proveedores { get; set; } = new();
+    [CascadingParameter] private Task<AuthenticationState> authenticationStateTask { get; set; }
+    private KalanDB kalanDB
+    {
+        get
+        {
+            return new KalanDB(DB.connectionString);
+        }
+
+    }
+    protected override async Task OnInitializedAsync()
+    {
+        th_proveedores.Activo = true;
+    }
+    public async Task Addth_proveedores()
+    {
+        if (string.IsNullOrEmpty(th_proveedores.CodigoPostal))
+        {
+            await Swal.FireAsync("Error", "Captura el Código postal", SweetAlertIcon.Error);
+            return;
+        }
+        if (string.IsNullOrEmpty(th_proveedores.Direccion))
+        {
+            await Swal.FireAsync("Error", "Captura la Dirección", SweetAlertIcon.Error);
+            return;
+        }
+        if (string.IsNullOrEmpty(th_proveedores.NombreCorto))
+        {
+            await Swal.FireAsync("Error", "Captura el Nombre Corto", SweetAlertIcon.Error);
+            return;
+        }
+        if (string.IsNullOrEmpty(th_proveedores.RazonSocial))
+        {
+            await Swal.FireAsync("Error", "Captura la Razón Social", SweetAlertIcon.Error);
+            return;
+        }
+        if (string.IsNullOrEmpty(th_proveedores.RFC))
+        {
+            await Swal.FireAsync("Error", "Captura el RFC", SweetAlertIcon.Error);
+            return;
+        }
+        if (th_proveedores.regimenfiscal_Id == null)
+        {
+            await Swal.FireAsync("Error", "Selecciona el Régimen Fiscal", SweetAlertIcon.Error);
+            return;
+        }
+        if (th_proveedores.usocfdi_Id == null)
+        {
+            await Swal.FireAsync("Error", "Selecciona el Uso de CFDi", SweetAlertIcon.Error);
+            return;
+        }
+        th_proveedores.Id = Guid.NewGuid().ToString();
+        var _authState = await authenticationStateTask;
+        var user = _authState.User;
+        var correo = ((System.Security.Claims.ClaimsIdentity)user.Identity).Name;
+        th_proveedores.FechaCreacion = DateTime.Now;
+        th_proveedores.UsuarioCreacion = correo;
+        DB.th_proveedores.Add(th_proveedores);
+        await DB.SaveChangesAsync();
+        NavigationManager.NavigateTo("/th_proveedores");
+    }
+}

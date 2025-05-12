@@ -1,0 +1,127 @@
+﻿@page "/egresos/Cancelar"
+@rendermode InteractiveServer
+@inject KalanDB DB
+@inject NavigationManager NavigationManager
+@inject SweetAlertService Swal
+@inject LoadingService Spinner
+@inject IContabilidad Contabilidad
+@inject ICompras Compras
+<SpinnerLoading></SpinnerLoading>
+
+<h1>Cancelar registro</h1>
+
+<h3>¿Estas seguro de cancelar el registro?</h3>
+
+<h1>Pago a Proveedor</h1>
+
+
+<div class="row">
+    <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+        <ReadOnly Etiqueta="Documento" Value="@( "PGO-"+th_egreso.Egreso.ToString("D7") )"></ReadOnly>
+    </div>
+</div>
+<div class="row">
+    <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+        <ReadOnly Etiqueta="Proveedor" Value="@th_egreso.proveedor.NombreCorto"></ReadOnly>
+    </div>
+    <div class="col-12 col-sm-12 col-md-12 col-lg-5 col-xl-5">
+        @if (th_egreso.proveedor != null)
+        {
+            <ReadOnly Etiqueta="Razón Social" Value="@th_egreso.proveedor.RazonSocial"></ReadOnly>
+        }
+        else
+        {
+            <ReadOnly Etiqueta="Razón Social" Value=" "></ReadOnly>
+        }
+    </div>
+</div>
+<div class="row">
+    <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+        <ReadOnly Etiqueta="Chequera" Value="@th_egreso.bancos.Chequera"></ReadOnly>
+    </div>
+    <div class="col-12 col-sm-12 col-md-12 col-lg-5 col-xl-5">
+        @if (th_egreso.bancos != null)
+        {
+            <ReadOnly Etiqueta="Banco" Value="@th_egreso.bancos.Banco"></ReadOnly>
+        }
+        else
+        {
+            <ReadOnly Etiqueta="Banco" Value=" "></ReadOnly>
+        }
+    </div>
+</div>
+<div class="row">
+    <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+        <Fecha disabled Etiqueta="Fecha" @bind-Value="th_egreso.Fecha"></Fecha>
+    </div>
+    <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+        <ReadOnly Etiqueta="Monto del Pago" Value="@th_egreso.Original.ToString("c")"></ReadOnly>
+    </div>
+</div>
+ 
+<div class="row">
+    <div class="col-12 col-sm-12 col-md-12 col-lg-12 col-xl-12">
+        <TextoLargo disabled MaxLength="400" rows="3" Etiqueta="Comentarios" @bind-Value="th_egreso.Observaciones"></TextoLargo>
+    </div>
+</div>
+ 
+<div class="row">
+    <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+        <ReadOnly Etiqueta="Usuario" Value="@th_egreso.UsuarioCreacion"></ReadOnly>
+    </div>
+    <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+        <ReadOnly Etiqueta="Fecha y Hora de Creación" Value="@th_egreso.FechaCreacion.ToString("yyyy-MM-dd HH:mm:ss")"></ReadOnly>
+    </div>
+</div>
+ 
+<div>
+    <button class="btn btn-danger" @onclick="CancelarActivo">Cancelar</button>
+    <a href="/egresos/listado"><i class="fa-solid fa-arrow-left"></i> Regresar al Index</a>
+</div>
+@code {
+    private th_egresos th_egreso { get; set; }
+    [CascadingParameter] private Task<AuthenticationState> authenticationStateTask { get; set; }
+    [SupplyParameterFromQuery]
+    public string Id { get; set; }
+    protected override async Task OnInitializedAsync()
+    {
+        th_egreso = DB.th_egresos.AsNoTracking().First(m => m.Id == Id);
+
+        if (th_egreso is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+        }
+    }
+    private async Task CancelarActivo()
+    { 
+        try
+        {
+            var _authState = await authenticationStateTask;
+            var user = _authState.User;
+            var correo = ((System.Security.Claims.ClaimsIdentity)user.Identity).Name;
+            if (th_egreso.Disponible == th_egreso.Original)
+            {
+                Spinner.IsLoading = true;
+                th_egreso.Activo = false;
+                th_egreso.UsuarioModifica = correo;
+                th_egreso.Disponible = 0;
+                th_egreso.Conciliado = false;
+                th_egreso.FechaModifica = DateTime.Now;
+                await Compras.CancelarEgreso(th_egreso);
+                await Contabilidad.CancelarEgreso(th_egreso.Id, correo);
+                Spinner.IsLoading = false;            
+                NavigationManager.NavigateTo("/egresos/listado");
+            }
+            else
+            {
+                Spinner.IsLoading = false;
+                await Swal.FireAsync("Error", "No se puede cancelar el ingreso, ya que tiene pagos asociados", SweetAlertIcon.Error);
+            }
+        }
+        catch (Exception ex)
+        { 
+            Spinner.IsLoading = false;
+            await Swal.FireAsync("Error", ex.Message, SweetAlertIcon.Error);
+        }
+    }
+}

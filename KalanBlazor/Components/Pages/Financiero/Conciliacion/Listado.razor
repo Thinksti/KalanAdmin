@@ -1,0 +1,88 @@
+﻿@page "/conciliacion/listado"
+@using KalanBlazor.DTOs.Financiero
+@rendermode InteractiveServer
+@inject KalanDB DB
+@inject NavigationManager NavigationManager
+@inject SweetAlertService Swal
+@inject LoadingService Spinner
+@inject Excel Excel
+<SpinnerLoading></SpinnerLoading>
+<h1>Listado de Pagos a Proveedores</h1>
+
+<div class="row">
+    <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+        <Fecha Etiqueta="Fecha Inicio" Max="@DateTime.Now" @bind-Value="FechaInicio"></Fecha>
+    </div>
+    <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+        <Fecha Etiqueta="Fecha Fin" Max="@DateTime.Now" @bind-Value="FechaFin"></Fecha>
+    </div>
+    <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+        <button @onclick="Reporte" class="btn btn-primary">Buscar</button>
+    </div>
+    <div class="col-12 col-sm-12 col-md-12 col-lg-4 col-xl-4">
+    </div>
+    <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+        <DescargarArchivo Archivo="@ExcelListado" Etiqueta="Exportar"></DescargarArchivo>
+    </div>
+</div>
+
+<QuickGrid Pagination="@pagination" Class="table small" Items="conciliacion.AsQueryable()">
+    <PropertyColumn Property="@(c => c.banco.Chequera)" Title="Chequera" Sortable="true" />
+    <PropertyColumn Property="@(c => c.FechaInicial)" Title="Fecha Inicial" Format="d" Sortable="true" />
+    <PropertyColumn Property="@(c => c.FechaFinal)" Title="Fecha Final" Format="d" Sortable="true" />
+    <PropertyColumn Property="@(c => c.SaldoBanco)" Title="Saldo Banco" Format="c" Sortable="true" />
+    <PropertyColumn Property="@(c => c.Diferencia)" Title="Diferencia" Format="c" Sortable="true" />
+    <PropertyColumn Property="@(c => c.Justificacion)" Title="Justificación" Sortable="true" />
+    <PropertyColumn Property="@(c => c.UsuarioModifica)" Title="Usuario" Sortable="true" />
+    <PropertyColumn Property="@(c => c.FechaModifica)" Title="Fecha" Sortable="true" />
+</QuickGrid>
+<Paginator State="@pagination" />
+@code {
+    PaginationState pagination = new PaginationState { ItemsPerPage = 10 };
+    private DateTime FechaInicio { get; set; }
+    private DateTime FechaFin { get; set; }
+    private List<th_concilacion> conciliacion { get; set; } = new List<th_concilacion>();
+    private ArchivoGral ExcelListado
+    {
+        get
+        {
+            var reporteExcel = conciliacion.Select(x => new ListadoConciliaciones
+                {
+                    Chequera = x.banco.Chequera,
+                    Diferencia = x.Diferencia,
+                    FechaInicial = x.FechaInicial,
+                    FechaFinal = x.FechaFinal,
+                    Fecha = x.FechaModifica,
+                    Justificacion = x.Justificacion,
+                    SaldoBanco = x.SaldoBanco,
+                    Usuario = x.UsuarioCreacion,
+                    Terminada = x.Terminada
+                }).ToList();
+            var bytes = Excel.ExportExcel(reporteExcel, "Conciliaciones");
+            return new ArchivoGral { Nombre = "Conciliaciones.xlsx", Datos = bytes };
+        }
+    }
+    protected override async Task OnInitializedAsync()
+    {
+
+        FechaInicio = DateTime.Now.AddMonths(-1).Date;
+        FechaFin = DateTime.Now.Date;
+        Reporte();
+
+    }
+    private void Reporte()
+    {
+        this.conciliacion = (from x in DB.th_concilacion
+                             where x.FechaInicial >= FechaInicio && x.FechaInicial <= FechaFin
+                           select x)
+        .Include(x => x.banco)
+        .IgnoreAutoIncludes()
+        .AsNoTracking()
+        .OrderByDescending(x => x.FechaInicial)
+        .ToList();
+    }
+    private void Navegar(string url)
+    {
+        NavigationManager.NavigateTo(url, true);
+    }
+}

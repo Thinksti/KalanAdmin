@@ -1,0 +1,156 @@
+﻿@page "/Ingresos/Cancelar"
+@rendermode InteractiveServer
+@inject KalanDB DB
+@inject NavigationManager NavigationManager
+@inject SweetAlertService Swal
+@inject LoadingService Spinner
+<SpinnerLoading></SpinnerLoading>
+
+<h1>Cancelar registro</h1>
+
+<h3>¿Estas seguro de cancelar el registro?</h3>
+
+<h1>Ingreso de Cliente</h1>
+
+ 
+<div class="row">
+    <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+        <ReadOnly Etiqueta="Documento" Value="@( "RC-"+th_ingreso.Ingreso.ToString("D7") )"></ReadOnly>
+    </div>
+</div>
+<div class="row">
+    <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+        <ReadOnly Etiqueta="Cliente" Value="@th_ingreso.cliente.NombreCorto"></ReadOnly>
+    </div>
+    <div class="col-12 col-sm-12 col-md-12 col-lg-5 col-xl-5">
+        @if (th_ingreso.cliente != null)
+        {
+            <ReadOnly Etiqueta="Razón Social" Value="@th_ingreso.cliente.RazonSocial"></ReadOnly>
+        }
+        else
+        {
+            <ReadOnly Etiqueta="Razón Social" Value=" "></ReadOnly>
+        }
+    </div>
+</div>
+<div class="row">
+    <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+        <ReadOnly Etiqueta="Chequera" Value="@th_ingreso.bancos.Chequera"></ReadOnly>
+    </div>
+    <div class="col-12 col-sm-12 col-md-12 col-lg-5 col-xl-5">
+        @if (th_ingreso.bancos != null)
+        {
+            <ReadOnly Etiqueta="Banco" Value="@th_ingreso.bancos.Banco"></ReadOnly>
+        }
+        else
+        {
+            <ReadOnly Etiqueta="Banco" Value=" "></ReadOnly>
+        }
+    </div>
+</div>
+<div class="row">
+    <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+        @if (th_ingreso.ingresos_origen == null)
+        {
+            <ReadOnly Etiqueta="Origen" Value=" "></ReadOnly>
+        }
+        else
+        {
+            <ReadOnly Etiqueta="Origen" Value="@th_ingreso.ingresos_origen.Origen"></ReadOnly>
+        }
+    </div>
+</div>
+<div class="row">
+    <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+        @if (th_ingreso.formapago == null)
+        {
+            <ReadOnly Etiqueta="Forma de Pago" Value=" "></ReadOnly>
+        }
+        else
+        {
+            <ReadOnly Etiqueta="Forma de Pago" Value="@th_ingreso.formapago.FormaPago"></ReadOnly>
+        }
+    </div>
+</div>
+<div class="row">
+    <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+        <Fecha disabled Etiqueta="Fecha" @bind-Value="th_ingreso.Fecha"></Fecha>
+    </div>
+    <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+        <ReadOnly Etiqueta="Monto del Pago" Value="@th_ingreso.Original.ToString("c")"></ReadOnly>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12 col-sm-12 col-md-12 col-lg-12 col-xl-12">
+        <Switch disabled Etiqueta="Activo" @bind-Value="th_ingreso.Activo"></Switch>
+    </div>
+</div>
+<div class="row">
+    <div class="col-12 col-sm-12 col-md-12 col-lg-12 col-xl-12">
+        <TextoLargo disabled MaxLength="400" rows="3" Etiqueta="Comentarios" @bind-Value="th_ingreso.Observaciones"></TextoLargo>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+        <ReadOnly Etiqueta="Usuario" Value="@th_ingreso.UsuarioCreacion"></ReadOnly>
+    </div>
+    <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+        <ReadOnly Etiqueta="Fecha y Hora de Creación" Value="@th_ingreso.FechaCreacion.ToString("yyyy-MM-dd HH:mm:ss")"></ReadOnly>
+    </div>
+</div>
+
+<div>
+    <a href="/ingresos/listado"><i class="fa-solid fa-arrow-left"></i> Regresar al Index</a>
+</div>
+ 
+@code {
+    private th_ingresos th_ingreso { get; set; }
+    [CascadingParameter] private Task<AuthenticationState> authenticationStateTask { get; set; }
+    [SupplyParameterFromQuery]
+    public string Id { get; set; }
+    protected override async Task OnInitializedAsync()
+    {
+        th_ingreso = DB.th_ingresos.AsNoTracking().First(m => m.Id == Id);
+
+        if (th_ingreso is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+        }
+    }
+    private async Task CancelarActivo()
+    {
+
+        using var transaction = DB.Database.BeginTransaction();
+        try
+        {
+            DB = new KalanDB(DB.connectionString);
+            var _authState = await authenticationStateTask;
+            var user = _authState.User;
+            var correo = ((System.Security.Claims.ClaimsIdentity)user.Identity).Name;
+            Spinner.IsLoading = true;
+            th_ingreso.Activo = false;
+            th_ingreso.UsuarioModifica = correo;
+            th_ingreso.Disponible = 0;
+            th_ingreso.Conciliado = false;
+            th_ingreso.FechaModifica = DateTime.Now;
+            DB.th_ingresos.Update(th_ingreso);
+            await DB.SaveChangesAsync();
+            DB = new KalanDB(DB.connectionString);
+            var chequera = DB.th_bancos.First(m => m.Id == th_ingreso.bancos_id);
+            chequera.Saldo -= th_ingreso.Original;
+            DB.th_bancos.Update(chequera);
+            await DB.SaveChangesAsync();
+            Spinner.IsLoading = false;
+            transaction.Commit();
+            NavigationManager.NavigateTo("/egresos/listado");
+        }
+        catch (Exception ex)
+        {
+            transaction.Rollback();
+            Spinner.IsLoading = false;
+            await Swal.FireAsync("Error", ex.Message, SweetAlertIcon.Error);
+        }
+    }
+}

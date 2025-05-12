@@ -1,0 +1,463 @@
+﻿@page "/conciliacion/crear"
+@rendermode InteractiveServer
+@inject KalanDB DB
+@inject NavigationManager NavigationManager
+@inject SweetAlertService Swal
+@inject LoadingService Spinner
+<SpinnerLoading></SpinnerLoading>
+
+<h1>Conciliar Bancos</h1>
+
+
+<div class="row">
+    <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+        <Buscador TValue="string" Etiqueta="Chequera" ItemChanged="ElegirChequera" TItem="th_bancos" SearchItems="SearchItemsBancos" SearchExacto="SearchExactoBancos" Llave="Chequera"></Buscador>
+    </div>
+    <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+        @if (th_banco == null)
+        {
+         <ReadOnly Etiqueta="Fecha Inicio" Value=" "></ReadOnly>   
+        }
+        else
+        {
+            <Fecha disabled Etiqueta="Fecha Inicio" @bind-Value="FechaInicio"></Fecha>
+        }
+        
+    </div>
+    <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+        @if (th_banco == null)
+        {
+            <ReadOnly Etiqueta="Fecha Fin" Value=" "></ReadOnly>
+        }
+        else
+        {
+            <Fecha Etiqueta="Fecha Fin" Min="@th_banco.FechaUltimaConciliacion.Date" Max="@DateTime.Now" @bind-Value="FechaFin"></Fecha>
+        }        
+    </div>
+    <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+        <Numerico Etiqueta="Saldo del estado de cuenta" @bind-Value="SaldoChequera"></Numerico>
+    </div>
+    <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+        <button @onclick="Generar" class="btn btn-primary">Generar</button>
+    </div>
+ </div>
+ <hr />
+ <div class="row">
+ 
+     <div class="col-12 col-sm-12 col-md-12 col-lg-8 col-xl-8">
+        <QuickGrid Class="table small" Items="this.Detalle.AsQueryable()">
+            <PropertyColumn Property="@(c => c.Documento)" Title="Documento" />
+            <PropertyColumn Property="@(c => c.FechaDocumento)" Title="Fecha" Format="d" />
+            <TemplateColumn Title="Ingreso" Context="c" Align="Align.Right">
+                <div style="text-align:right">
+                    @if (c.Ingreso)
+                    {
+                        @c.Monto.ToString("c")
+                    }
+                    else
+                    {
+                        @(0.ToString("c"))
+                    }
+                </div>
+            </TemplateColumn>
+            <TemplateColumn Title="Egreso" Context="c">
+                <div style="text-align:right">
+                    @if (c.Ingreso == false)
+                    {
+                        @c.Monto.ToString("c")
+                    }
+                    else
+                    {
+                        @(0.ToString("c"))
+                    }
+                </div>
+            </TemplateColumn>
+            <PropertyColumn Property="@(c => c.Comentarios)" Title="Comentarios" />
+        </QuickGrid>
+     </div>
+    <div class="col-12 col-sm-12 col-md-12 col-lg-4 col-xl-4">
+        <div class="card">
+            <div class="card-header">
+                Resumen
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-6">
+                        Total de Movimientos
+                    </div>
+                    <div class="col-6">
+                        @CantidadMovimientos
+                    </div>
+                </div>
+      
+                <div class="row">
+                    <div class="col-6">
+                        Ultimo Saldo Conciliado
+                    </div>
+                    <div class="col-6">
+                        @SaldoUltimaConciliacion.ToString("c")
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-6">
+                        Total de Ingresos
+                    </div>
+                    <div class="col-6">
+                        @TotalIngresos.ToString("c")
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-6">
+                        Total de Egresos
+                    </div>
+                    <div class="col-6">
+                        @TotalEgresos.ToString("c")
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-6">
+                        Suma Movimientos
+                    </div>
+                    <div class="col-6">
+                        @SumaMovimientos.ToString("c")
+                    </div>
+                </div>
+              
+                <div class="row">
+                    <div class="col-6">
+                        Saldo de Chequera después de conciliar
+                    </div>
+                    <div class="col-6">
+                        @((TotalIngresos - TotalEgresos + SaldoUltimaConciliacion).ToString("c"))
+                    </div>
+                </div>
+            
+                <div class="row">
+                    <div class="col-6">
+                        Diferencia a Conciliar
+                    </div>
+                    <div class="col-6 ">
+                        @if(Diferencia == 0)
+                        {
+                            <span style="color:green">@Diferencia.ToString("c")</span>                            
+                        }
+                        else
+                        {
+                            <span style="color:red">@Diferencia.ToString("c")</span>                            
+                        }
+                    </div>
+                </div>
+              
+                @if (Diferencia != 0 && Detalle.Count()>0)
+                {
+                    <div class="row">
+                        <div class="col-12">
+                            <TextoLargo rows="4" style="background-color:wheat !important;" MaxLength="450" @bind-Value="Justificacion" Etiqueta="Justificación del Ajuste"></TextoLargo>
+                        </div>
+                    </div>
+                    
+                }
+                
+                <button @onclick="Conciliar" class="btn btn-secondary">Conciliar</button>
+            </div>
+        </div>
+    </div>
+ 
+ </div>
+@code {
+    [CascadingParameter] private Task<AuthenticationState> authenticationStateTask { get; set; }
+    private th_bancos th_banco { get; set; }
+    private string Justificacion { get; set; }
+    private decimal SaldoBanco
+    {
+        get
+        {
+            if (th_banco == null)
+            {
+                return 0;
+            }
+            return th_banco.Saldo;
+
+        }
+    }
+    private decimal SaldoUltimaConciliacion
+    {
+        get
+        {
+            if (th_banco == null)
+            {
+                return 0;
+            }
+            return th_banco.SaldoUltimaConciliacion;
+        }
+    }
+    private decimal SaldoChequeraDespues
+    {
+        get
+        {
+            return TotalIngresos - TotalEgresos + SaldoUltimaConciliacion;
+        }
+    }
+    private decimal TotalIngresos
+    {
+        get
+        {
+            return Detalle.Where(x => x.Ingreso).Sum(x => x.Monto);
+        }
+    }
+    private decimal TotalEgresos
+    {
+        get
+        {
+            return Detalle.Where(x => x.Ingreso == false).Sum(x => x.Monto);
+        }
+    }
+    private decimal Diferencia
+    {
+        get
+        {
+            return SaldoChequeraDespues - SaldoChequera;
+        }
+    }
+    private int CantidadMovimientos
+    {
+        get
+        {
+            return Detalle.Count();
+        }
+    }
+    private decimal SumaMovimientos
+    {
+        get
+        {
+            return TotalIngresos - TotalEgresos;
+        }
+    }
+    private DateTime FechaInicio { get; set; }=DateTime.Now.Date;
+    private DateTime FechaFin { get; set; } = DateTime.Now.Date;
+    private th_concilacion conciliacion { get; set; } = new();
+    private decimal SaldoChequera { get; set; }
+    private List<th_conciliacion_detalle> Detalle { get; set; } = new(); 
+    protected override async Task OnInitializedAsync()
+    {
+        Justificacion = "";
+    }
+
+    private async Task<IEnumerable<th_bancos>> SearchItemsBancos(string value)
+    {
+        return DB.th_bancos.Where(c => c.Banco.Contains(value)).ToList().AsEnumerable();
+    }
+    private async Task<IEnumerable<th_bancos>> SearchExactoBancos(string value)
+    {
+        return DB.th_bancos.Where(c => c.Banco == value).ToList().AsEnumerable();
+    }
+    private async Task ElegirChequera(th_bancos item)
+    {
+        th_banco = item;
+        FechaInicio = th_banco.FechaUltimaConciliacion.Date;
+        FechaFin = DateTime.Now.Date;
+        SaldoChequera = th_banco.Saldo;
+    }
+    private async Task Generar()
+    {
+        FechaFin = FechaFin.Date.AddHours(23).AddMinutes(59).AddSeconds(59);
+        DB = new KalanDB(DB.connectionString);
+        if (th_banco == null)
+        {
+            await Swal.FireAsync("Error", "Debe seleccionar una chequera", SweetAlertIcon.Error);
+            return;
+        }
+        if (FechaInicio == DateTime.MinValue)
+        {
+            await Swal.FireAsync("Error", "Debe seleccionar una fecha de inicio", SweetAlertIcon.Error);
+            return;
+        }
+        if (FechaFin == DateTime.MinValue)
+        {
+            await Swal.FireAsync("Error", "Debe seleccionar una fecha de fin", SweetAlertIcon.Error);
+            return;
+        }
+        if (FechaInicio > FechaFin)
+        {
+            await Swal.FireAsync("Error", "La fecha de inicio no puede ser mayor a la fecha de fin", SweetAlertIcon.Error);
+            return;
+        }
+      
+        var _authState = await authenticationStateTask;
+        var user = _authState.User;
+        var correo = ((System.Security.Claims.ClaimsIdentity)user.Identity).Name;
+        Spinner.IsLoading = true;
+        conciliacion = DB.th_concilacion.FirstOrDefault(x=>x.banco_Id==th_banco.Id && x.FechaInicial==FechaInicio && x.FechaFinal==FechaFin);
+        if (conciliacion == null)
+        {
+            conciliacion = new th_concilacion
+                {
+                    banco_Id = th_banco.Id,
+                    FechaCreacion = DateTime.Now,
+                    FechaInicial = FechaInicio,
+                    FechaFinal = FechaFin,
+                    Id = Guid.NewGuid().ToString(),
+                    Terminada = false,
+                    UsuarioCreacion = correo,
+                    SaldoBanco = SaldoChequera,
+                };
+
+            DB.th_concilacion.Add(conciliacion);
+            await DB.SaveChangesAsync();
+        }
+        else
+        {
+            conciliacion.SaldoBanco = SaldoChequera;
+            conciliacion.FechaModifica = DateTime.Now;
+            conciliacion.UsuarioModifica = correo;
+            DB.th_concilacion.Update(conciliacion);
+            await DB.SaveChangesAsync();
+            DB.Entry(conciliacion).Reload();
+        }        
+        var partidas = new List<th_conciliacion_detalle>();
+        var ingresos = (from m in DB.th_ingresos where m.bancos_id == th_banco.Id && m.Fecha >= FechaInicio && m.Fecha <= FechaFin && m.Conciliado == false select m).IgnoreAutoIncludes().AsNoTracking().ToList();
+        var egresos = (from m in DB.th_egresos where m.bancos_id == th_banco.Id && m.Fecha >= FechaInicio && m.Fecha <= FechaFin && m.Conciliado == false select m).IgnoreAutoIncludes().AsNoTracking().ToList();
+        var ingresosCancelados = (from m in DB.th_ingresos where m.bancos_id == th_banco.Id && m.Activo == false && m.FechaModifica >= FechaInicio && m.FechaModifica <= FechaFin && m.Conciliado == false select m).IgnoreAutoIncludes().AsNoTracking().ToList();
+        var egresosCancelados = (from m in DB.th_egresos where m.bancos_id == th_banco.Id && m.Activo == false && m.FechaModifica >= FechaInicio && m.FechaModifica <= FechaFin && m.Conciliado == false select m).IgnoreAutoIncludes().AsNoTracking().ToList();
+        var partida = 1;
+        foreach (var x in ingresos.OrderBy(x=>x.Ingreso))
+        {
+            var detalle = new th_conciliacion_detalle
+                {
+                    conciliacion_Id = conciliacion.Id,
+                    Documento = $"RC-{x.Ingreso.ToString("D7")}",
+                    Id_Documento = x.Ingreso,
+                    Comentarios = x.Observaciones,
+                    Ingreso=true,
+                    FechaDocumento = x.Fecha,
+                    FechaCreacion = DateTime.Now,
+                    Monto = x.Original,
+                    Partida = partida,
+                    UsuarioCreacion = correo,
+                    Conciliado=true
+                };
+            partidas.Add(detalle);
+            partida += 1;
+        }
+        foreach (var x in egresos.OrderBy(x => x.Egreso))
+        {
+            var detalle = new th_conciliacion_detalle
+                {
+                    conciliacion_Id = conciliacion.Id,
+                    Documento = $"PGO-{x.Egreso.ToString("D7")}",
+                    Id_Documento = x.Egreso,
+                    Comentarios = x.Observaciones,
+                    FechaDocumento = x.Fecha,
+                    Ingreso=false,
+                    FechaCreacion = DateTime.Now,
+                    Monto = x.Original,
+                    Partida = partida,
+                    UsuarioCreacion = correo,
+                    Conciliado = true
+                };
+            partidas.Add(detalle);
+            partida += 1;
+        }
+        foreach (var x in ingresosCancelados.OrderBy(x => x.Ingreso))
+        {
+            var detalle = new th_conciliacion_detalle
+                {
+                    conciliacion_Id = conciliacion.Id,
+                    Documento = $"RC-{x.Ingreso.ToString("D7")}",
+                    Id_Documento = x.Ingreso,
+                    Comentarios = x.Observaciones,
+                    Ingreso = true,
+                    FechaDocumento = x.FechaModifica.Value,
+                    FechaCreacion = DateTime.Now,
+                    Monto = -x.Original,
+                    Partida = partida,
+                    UsuarioCreacion = correo,
+                    Conciliado = true
+                };
+            partidas.Add(detalle);
+            partida += 1;
+        }
+        foreach(var x in egresosCancelados.OrderBy(x => x.Egreso))
+        {
+            var detalle = new th_conciliacion_detalle
+                {
+                    conciliacion_Id = conciliacion.Id,
+                    Documento = $"PGO-{x.Egreso.ToString("D7")}",
+                    Id_Documento = x.Egreso,
+                    Comentarios = x.Observaciones,
+                    Ingreso = false,
+                    FechaDocumento = x.FechaModifica.Value,
+                    FechaCreacion = DateTime.Now,
+                    Monto = -x.Original,
+                    Partida = partida,
+                    UsuarioCreacion = correo,
+                    Conciliado = true
+                };
+            partidas.Add(detalle);
+            partida += 1;
+        }
+        this.Detalle = partidas.OrderBy(x => x.FechaDocumento).ToList();
+        Spinner.IsLoading = false;
+    }
+    private async Task Conciliar()
+    {
+        using var transaction = DB.Database.BeginTransaction();
+        try
+        {
+            if (Diferencia != 0 && string.IsNullOrEmpty(Justificacion))
+            {
+                await Swal.FireAsync("Error", "Debe justificar el ajuste", SweetAlertIcon.Error);
+                return;
+            }
+            Spinner.IsLoading = true;
+            var _authState = await authenticationStateTask;
+            var user = _authState.User;
+            var correo = ((System.Security.Claims.ClaimsIdentity)user.Identity).Name;
+            conciliacion.FechaModifica = DateTime.Now;
+            conciliacion.UsuarioModifica = correo;
+            conciliacion.Terminada = true;
+            conciliacion.Diferencia = Diferencia;
+            conciliacion.Justificacion = Justificacion;
+            DB.th_concilacion.Update(conciliacion);
+            await DB.SaveChangesAsync();
+            var eliminarDetalle = DB.th_conciliacion_detalle.Where(x => x.conciliacion_Id == conciliacion.Id).ToList();
+            DB.th_conciliacion_detalle.RemoveRange(eliminarDetalle);
+            await DB.SaveChangesAsync();
+            DB.th_conciliacion_detalle.AddRange(Detalle);
+            await DB.SaveChangesAsync();
+            th_banco = DB.th_bancos.FirstOrDefault(x => x.Id == th_banco.Id);
+            th_banco.SaldoUltimaConciliacion = SaldoChequera;
+            th_banco.Saldo = SaldoChequera;
+            th_banco.FechaUltimaConciliacion = FechaFin;
+            DB.th_bancos.Update(th_banco);
+            await DB.SaveChangesAsync();
+            foreach (var item in Detalle)
+            {
+                if (item.Ingreso)
+                {
+                    var ingreso = DB.th_ingresos.FirstOrDefault(x => x.Ingreso == item.Id_Documento);
+                    ingreso.Conciliado = true;
+                    DB.th_ingresos.Update(ingreso);
+                    DB.SaveChanges();
+                }
+                else
+                {
+                    var egreso = DB.th_egresos.FirstOrDefault(x => x.Egreso == item.Id_Documento);
+                    egreso.Conciliado = true;
+                    DB.th_egresos.Update(egreso);
+                    DB.SaveChanges();
+                }
+            }
+            Spinner.IsLoading = false;
+            await Swal.FireAsync("Conciliación", "Conciliación realizada con éxito", SweetAlertIcon.Success);
+
+            NavigationManager.NavigateTo("/finaciero/menu");
+        }
+        catch (Exception ex)
+        {
+            transaction.Rollback();
+            Spinner.IsLoading = false;
+            await Swal.FireAsync("Error", ex.Message, SweetAlertIcon.Error);
+        }      
+    }
+}

@@ -1,0 +1,37 @@
+﻿@page "/"
+@rendermode InteractiveServer
+@inject KalanDB DB
+@inject Shared.Kalan.Componentes.UserService UserService; 
+
+<PageTitle>Home</PageTitle>
+
+ 
+@code{
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+ 
+            var tipoCambio = DB.th_tiposcambio.Where(x=>x.Fecha == DateTime.Now.Date).FirstOrDefault();
+            if(tipoCambio== null)
+            {
+                var monedas = DB.th_monedas.ToList();
+                foreach (var moneda in monedas)
+                {
+                    DB.th_tiposcambio.Add(new th_tiposcambio
+                        {
+                            Fecha = DateTime.Now.Date,
+                            moneda_Id = moneda.Id,
+                            Origen = "Usuario",
+                            Activo = true,
+                            FechaCreacion = DateTime.Now,
+                            Id = Guid.NewGuid().ToString(),
+                            TipoCambio = 1,
+                            UsuarioCreacion = UserService.Login
+                        });
+                        DB.SaveChanges();
+                }   
+            }
+        }
+    }
+}

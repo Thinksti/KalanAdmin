@@ -1,0 +1,189 @@
+﻿@page "/ventas/Facturas/Ver"
+@rendermode InteractiveServer
+@inject KalanDB DB
+@inject NavigationManager NavigationManager
+@inject SweetAlertService Swal
+
+<h1>Factura de Cliente</h1>
+@if (entidad != null)
+{
+    <div class="row">
+        <div class="col-12 col-sm-12 col-md-12 col-lg-4 col-xl-2">
+            <ReadOnly Etiqueta="Cliente" @bind-Value="entidad.cliente.NombreCorto"></ReadOnly>
+        </div>
+        <div class="col-12 col-sm-12 col-md-12 col-lg-8 col-xl-5">
+            @if (entidad.cliente != null)
+            {
+                <ReadOnly Etiqueta="Razón Social" Value="@entidad.cliente.RazonSocial"></ReadOnly>
+            }
+            else
+            {
+                <ReadOnly Etiqueta="Razón Social" Value=" "></ReadOnly>
+            }
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-12 col-sm-12 col-md-6 col-lg-4 col-xl-2">
+            <Texto disabled MaxLength="36" Etiqueta="Factura" @bind-Value="entidad.Factura"></Texto>
+        </div>
+        <div class="col-12 col-sm-12 col-md-6 col-lg-4 col-xl-2">
+            <Fecha disabled Etiqueta="Fecha" @bind-Value="entidad.Fecha"></Fecha>
+        </div>
+        <div class="col-12 col-sm-12 col-md-6 col-lg-4 col-xl-2">
+            <Numerico disabled Etiqueta="Monto de la Factura" Min="0" @bind-Value="entidad.Original"></Numerico>
+        </div>
+        <div class="col-12 col-sm-12 col-md-6 col-lg-4 col-xl-2">
+            <Numerico disabled Etiqueta="Saldo de la Factura" Min="0" @bind-Value="entidad.Disponible"></Numerico>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-12 col-sm-12 col-md-12 col-lg-6 col-xl-3">
+            <Texto disabled Etiqueta="UUID" MaxLength="36" @bind-Value="entidad.UUID"></Texto>
+        </div>
+        <div class="col-12 col-sm-12 col-md-6 col-lg-3 col-xl-2">
+            <div class="form-floating">
+                <select disabled @bind="entidad.metodopago_Id" class="form-select">
+                    <option value="" selected disabled>Método de Pago</option>
+                    @foreach (var item in kalanDB.th_metodopago)
+                    {
+                        <option value="@item.Id">@item.Id</option>
+                    }
+                </select>
+                <label>Método de Pago</label>
+            </div>
+        </div>
+        <div class="col-12 col-sm-12 col-md-6 col-lg-3 col-xl-2" style="align-self:center;">
+            <Switch disabled Etiqueta="Activo" @bind-Value="entidad.Activo"></Switch>
+        </div>
+        <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+            @if (string.IsNullOrEmpty(entidad.th_venta_factura.RutaXML)==false)
+            {
+                <DescargarArchivo Etiqueta="XML" Ruta="@entidad.th_venta_factura.RutaXML"></DescargarArchivo>
+            }
+            @if (string.IsNullOrEmpty(entidad.th_venta_factura.RutaPDF) == false)
+            {
+                <DescargarArchivo Etiqueta="PDF" Ruta="@entidad.th_venta_factura.RutaPDF"></DescargarArchivo>
+            }
+            @if (string.IsNullOrEmpty(entidad.th_venta_factura.RutaAcuse) == false)
+            {
+                <DescargarArchivo Etiqueta="Acuse" Ruta="@entidad.th_venta_factura.RutaAcuse"></DescargarArchivo>
+            }
+        </div>
+        <div class="col-12 col-sm-12 col-md-6 col-lg-3 col-xl-2" style="align-self:center;">
+            @if (string.IsNullOrEmpty(entidad.th_venta_factura.asiento_Id) == false)
+           {
+                <button class="btn btn-info" @onclick="@(()=>ModalAsiento.ShowModal())">Ver Asiento</button>
+           }
+        </div>
+        <div class="col-12 col-sm-12 col-md-6 col-lg-3 col-xl-2" style="align-self:center;">
+            @if (string.IsNullOrEmpty(entidad.th_venta_factura.asientocancelado_Id) == false)
+            {
+                <button class="btn btn-info" @onclick="@(()=>ModalAsientoCancelado.ShowModal())">Ver Asiento Cancelación</button>
+            }
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-12 col-sm-12 col-md-12 col-lg-12 col-xl-12">
+            <TextoLargo disabled MaxLength="400" rows="3" Etiqueta="Comentarios" @bind-Value="entidad.Observaciones"></TextoLargo>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+            <ReadOnly Etiqueta="Sucursal de Entrega" Value="@entidad.th_venta_factura.SucursalEntrega"></ReadOnly>
+        </div>
+        <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+            <ReadOnly Etiqueta="Orden de Compra" Value="@entidad.th_venta_factura.OrdenCompra"></ReadOnly>
+        </div>
+        <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+            <ReadOnly Etiqueta="Usuario" Value="@entidad.UsuarioCreacion"></ReadOnly>
+        </div>
+        <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+            <ReadOnly Etiqueta="Fecha y Hora de Creación" Value="@entidad.FechaCreacion.ToString("yyyy-MM-dd HH:mm:ss")"></ReadOnly>
+        </div>
+        
+    </div>
+    <div class="row">
+        <div class="col-12">
+            @if (entidad.th_venta_factura != null)
+            {
+                <h2>Detalle de la Factura</h2>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Producto</th>
+                            <th>Cantidad</th>
+                            <th>Precio</th>
+                            <th>Subtotal</th>
+                            <th>Impuesto</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in entidad.th_venta_factura.th_venta_factura_detalle)
+                        {
+                            <tr>
+                                <td>@item.articulo.NombreCorto - @item.articulo.Descripcion</td>
+                                <td>@item.Cantidad</td>
+                                <td style="text-align:right;">@item.Unitario.ToString("c")</td>
+                                <td style="text-align:right;">@item.SubTotal.ToString("c")</td>
+                                <td style="text-align:right;">@item.Impuesto.ToString("c")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+        </div>
+    </div>
+    <div>
+        <a href="@($"/ventas/Facturas/listado")"><i class="fa-solid fa-arrow-left"></i> Regresar al Index</a>
+    </div>
+    @if (string.IsNullOrEmpty(entidad.th_venta_factura.asiento_Id) == false)
+    {
+        <Modal @ref="ModalAsiento" Size="Shared.Kalan.Components.Pages.Componentes.Modal.Size.Modal_XL" Title="Asiento Contable">
+            
+                <KalanBlazor.Components.Pages.Financiero.Asientos.VerAsiento Id="@entidad.th_venta_factura.asiento_Id"></KalanBlazor.Components.Pages.Financiero.Asientos.VerAsiento>
+           
+        </Modal>
+    }
+    @if (string.IsNullOrEmpty(entidad.th_venta_factura.asientocancelado_Id) == false)
+    {
+        <Modal @ref="ModalAsientoCancelado" Size="Shared.Kalan.Components.Pages.Componentes.Modal.Size.Modal_XL" Title="Asiento Contable">
+           
+                <KalanBlazor.Components.Pages.Financiero.Asientos.VerAsiento Id="@entidad.th_venta_factura.asientocancelado_Id"></KalanBlazor.Components.Pages.Financiero.Asientos.VerAsiento>
+            
+        </Modal>
+    }
+}
+
+
+@code {
+    [SupplyParameterFromQuery]
+    public string Id { get; set; }
+    private DateTime Fecha { get; set; }
+    private Modal ModalAsiento { get; set; }
+    private Modal ModalAsientoCancelado { get; set; }
+    private decimal Monto { get; set; }
+    private string Comentario { get; set; }
+    private string Factura { get; set; } 
+    private string UUID { get; set; }
+    private string MetodoPago { get; set; }
+    private th_cuentascobrar entidad { get; set; }
+    private KalanDB kalanDB
+    {
+        get
+        {
+            return new KalanDB(DB.connectionString);
+        }
+    }
+    protected override async Task OnInitializedAsync()
+    {
+        entidad = await DB.th_cuentascobrar.FirstOrDefaultAsync(m => m.Id == Id);
+
+        if (entidad is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+        }
+    }
+}

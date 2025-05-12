@@ -1,0 +1,156 @@
+﻿@page "/egresos/crear"
+
+@rendermode InteractiveServer
+@inject KalanDB DB
+@inject NavigationManager NavigationManager
+@inject SweetAlertService Swal
+@inject IContabilidad Contabilidad
+@inject ICompras Compras
+<h1>Crear Pago a Proveedor</h1>
+<div class="row">
+    <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+        <Buscador TValue="string" Etiqueta="Id Proveedor" ItemChanged="@((item)=>th_Proveedor = item)" TItem="th_proveedores" @bind-Value="th_egreso.proveedor_Id" SearchItems="SearchItemsProveedores" SearchExacto="SearchExactoProveedores" Llave="NombreCorto"></Buscador>
+    </div>
+    <div class="col-12 col-sm-12 col-md-12 col-lg-5 col-xl-5">
+        @if (th_Proveedor != null)
+        {
+            <ReadOnly Etiqueta="Razón Social" Value="@th_Proveedor.RazonSocial"></ReadOnly>
+        }
+        else
+        {
+            <ReadOnly Etiqueta="Razón Social" Value=" "></ReadOnly>
+        }
+    </div>
+
+</div>
+<div class="row">
+    <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+        <Buscador TValue="string" Etiqueta="Chequera" ItemChanged="@((item)=>{th_banco = item;th_egreso.moneda_Id = item.moneda_Id;})" TItem="th_bancos" @bind-Value="th_egreso.bancos_id" SearchItems="SearchItemsBancos" SearchExacto="SearchExactoBancos" Llave="Chequera"></Buscador>
+    </div>
+    <div class="col-12 col-sm-12 col-md-12 col-lg-5 col-xl-5">
+        @if (th_banco != null)
+        {
+            <ReadOnly Etiqueta="Chequera" Value="@th_banco.Banco"></ReadOnly>
+        }
+        else
+        {
+            <ReadOnly Etiqueta="Chequera" Value=" "></ReadOnly>
+        }
+    </div>
+    <div class="col-12 col-sm-12 col-md-12 col-lg-5 col-xl-5">
+        @if (th_banco != null)
+        {
+            <Monedas @bind-ValueFecha="Fecha"
+                     MonedaFija="true"
+                     @bind-ValueTipoCambio="th_egreso.tipocambio_Id"
+                     @bind-ValueMoneda="th_banco.moneda_Id">
+            </Monedas>
+        }
+        else
+        {
+            <ReadOnly Etiqueta="Moneda" Value=" "></ReadOnly>
+        }        
+    </div>
+</div>
+<div class="row">
+    <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+        <Fecha Etiqueta="Fecha" @bind-Value="Fecha" @bind-Value:after="@(()=>InvokeAsync(StateHasChanged))"></Fecha>
+    </div>
+    <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+        <Numerico Etiqueta="Monto del Pago" Min="0" @bind-Value="Monto"></Numerico>
+    </div>
+</div>
+ 
+<div class="row">
+    <div class="col-12 col-sm-12 col-md-12 col-lg-12 col-xl-12">         
+        <TextoLargo MaxLength="400" rows="3" Etiqueta="Comentarios" @bind-Value="Comentario"></TextoLargo>
+    </div>
+</div>
+ 
+<div class="row">
+    <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+        <button @onclick="Guardar" class="btn btn-primary">Guardar</button>
+    </div>    
+</div>
+
+@code {
+    [CascadingParameter] private Task<AuthenticationState> authenticationStateTask { get; set; }
+    private th_egresos th_egreso { get; set; } = new ();
+    private th_proveedores th_Proveedor { get; set; } 
+    private th_bancos th_banco { get; set; }
+    private DateTime Fecha { get; set; }
+    private decimal Monto { get; set; }
+    private string Comentario { get; set; }
+    protected override async Task OnInitializedAsync()
+    {
+        Fecha = DateTime.Now.Date;
+        Comentario = "";
+    }
+    private async Task<IEnumerable<th_proveedores>> SearchItemsProveedores(string value)
+    {
+        if(value == ".")
+        {
+            return DB.th_proveedores.Take(10).ToList().AsEnumerable();
+        }
+        else
+        {
+            return DB.th_proveedores.Where(c => c.NombreCorto.Contains(value) || c.RazonSocial.Contains(value)).ToList().AsEnumerable();
+        }
+
+    }
+    private async Task<IEnumerable<th_proveedores>> SearchExactoProveedores(string value)
+    {
+        return DB.th_proveedores.Where(c => c.NombreCorto == value ).ToList().AsEnumerable();
+    }
+    private async Task<IEnumerable<th_bancos>> SearchItemsBancos(string value)
+    {
+        if (value == ".")
+        {
+            return DB.th_bancos.Take(10).ToList().AsEnumerable();
+        }
+        else
+        {
+            return DB.th_bancos.Where(c => c.Banco.Contains(value)).ToList().AsEnumerable();
+        }
+    }
+    private async Task<IEnumerable<th_bancos>> SearchExactoBancos(string value)
+    {
+        return DB.th_bancos.Where(c => c.Banco == value).ToList().AsEnumerable();
+    }
+    private async Task Guardar()
+    {
+        if (th_Proveedor == null)
+        {
+            await Swal.FireAsync("Error","Debe seleccionar un proveedor",SweetAlertIcon.Error);
+            return;
+        }
+        if (th_banco == null)
+        {
+            await Swal.FireAsync("Error","Debe seleccionar un banco",SweetAlertIcon.Error);
+            return;
+        }
+        if (Monto <= 0)
+        {
+            await Swal.FireAsync("Error","El monto debe ser mayor a 0",SweetAlertIcon.Error);
+            return;
+        }
+        var _authState = await authenticationStateTask;
+        var user = _authState.User;
+        var correo = ((System.Security.Claims.ClaimsIdentity)user.Identity).Name;
+        th_egreso.Fecha = Fecha;
+        th_egreso.Id = Guid.NewGuid().ToString();
+        th_egreso.Original = Monto;
+        th_egreso.Observaciones = Comentario;
+        th_egreso.proveedor_Id = th_Proveedor.Id;
+        th_egreso.bancos_id = th_banco.Id;
+        th_egreso.UsuarioCreacion= correo;
+        th_egreso.FechaCreacion = DateTime.Now;
+        th_egreso.Activo = true;
+        th_egreso.Disponible= Monto;
+        th_egreso.Conciliado = false;
+        await Compras.Egreso(th_egreso);
+        await Contabilidad.Egreso(th_egreso.Id, correo);
+        await Swal.FireAsync("Guardado", $"El egreso PGO-{th_egreso.Egreso.ToString("D7")} ha sido guardado", SweetAlertIcon.Success);
+        NavigationManager.NavigateTo("/egresos/listado");
+    }
+}

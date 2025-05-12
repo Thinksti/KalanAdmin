@@ -1,0 +1,103 @@
+﻿@page "/conciliacion/reporteflujo"
+@using KalanBlazor.DTOs.Financiero
+@rendermode InteractiveServer
+@inject KalanDB DB
+@inject NavigationManager NavigationManager
+@inject SweetAlertService Swal
+@inject LoadingService Spinner
+@inject Excel Excel
+
+
+<h1>Flujo de efectivo</h1>
+
+<SpinnerLoading></SpinnerLoading>
+<div class="row">
+    <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+        <Fecha Etiqueta="Fecha Inicio" Min="DateTime.Now.AddYears(-1).Date" Max="@DateTime.Now.Date" @bind-Value="FechaInicio"></Fecha>
+    </div>
+    <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+        <Fecha Etiqueta="Fecha Fin" Min="FechaInicio" Max="@DateTime.Now.Date" @bind-Value="FechaFin"></Fecha>
+    </div>
+    <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+        <button style="height:100%" class="btn btn-primary" @onclick="Reporte">Generar Reporte</button>
+    </div>
+</div>
+<div class="row">
+    <div class="col-12">
+        @if (FlujoEfectivo != null)
+        {
+            @if (FlujoEfectivo.Any())
+            {
+                <Tabla Descargar="true" TItem="FlujoEfectivo_Items" Items="flujoEfectivos"></Tabla>
+            }
+        }        
+    </div>
+</div>
+
+
+@code {
+    private DateTime FechaInicio { get; set; }
+    private DateTime FechaFin { get; set; }
+    private List<FlujoEfectivo_Items> FlujoEfectivo = new List<FlujoEfectivo_Items>();
+    private List<FlujoEfectivo_Items> flujoEfectivos
+    {
+        get
+        {
+            return FlujoEfectivo.OrderBy(x=>x.Fecha).ToList();
+        }
+    }
+    protected override async Task OnInitializedAsync()
+    {
+
+        FechaInicio = DateTime.Now.AddMonths(-1).Date;
+        FechaFin = DateTime.Now.Date;
+        Reporte();
+
+    }
+    private void Reporte()
+    {
+        Spinner.IsLoading = true;
+        using(var dbKalan = new KalanDB(DB.connectionString))
+        {
+            var ingresos = dbKalan.th_ingresos
+            .Where(x => x.Fecha >= FechaInicio && x.Fecha <= FechaFin && x.Activo)
+            .Select(x => new FlujoEfectivo_Items
+                {
+                    Chequera = x.bancos.Chequera,
+                    Documento = $"RC-{x.Ingreso.ToString("D7")}",
+                    Egreso = 0,
+                    Ingreso = x.Original,
+                    Fecha = x.Fecha,
+                    Observaciones = x.Observaciones,
+                    Usuario = x.UsuarioCreacion
+                })
+            .ToList();
+            FlujoEfectivo.AddRange(ingresos);
+            var egresos = dbKalan.th_egresos
+            .Select(x => new FlujoEfectivo_Items
+                {
+                    Chequera = x.bancos.Chequera,
+                    Documento = $"PGO-{x.Egreso.ToString("D7")}",
+                    Egreso = x.Original,
+                    Ingreso = 0,
+                    Fecha = x.Fecha,
+                    Observaciones = x.Observaciones,
+                    Usuario = x.UsuarioCreacion
+                })
+            .Where(x => x.Fecha >= FechaInicio && x.Fecha <= FechaFin)
+            .ToList();
+            FlujoEfectivo.AddRange(egresos);
+            if (FlujoEfectivo.Count() == 0)
+            {
+                Spinner.IsLoading = false;
+                Swal.FireAsync("Alerta","No existen registros en ese periodo de fechas", SweetAlertIcon.Warning);
+                return;
+            }
+        }
+        Spinner.IsLoading = false;
+    }
+    private void Navegar(string url)
+    {
+        NavigationManager.NavigateTo(url, true);
+    }
+}

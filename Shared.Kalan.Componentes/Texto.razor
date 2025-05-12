@@ -1,0 +1,57 @@
+﻿@using Microsoft.AspNetCore.Components.Rendering
+@if (string.IsNullOrEmpty(Etiqueta))
+{
+    <input id="txt_@id" class="form-control componentesKalan" @attributes="AdditionalAttributes" type="text" @bind="Value" @bind:after="ValidarValor" />
+}
+else
+{
+    @if (EsBuscador)
+    {
+        <div class="form-floating">
+            <input id="txt_@id" class="form-control componentesKalan" @bind:event="oninput" @attributes="AdditionalAttributes" type="text" @bind="Value" @bind:after="ValidarValor" placeholder="@Etiqueta" />
+            <label for="txt_@id"><i class="fa-solid fa-magnifying-glass"></i> @Etiqueta</label>
+        </div>
+    }
+    else
+    {
+        <div class="form-floating">
+            <input id="txt_@id" class="form-control componentesKalan" @attributes="AdditionalAttributes" type="text" @bind="Value" @bind:after="ValidarValor" placeholder="@Etiqueta" />
+            <label for="txt_@id">@Etiqueta</label>
+        </div>
+    }
+
+    
+}
+@code {
+    [Parameter] public string Value { get; set; }
+
+    [Parameter] public EventCallback<string> ValueChanged { get; set; }
+    [Parameter] public int MaxLength { get; set; } = 500;
+    [Parameter] public bool EsBuscador { get; set; }
+    [Parameter(CaptureUnmatchedValues = true)] public IDictionary<string, object> AdditionalAttributes { get; set; }
+    [Parameter] public string Etiqueta { get; set; }
+    private string id { get; set; }
+    protected override async Task OnInitializedAsync()
+    {
+        this.id = Guid.NewGuid().ToString().Replace("-", "");
+        if (MaxLength == null)
+        {
+            MaxLength = int.MaxValue;
+        }
+        await ValidarValor();
+    }
+    private async Task ValidarValor()
+    {
+        if (string.IsNullOrEmpty(Value) == false)
+        {
+            if (Value.Length > MaxLength)
+            {
+                Value = Value.Substring(0, MaxLength);
+            }
+        }
+        await ValueChanged.InvokeAsync(Value);
+        await InvokeAsync(() => StateHasChanged());
+    }
+ 
+
+}

@@ -1,0 +1,71 @@
+﻿@page "/inventario/unidad/listado"
+
+@rendermode InteractiveServer
+@inject KalanDB DB
+@inject Excel Excel
+@inject NavigationManager NavigationManager
+
+<Contenido Titulo="Listado de Unidades de Medida">
+   
+        <div class="row">
+            <div class="col-12 col-sm-12 col-md-12 col-lg-4 col-xl-4">
+                <a href="/inventario/unidad/crear"><i class="fas fa-plus"></i> Crear una nueva Unidad</a>
+            </div>
+            <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+                <a href="/inventario/unidad/cargalayout"><i class="fa-solid fa-table-list"></i> Cargar por Layout</a>
+            </div>
+            <div class="col-12 col-sm-12 col-md-12 col-lg-4 col-xl-4">
+                <button class="btn btn-link" @onclick="@(()=>NavigationManager.NavigateTo("/recursos/layout.xlsx"))"><i class="fa-regular fa-file-excel"></i> Descargar Layout</button>
+            </div>
+            <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+                <DescargarArchivo Archivo="@ExcelListado" Etiqueta="Exportar"></DescargarArchivo>
+            </div>
+        </div>
+        <QuickGrid Pagination="@pagination" Class="table small" Items="listado.AsQueryable()">
+            <TemplateColumn Context="item" Sortable="true">
+                <button class="btn btn-outline-warning" @onclick="@(()=>Navegar($"/inventario/unidad/editar?id={item.Id}"))"><i class="fa-solid fa-pen-to-square"></i></button>
+                <button class="btn btn-outline-info" @onclick="@(()=>Navegar($"/inventario/unidad/ver?id={item.Id}"))"><i class="fas fa-info"></i></button>
+                <button class="btn btn-outline-danger" @onclick="@(()=>Navegar($"/inventario/unidad/cancelar?id={item.Id}"))"><i class="fas fa-trash"></i></button>
+            </TemplateColumn>
+            <PropertyColumn Property="@(item => item.NombreCorto)" Title="Nombre Corto" Sortable="true" />
+            <PropertyColumn Property="@(item => item.ClaveSAT)" Title="Clave SAT" Sortable="true" />
+            <TemplateColumn Title="Activo" Context="item" Sortable="true">
+                <Switch disabled Label=" " @bind-Value="item.Activo"></Switch>
+            </TemplateColumn>
+            <PropertyColumn Property="@(item => item.UsuarioCreacion)" Title="Usuario Creo" Sortable="true" />
+            <PropertyColumn Property="@(item => item.FechaCreacion)" Title="Fecha Creación" Sortable="true" />
+            <PropertyColumn Property="@(item => item.UsuarioModifica)" Title="Usuario Modificación" Sortable="true" />
+            <PropertyColumn Property="@(item => item.FechaModifica)" Title="Fecha Modificación" Sortable="true" />
+        </QuickGrid>
+        <Paginator State="@pagination" />
+ 
+</Contenido>
+
+@code {
+    PaginationState pagination = new PaginationState { ItemsPerPage = 10 };
+    private List<th_articulos_unidad> listado = new List<th_articulos_unidad>();
+
+    private ArchivoGral ExcelListado
+    {
+        get
+        {
+            var bytes = Excel.ExportExcel(listado, "Unidades");
+            return new ArchivoGral { Nombre = "Unidades.xlsx", Datos = bytes };
+        }
+    }
+    protected override async Task OnInitializedAsync()
+    {
+        Reporte();
+    }
+    private void Reporte()
+    {
+        this.listado = DB.th_articulos_unidad
+         .IgnoreAutoIncludes()
+         .AsNoTracking()
+        .ToList();
+    }
+    private void Navegar(string url)
+    {
+        NavigationManager.NavigateTo(url, true);
+    }
+}

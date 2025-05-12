@@ -1,0 +1,340 @@
+﻿@page "/Dashboardhome"
+@rendermode InteractiveServer
+@inject IConfiguration Configuration
+@inject LoadingService LoadingService
+@using static KalanBlazor.BL.Dashboard.FacturasTodas
+@using static KalanBlazor.BL.Dashboard.FacturasSinComplementos
+@using static KalanBlazor.BL.Dashboard.FacturasSinComplementoCanceladas
+@using static KalanBlazor.BL.Dashboard.FacturasConComplementos
+
+
+<Contenido Titulo="Dashboard">
+    @*Card para mostrar y aplicar los filtros de rango de fechas para las facturas y para mostrar los cancelados*@
+
+    <Rows>
+
+        <Cols Col="3">
+            <Fecha Etiqueta="Fecha Inicial" Max="@DateTime.Now" Min="@DateTime.Now.AddYears(-1)" @bind-Value="fechainicio"></Fecha>
+        </Cols>
+        <br />
+        <Cols Col="3">
+
+            <Fecha Etiqueta="Fecha Final" Max="@DateTime.Now" Min="@DateTime.Now.AddYears(-1)" @bind-Value="fechafin"></Fecha>
+        </Cols>
+        <Cols Col="3">
+            <button class="btn btn-primary" @* onclick="@FiltrarFacturasPorFecha" *@>Buscar</button>
+        </Cols>
+
+
+    </Rows>
+
+    @*Check Mostrar Cancelados*@
+    <Rows>
+        <Cols Col="2">
+            <div style="display: flex; align-items: center; ">
+                <h6> Mostrar Cancelados </h6>
+                @* <Check Value="mostrarCancelados">Monstrar Cancelados</Check> *@
+                <input type="checkbox"@*  @bind="mostrarCancelados" *@ style="margin-left: 10px; " />
+            </div>
+        </Cols>
+    </Rows>
+   
+        <Rows>
+        @* CARD TotalFacturasPPD *@
+        <Cols Col="3">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Total de FacturasPPD</h5>
+
+                    <div style="position: relative; width: 36px; height: 36px; background-color: #D3758F; border-radius: 8px; display: flex; justify-content: center; align-items: center; position: absolute; top: 10px; right: 10px;">
+                        <i class="fa-solid fa-wallet" style="color: #ffffff;"></i>
+                    </div>
+                    <table>
+                        <tr>
+
+                            <td>Total de Facturas: </td>
+                            <td>@totalFacturaPPD.ToString("N0")</td>
+
+                        </tr>
+                        <tr>
+                            <td>Monto acumulado: </td>
+                            <td> $@montototalppd.ToString("N2", new System.Globalization.CultureInfo("es-MX"))</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+
+@*             <Card Titulo="Total de Facturas PPD">
+                <CardsComponent />
+
+                
+            </Card> *@
+        </Cols>
+
+        @* CARD Facturas sin complemento *@
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Total de facturas recibidas sin complemento</h5>
+                    
+                        <div style="position: relative; width: 36px; height: 36px; background-color: #D3758F; border-radius: 8px; display: flex; justify-content: center; align-items: center; position: absolute; top: 10px; right: 10px;">
+                            <i class="fa-solid fa-wallet" style="color: #ffffff;"></i>
+                         </div>
+                        <table>
+                            <tr>
+                                <td>Total de facturas: </td>
+                                <td>@totalFacturaSC.ToString("N0")</td>
+                                </tr>
+                            <tr>
+                                <td>Monto Pendiente: </td>
+                                <td>$ @montototalppdsc.ToString("N2", new System.Globalization.CultureInfo("es-MX"))</td>
+                            </tr>
+                        </table>
+                </div>
+            </div>
+        </div>
+
+@*         <Cols Col="3">
+            <Card Titulo="Total de facturas recibidas sin complemento">
+
+            </Card>
+        </Cols> *@
+
+        @* CARD PORCENTAJE FSC RESPECTO A FACTURAS TOTALES *@    
+        <Cols Col="3">
+            <div class="card">
+                <div class="card-body" style="padding-right: 60px;">
+                    <h5 class="card-title">% de facturas sin complemento respecto al total de gastos</h5>
+                    <div style="position: absolute; top: 10px; right: 10px; width: 36px; height: 36px; background-color: #D3758F; border-radius: 8px; display: flex; justify-content: center; align-items: center;">
+                        <i class="fa-solid fa-wallet" style="color: #ffffff;"></i>
+                    </div>
+                    <table>
+                        <tr>
+
+                            <td></td>
+                            <td style="align-items: center"> @porcentajesc.ToString("N2", new System.Globalization.CultureInfo("es-MX")) %</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            @* <Card Titulo="% de facturas sin complemento respecto al total de gastos">
+                <div style="margin: 40px;">
+                    <CardsComponent />
+                </div>
+                
+            </Card> *@
+        </Cols>
+
+        @*  CARD TOTAL DE COMPLEMENTOS RECIBIDOS *@
+        <Cols Col="3">
+            <div class="card">
+                <div class="card-body" style="display: flex; flex-direction: column; align-items: flex-start; position: relative;">
+                    <h5 class="card-title" style="margin-right: 46px;">Total de complementos recibidos</h5>
+                    <div style="position: absolute; top: 10px; right: 10px; width: 36px; height: 36px; background-color: #D3758F; border-radius: 8px; display: flex; justify-content: center; align-items: center;">
+                        <i class="fa-solid fa-wallet" style="color: #ffffff;"></i>
+                    </div>
+                    <table>
+                        <tr>
+                            <td>Total de Complementos: </td>
+                            <td>@totalFacturaCC.ToString("N0")</td>
+                        </tr>
+                        <tr>
+                            <td>Monto de Complementos: </td>
+                            <td>$ @totalValorComplementos.ToString("N2", new System.Globalization.CultureInfo("es-MX"))</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+
+           @*  <Card Titulo="Total de Complementos Recibidos">
+                <CardsComponent />
+                
+            </Card> *@
+        </Cols>
+
+    </Rows>
+
+
+    @* Renderizar la tabla *@
+    <Rows>
+        <Cols Col="12">
+
+            @if (FacturasSC is null)
+            {
+                <!--Mostrar gift de cargando-->
+                <div style="display: flex; justify-content:center; align-items: center; ">
+                    <img src="https://i0.wp.com/www.watan.foundation/wp-content/uploads/2021/05/loading-gif-png-5.gif?quality=90&strip=all&ssl=1" alt="loading" style="width: 100px; height: 100px;" />
+                </div>
+
+            }
+            else
+            {
+                <!--Condicionamos el renderizado de la tabla esto ya que son dos listas diferentes donde  las obtenemos-->
+                @if (!haBuscado)
+                {
+                    <!-- Si no se ha hecho clic en buscar, mostrar FacturaSC -->
+                    <Tabla TItem="FacturaSC" Nombre="Facturas sin complemento" Items="FacturasSC"></Tabla>
+                }
+                else
+                {
+                    <!-- Si se ha hecho clic en buscar, decidir qué tabla mostrar -->
+                    @if (mostrarCancelados)
+                    {
+                        <Tabla TItem="FacturaSCCancelada" Nombre="Facturas sin complemento" Items="FacturaSCCancelada"></Tabla>
+
+                    }
+                    else
+                    {
+                        <Tabla TItem="FacturaSC" Nombre="Facturas sin complemento" Items="FacturasSC" class="page-item" style=""></Tabla>
+                    }
+                }
+            }
+        </Cols>
+    </Rows>
+
+
+</Contenido>
+
+
+
+
+
+
+
+
+
+@code {
+
+    #region Intancias de las clases de las consultas
+    private KalanBlazor.BL.Dashboard.FacturasTodas facturasTodas { get; set; }
+    private KalanBlazor.BL.Dashboard.FacturasSinComplementos facturasSinComplementos { get; set; }
+    private KalanBlazor.BL.Dashboard.FacturasConComplementos facturasConComplementos { get; set; }
+    private KalanBlazor.BL.Dashboard.FacturasSinComplementoCanceladas fsccancelada { get; set; }
+
+
+    #endregion
+
+    #region Fecha
+    private DateTime fechainicio { get; set; } = DateTime.Now;
+    private DateTime fechafin { get; set; } = DateTime.Now;
+    #endregion
+
+    #region Listas de facturas
+    private List<FacturaSC> FacturasSC { get; set; }
+    private List<FacturaTSC> FacturasTSC { get; set; }
+    private List<FacturaCC> FacturasCC { get; set; }
+    private List<FacturaSCCancelada> FacturaSCCancelada { get; set; }
+
+    #endregion
+
+    #region mostrar cancelados
+    private bool mostrarCancelados { get; set; }
+    #endregion
+
+    #region Bandera para bsuqueda
+    private bool haBuscado { get; set; } = false;
+    #endregion
+
+    #region Variables para las operaciones
+    private int totalFacturaSC;
+    private int totalFacturaPPD;
+    private decimal montototalppd;
+    private decimal montototalppdsc;
+    private float porcentajesc;
+    private int totalFacturaCC;
+    private decimal totalValorComplementos;
+    #endregion
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            try
+            {
+                #region Instancias de las clases de las consultas y obteniendo la cadena de conexion
+                var facturasTodas = new KalanBlazor.BL.Dashboard.FacturasTodas(Configuration.GetConnectionString("DefaultConnection"));
+                
+                facturasSinComplementos = new KalanBlazor.BL.Dashboard.FacturasSinComplementos(Configuration.GetConnectionString("DefaultConnection"));
+                //var facturasSC = new KalanBlazor.BL.Dashboard.FacturasSinComplementos(Configuration.GetConnectionString("DefaultConnection"));
+                var facturasConComplementos = new KalanBlazor.BL.Dashboard.FacturasConComplementos(Configuration.GetConnectionString("DefaultConnection"));
+                var facturasSCCanceladas = new KalanBlazor.BL.Dashboard.FacturasSinComplementoCanceladas(Configuration.GetConnectionString("DefaultConnection"));
+                #endregion
+
+                #region Cargamos las listas de facturas llamando a los metodos de las clases para asignarlas a las variables
+                FacturasTSC = facturasTodas.ResultadoFacturasTodas();
+                FacturasSC = facturasSinComplementos.ResultadoFacturasSC();
+                FacturasCC = facturasConComplementos.ResultadoFacturasCC();
+                FacturaSCCancelada = facturasSCCanceladas.ResultadoFacturasSCCancelados();
+                #endregion
+
+                #region CARDS OPERACIONES
+                //Correctas
+                fechainicio = DateTime.Now;
+                fechafin = DateTime.Now;
+                //CARD TOTAL FACTURAS PPD
+                totalFacturaPPD = FacturasTSC.Count;
+                montototalppd = facturasTodas.SumarMontosFacturasTodas(FacturasTSC);
+                //CARD TOTAL FACTURAS SIN COMPORBANTE
+                totalFacturaSC = FacturasSC.Count;
+                montototalppdsc = facturasSinComplementos.SumarMontosFacturasSC(FacturasSC);
+                //CARD PORCENTAJE FSC RESPECTO A FACTURAS TOTALES
+                porcentajesc = (float)((montototalppdsc / montototalppd) * 100);
+                //CARD TOTAL DE COMPLEMENTOS RECIBIDOS
+                totalFacturaCC = FacturasCC.Count;
+
+                totalValorComplementos = facturasConComplementos.SumaTotalValorComplementos();
+                #endregion
+            }
+            catch (Exception ex)
+            {
+                // Handle exceptions appropriately, e.g., log the error or display a message
+                Console.WriteLine($"Error loading data: {ex.Message}");
+                
+            }
+            finally
+            {
+                LoadingService.IsLoading = false;
+            }
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    // Generamos la funcion para poder filtrar las facturas por fecha
+    private void FiltrarFacturasPorFecha()
+    {
+        try
+        {
+            haBuscado = true;
+            var bl = new KalanBlazor.BL.Dashboard.FacturasSinComplementoCanceladas(Configuration.GetConnectionString("DefaultConnection"));
+            var todasLasFacturas = bl.ResultadoFacturasSCCancelados();
+            var facturasTodas = new KalanBlazor.BL.Dashboard.FacturasTodas(Configuration.GetConnectionString("DefaultConnection"));
+            var facturasFiltradas = todasLasFacturas
+                .Where(factura => factura.Fecha >= fechainicio && factura.Fecha <= fechafin);
+            if (mostrarCancelados)
+            {
+                FacturaSCCancelada = facturasFiltradas
+                    .Where(factura => factura.fechacancelacion.HasValue) // Filtra por fecha de cancelación no nula
+                    .ToList();
+                for (int i = 0; i < FacturaSCCancelada.Count; i++)
+                {
+                    FacturaSCCancelada[i].Numero = i + 1; // Empezar desde 1
+                }
+            }
+            else
+            {
+                FacturaSCCancelada = facturasFiltradas.ToList();
+            }
+
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error filtering data: {ex.Message}");
+        }
+
+
+    }
+
+}

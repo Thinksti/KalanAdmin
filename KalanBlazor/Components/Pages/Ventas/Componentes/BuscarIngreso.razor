@@ -1,0 +1,59 @@
+﻿@inject KalanDB DB
+<Buscador TValue="string" Etiqueta="Ingreso" @bind-Item="ValueOBj" @bind-Item:after="ValueChangedEvento"
+TItem="ListadoRecibos" SearchItems="SearchItemsEgreso" Columnas="Columnas" SearchExacto="SearchExactoEgreso" Llave="Documento"></Buscador>
+
+@code {
+    [Parameter] public string Id_Cliente { get; set; }
+    [Parameter] public th_ingresos Value { get; set; }
+    private ListadoRecibos ValueOBj { get; set; }
+    private List<string> Columnas = new List<string>{ "Documento", "Chequera", "Fecha", "Monto_Original", "Monto_Disponible" };
+    [Parameter] public EventCallback<th_ingresos> ValueChanged { get; set; }
+    private string Id_Ingreso { get; set; }
+    private async Task ValueChangedEvento()
+    { 
+        Value = await DB.th_ingresos.FindAsync(ValueOBj.Id);
+        await ValueChanged.InvokeAsync(Value);
+    }
+    private async Task<IEnumerable<ListadoRecibos>> SearchItemsEgreso(string value)
+    {
+        using var tdb = new KalanDB(DB.connectionString);
+        var t = (await DB.th_ingresos
+                 .Where(x=> x.cliente_Id == Id_Cliente && x.Activo == true) 
+                     .Select(x => new ListadoRecibos
+
+                         {
+                             Activo = x.Activo,
+                             Chequera = x.bancos.Chequera,
+                             Documento = $"RC-{x.Ingreso.ToString("D7")}",
+                             Fecha = x.Fecha,
+                             Id = x.Id,
+                             Monto_Disponible = x.Disponible,
+                             Monto_Original = x.Original,
+                             Cliente = x.cliente.NombreCorto,
+                             Usuario = x.UsuarioCreacion
+                         })
+                 .ToListAsync()).AsEnumerable();
+        return t;
+    }
+    private async Task<IEnumerable<ListadoRecibos>> SearchExactoEgreso(string value)
+    {
+        using var tdb = new KalanDB(DB.connectionString);
+        return (await DB.th_ingresos
+            .Where(c => c.cliente_Id == Id_Cliente && c.Ingreso.ToString() == value && c.Activo == true )
+            .Select(x => new ListadoRecibos
+
+                {
+                    Activo = x.Activo,
+                    Chequera = x.bancos.Chequera,
+                    Documento = $"RC-{x.Ingreso.ToString("D7")}",
+                    Fecha = x.Fecha,
+                    Id = x.Id,
+                    Monto_Disponible = x.Disponible,
+                    Monto_Original = x.Original,
+                    Cliente = x.cliente.NombreCorto,
+                    Usuario = x.UsuarioCreacion
+                })
+            .ToListAsync())
+            .AsEnumerable();
+    }
+}

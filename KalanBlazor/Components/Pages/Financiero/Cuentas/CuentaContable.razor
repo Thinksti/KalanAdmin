@@ -1,0 +1,104 @@
+﻿@inject IConfiguration Configuration
+@if (Disabled)
+{
+    <Buscador disabled
+              Etiqueta="@Etiqueta"
+              SearchExacto="SearchExacto"
+              SearchItems="SearchItems"
+              TItem="th_contabilidad_cuenta"
+              TValue="string"
+              Llave="CuentaContable"
+              Columnas="@Columnas"
+              @bind-Value="Value2"
+              @bind-Item="cuenta"
+              @bind-Item:after="@(()=>{Value=cuenta.Id; ValueChanged.InvokeAsync(cuenta.Id);})">
+    </Buscador>
+}
+else
+{
+    <Buscador Etiqueta="@Etiqueta"
+              SearchExacto="SearchExacto"
+              SearchItems="SearchItems"
+              TItem="th_contabilidad_cuenta"
+              TValue="string"
+              Llave="CuentaContable"
+              Columnas="@Columnas"
+              @bind-Item="cuenta"
+              @bind-Value="Value2"
+              @bind-Item:after="@(()=>{Value=cuenta.Id; ValueChanged.InvokeAsync(cuenta.Id);})">
+    </Buscador>
+}
+
+@code {
+    [Parameter] public string Etiqueta { get; set; }
+    [Parameter] public string Value 
+    {
+        get
+        {
+            if (string.IsNullOrEmpty(Value2))
+            {
+                return null;
+            }
+            var cuenta = SearchExacto(Value2).Result.FirstOrDefault();
+            if (cuenta != null)
+            {
+                return cuenta.CuentaContable;
+            }
+            else
+            {
+                return null;
+            }
+        }
+        set
+        {
+            if (value != null)
+            {
+                Value2 = SearchExacto2(value).FirstOrDefault().CuentaContable;
+            }
+            
+        }
+    }
+    private string _Value;
+    private string Value2;
+    [Parameter] public bool Disabled { get; set; }
+    [Parameter] public EventCallback<string> ValueChanged { get; set; }
+    private th_contabilidad_cuenta cuenta { get; set; }
+    private List<string> Columnas = new List<string> { "CuentaContable", "Descripcion", "Id" };
+    private async Task<IEnumerable<th_contabilidad_cuenta>> SearchItems(string value)
+    {
+        IEnumerable<th_contabilidad_cuenta> items;
+        if (string.IsNullOrEmpty(value))
+        {
+            using (var DB = new KalanDB(Configuration.GetConnectionString("DefaultConnection")))
+            {
+                items = DB.th_contabilidad_cuenta.Take(10).IgnoreAutoIncludes().ToList().AsEnumerable();
+            }           
+        }
+        else
+        {
+            using (var DB = new KalanDB(Configuration.GetConnectionString("DefaultConnection")))
+            {
+                items = DB.th_contabilidad_cuenta.Where(x => x.CuentaContable.ToUpper().Contains(value.ToUpper()) || x.Descripcion.ToUpper().Contains(value.ToUpper())).IgnoreAutoIncludes().Take(10).ToList().AsEnumerable();
+            }            
+        }
+        return items;
+    }
+    private async Task<IEnumerable<th_contabilidad_cuenta>> SearchExacto(string value)
+    {
+        IEnumerable<th_contabilidad_cuenta> items;
+        using (var DB = new KalanDB(Configuration.GetConnectionString("DefaultConnection")))
+        {
+            items = DB.th_contabilidad_cuenta.Where(c => c.CuentaContable.ToUpper() == value.ToUpper()).IgnoreAutoIncludes().ToList().AsEnumerable();
+        }       
+        return items;
+    }
+    private    IEnumerable<th_contabilidad_cuenta> SearchExacto2(string value)
+    {
+        IEnumerable<th_contabilidad_cuenta> items;
+        using (var DB = new KalanDB(Configuration.GetConnectionString("DefaultConnection")))
+        {
+            items = DB.th_contabilidad_cuenta.Where(c => c.Id == value.ToUpper()).IgnoreAutoIncludes().ToList().AsEnumerable();
+        }
+        return items;
+    }
+}

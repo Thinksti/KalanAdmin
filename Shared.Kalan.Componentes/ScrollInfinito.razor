@@ -1,0 +1,123 @@
+﻿@typeparam TItem
+@inject IJSRuntime JSRuntime
+<script>
+    window.getScrollHeight = (nombreDelDiv) => {
+        var element = document.getElementById(nombreDelDiv);
+        return element.scrollHeight;
+    };
+
+    window.getScrollTop = (nombreDelDiv) => {
+        var element = document.getElementById(nombreDelDiv);
+        return element.scrollTop;
+    };
+
+    window.getClientHeight = (nombreDelDiv) => {
+        var element = document.getElementById(nombreDelDiv);
+        return element.clientHeight;
+    };
+</script>
+<style>
+    .table-container {
+        height: 90%;
+        overflow-y: auto;
+    }
+
+    .loading {
+        text-align: center;
+        padding: 10px;
+    }
+</style>
+<div class="row">
+    <div class="col-12">
+        <Texto Etiqueta="Buscar" @bind-Value:after="LoadMoreItems" @bind-Value="Buscar"></Texto>
+    </div>
+</div>
+<br />
+<div class="table-container" id="@Id_Div" @ref="tableContainer" @attributes="AdditionalAttributes" @onscroll="OnScroll">
+    @ChildContent
+    @if (isLoading)
+    {
+        <div class="loading">Cargando...</div>
+    }
+</div>
+
+@code {
+    [Parameter] public RenderFragment ChildContent { get; set; }
+    [Parameter] public List<TItem> Registros { get; set; }
+    [Parameter] public List<TItem> Value { get; set; }
+    [Parameter(CaptureUnmatchedValues = true)] public IDictionary<string, object> AdditionalAttributes { get; set; }
+    [Parameter] public EventCallback<List<TItem>> ValueChanged { get; set; }
+    private List<TItem> allItems = new List<TItem>();
+    private List<TItem> visibleItems = new List<TItem>();
+    private bool isLoading = false;
+    private int itemsToLoad = 20;
+    private ElementReference tableContainer;
+    private string Buscar { get; set; }
+    private string Id_Div { get; set; }
+    private List<TItem> filtrado
+    {
+        get
+        {
+            if (Registros == null)
+            {
+                return new List<TItem>();
+            }
+            if (string.IsNullOrEmpty(Buscar))
+            {
+                return Registros;
+            }
+            return Registros.ToList()?
+                .Where(item => typeof(TItem).GetProperties()
+                .Any(prop => prop.GetValue(item)?.ToString()?
+                .Contains(Buscar, StringComparison.InvariantCultureIgnoreCase) == true)).ToList();
+        }
+    }
+    protected override void OnInitialized()
+    {
+        Id_Div = Guid.NewGuid().ToString();
+        allItems = filtrado.ToList();
+        LoadMoreItems();
+    }
+
+    private void LoadMoreItems()
+    {
+        isLoading = true;
+        if (string.IsNullOrEmpty(Buscar))
+        {
+            var itemsToAdd = filtrado
+                       .Skip(visibleItems.Count)
+                       .Take(itemsToLoad)
+                       .ToList();
+            visibleItems.AddRange(itemsToAdd);
+            Value = visibleItems.ToList();
+        }
+        else
+        {
+            Value = Registros.ToList()?
+            .Where(item => typeof(TItem).GetProperties()
+            .Any(prop => prop.GetValue(item)?.ToString()?
+            .Contains(Buscar, StringComparison.InvariantCultureIgnoreCase) == true)).ToList();
+
+        }
+        ValueChanged.InvokeAsync(Value);
+        isLoading = false;
+    }
+
+    private async Task OnScroll()
+    {
+        var scrollHeight = await JSRuntime.InvokeAsync<float>("getScrollHeight", Id_Div);
+        var scrollTop = await JSRuntime.InvokeAsync<float>("getScrollTop", Id_Div);
+        var clientHeight = await JSRuntime.InvokeAsync<float>("getClientHeight", Id_Div);
+        if (scrollTop + clientHeight >= scrollHeight - 10 && !isLoading)
+        {
+            LoadMoreItems();
+        }
+    }
+
+    private List<TItem> GetAllItems()
+    {
+        return Registros;
+    }
+}
+
+

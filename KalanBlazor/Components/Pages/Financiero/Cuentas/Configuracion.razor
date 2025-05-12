@@ -1,0 +1,272 @@
+﻿@page "/financiero/cuentas/configuracion"
+
+@rendermode InteractiveServer
+@inject IConfiguration Configuration
+@inject Excel Excel
+@inject NavigationManager NavigationManager
+@inject SweetAlertService Swal
+@inject LoadingService Spinner
+
+<SpinnerLoading></SpinnerLoading>
+
+<Contenido Titulo="Configuración de Cuentas Contables">
+ 
+        @if (item != null)
+        {
+            <h4>Moneda Funcional de la Contabilidad</h4>
+            <br />
+            <div class="row">
+                <div class="col-12 col-sm-12 col-md-6 col-lg-4 col-xl-2">
+                    <Combo Etiqueta="Moneda"
+                           TItem="th_monedas"
+                           TValue="string"
+                           ItemValue="Id"
+                           TextValue="NombreCorto"
+                           Items="MonedasList"
+                           @bind-Value="item.moneda_Id"
+                           @bind-Item="Moneda">
+                    </Combo>
+                </div>
+            </div>
+            <br />
+            <h4>¿Que segmentos usaras en las cuentas?</h4>
+            <br />
+            @if (Editable)
+            {
+                <div class="row">
+                    <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+                        <Switch Etiqueta="Segmento 1" @bind-Value="item.Segmento1"></Switch>
+                    </div>
+                    <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+                        <Entero Etiqueta="Longitud" Min="1" Max="50" @bind-Value="item.Segmento1Largo"></Entero>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+                        <Switch Etiqueta="Segmento 2" @bind-Value="item.Segmento2"></Switch>
+                    </div>
+                    <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+                        <Entero Etiqueta="Longitud" Min="1" Max="50" @bind-Value="item.Segmento2Largo"></Entero>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+                        <Switch Etiqueta="Segmento 3" @bind-Value="item.Segmento3"></Switch>
+                    </div>
+                    <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+                        <Entero Etiqueta="Longitud" Min="1" Max="50" @bind-Value="item.Segmento3Largo"></Entero>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+                        <Switch Etiqueta="Segmento 4" @bind-Value="item.Segmento4"></Switch>
+                    </div>
+                    <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+                        <Entero Etiqueta="Longitud" Min="1" Max="50" @bind-Value="item.Segmento4Largo"></Entero>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+                        <Switch Etiqueta="Segmento 5" @bind-Value="item.Segmento5"></Switch>
+                    </div>
+                    <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+                        <Entero Etiqueta="Longitud" Min="1" Max="50" @bind-Value="item.Segmento5Largo"></Entero>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+                        <Switch Etiqueta="Segmento 6" @bind-Value="item.Segmento6"></Switch>
+                    </div>
+                    <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+                        <Entero Etiqueta="Longitud" Min="1" Max="50" @bind-Value="item.Segmento6Largo"></Entero>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="row">
+                    <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+                        <Switch disabled Etiqueta="Segmento 1" @bind-Value="item.Segmento1"></Switch>
+                    </div>
+                    <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+                        <Entero disabled Etiqueta="Longitud" Min="1" Max="50" @bind-Value="item.Segmento1Largo"></Entero>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+                        <Switch disabled Etiqueta="Segmento 2" @bind-Value="item.Segmento2"></Switch>
+                    </div>
+                    <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+                        <Entero disabled Etiqueta="Longitud" Min="1" Max="50" @bind-Value="item.Segmento2Largo"></Entero>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+                        <Switch disabled Etiqueta="Segmento 3" @bind-Value="item.Segmento3"></Switch>
+                    </div>
+                    <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+                        <Entero disabled Etiqueta="Longitud" Min="1" Max="50" @bind-Value="item.Segmento3Largo"></Entero>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+                        <Switch disabled Etiqueta="Segmento 4" @bind-Value="item.Segmento4"></Switch>
+                    </div>
+                    <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+                        <Entero disabled Etiqueta="Longitud" Min="1" Max="50" @bind-Value="item.Segmento4Largo"></Entero>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+                        <Switch disabled Etiqueta="Segmento 5" @bind-Value="item.Segmento5"></Switch>
+                    </div>
+                    <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+                        <Entero disabled Etiqueta="Longitud" Min="1" Max="50" @bind-Value="item.Segmento5Largo"></Entero>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+                        <Switch disabled Etiqueta="Segmento 6" @bind-Value="item.Segmento6"></Switch>
+                    </div>
+                    <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+                        <Entero disabled Etiqueta="Longitud" Min="1" Max="50" @bind-Value="item.Segmento6Largo"></Entero>
+                    </div>
+                </div>
+            }
+            
+            <br />
+            <h4>Configurar Segmentos Principales</h4>
+            <br />
+            <div class="row">
+                <div class="col-12 col-sm-12 col-md-6 col-lg-4 col-xl-2">
+                    <Entero Etiqueta="Segmento de Costos" Min="1" Max="6" @bind-Value="item.Costos"></Entero>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-12 col-sm-12 col-md-6 col-lg-4 col-xl-2">
+                    <Entero Etiqueta="Segmento de Mayor" Min="1" Max="6" @bind-Value="item.Mayor"></Entero>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-12 col-sm-12 col-md-6 col-lg-4 col-xl-2">
+                    <Entero Etiqueta="Segmento de Detalle" Min="1" Max="6" @bind-Value="item.Detalle"></Entero>
+                </div>
+            </div>   
+            <br />
+            <h4>Configurar Cuentas Default</h4>
+            <br />
+            <div class="row">
+                <div class="col-12 col-sm-12 col-md-6 col-lg-4 col-xl-3">
+                    <CuentaContable Etiqueta="Cuenta de Compras default" @bind-Value="item.cuentacompra_Id"></CuentaContable>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-12 col-sm-12 col-md-6 col-lg-4 col-xl-3">
+                    <CuentaContable Etiqueta="Cuenta de Ventas default" @bind-Value="item.cuentaventa_Id"></CuentaContable>
+                </div>
+            </div>
+            <br />
+            <div class="row">
+                <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+                    <button @onclick="Guardar" class="btn btn-primary">Guardar Configuración</button>
+                </div>
+            </div>
+            <br />
+            <div class="row">
+                <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+                    <a href="/finaciero/menu"><i class="fa-solid fa-arrow-left"></i> Regresar al Menú</a>
+                </div>
+            </div>
+        }
+   
+</Contenido>
+
+@code {
+    [CascadingParameter] private Task<AuthenticationState> authenticationStateTask { get; set; }
+    private th_contabilidad_cuenta_configuracion item { get; set; } 
+    private List<th_monedas> MonedasList { get; set; }
+    public th_monedas Moneda { get; set; }
+    private DateTime fechaActual;
+    private bool Editable
+    {
+        get
+        {
+            if (conSegmento == false)
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+    }
+    private bool conSegmento;
+    private string Usuario
+    {
+        get
+        {
+            var _authState = authenticationStateTask.Result;
+            var user = _authState.User;
+            return user.Identity.Name;
+        }
+    }
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            using (var db = new KalanDB(Configuration.GetConnectionString("DefaultConnection")))
+            {
+                MonedasList = await db.th_monedas.ToListAsync();
+                item = await db.th_contabilidad_cuenta_configuracion.FirstOrDefaultAsync();
+
+                if (item == null)
+                {
+                    fechaActual = DateTime.Now;
+                    item = new th_contabilidad_cuenta_configuracion();
+                    item.Id = Guid.NewGuid().ToString();
+                    item.Segmento1 = false;
+                    item.Segmento2 = false;
+                    item.Segmento3 = false;
+                    item.Segmento4 = false;
+                    item.Segmento5 = false;
+                    item.Segmento6 = false;
+                    item.UsuarioCreacion = Usuario;
+                    item.FechaCreacion = fechaActual;
+                    db.th_contabilidad_cuenta_configuracion.Add(item);
+
+                    await db.SaveChangesAsync();
+                }
+            }
+            if (item.Segmento1 == false && item.Segmento2 == false && item.Segmento3 == false && item.Segmento4 == false && item.Segmento5 == false && item.Segmento6 == false)
+            {
+                conSegmento = false;
+            }
+            else
+            {
+                conSegmento = true;
+            }
+            StateHasChanged();
+        }
+    }
+ 
+    private async Task Guardar()
+    {
+        try
+        {
+            item.UsuarioModifica = Usuario;
+            item.FechaModifica= DateTime.Now;
+            using (var db = new KalanDB(Configuration.GetConnectionString("DefaultConnection")))
+            {
+                db.th_contabilidad_cuenta_configuracion.Update(item);
+                await db.SaveChangesAsync();
+            }
+            await Swal.FireAsync("Configuración de Cuentas", "Configuración Guardada", SweetAlertIcon.Success);
+            NavigationManager.NavigateTo("/finaciero/menu");
+        }
+        catch (Exception ex)
+        {
+            await Swal.FireAsync("Error", ex.Message, SweetAlertIcon.Error);
+        }
+    }
+}

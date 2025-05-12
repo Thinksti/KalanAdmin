@@ -1,0 +1,183 @@
+﻿@page "/financiero/planimpuestos/cargalayout"
+@using System.Data
+@using KalanBlazor.DTOs.Financiero
+
+
+@rendermode InteractiveServer
+@inject KalanDB DB
+@inject Excel Excel
+@inject NavigationManager NavigationManager
+@inject SweetAlertService Swal
+@inject LoadingService Spinner
+@inject UserService Usuario
+@inject TranslatorService Translator
+<SpinnerLoading></SpinnerLoading>
+<Contenido Titulo="Carga de Layout de Planes de Impuestos">
+ 
+        <div class="row">
+            <div class="col-12">
+                <SubirArchivo Etiqueta="Archivo de Excel con Layout" @bind-Value:after="Cargado" @bind-Value="Archivo" TiposPermitidos=".xlsx" Simple="false" Multiple="false"></SubirArchivo>
+            </div>
+        </div>
+        @if (Errores.Count() > 0)
+        {
+            <div class="row">
+                <div class="col-12">
+                    <h3>Errores de la carga</h3>
+                    <ul>
+                        @foreach (var item in Errores)
+                        {
+                            <li>@((MarkupString)item)</li>
+                        }
+                    </ul>
+                </div>
+            </div>
+        }
+        @if (ItemListado.Count() > 0)
+        {
+            <div class="row">
+                <div class="col-12">
+                    <Tabla TItem="LayoutPlanesImpuesto" Items="ItemListado" Nombre="Datos del Excel" Descargar="false"></Tabla>
+                </div>
+            </div>
+        }
+        
+ 
+</Contenido>
+@code {
+    private List<ArchivoGral> Archivo { get; set; }
+    private List<string> Errores { get; set; } = new();
+    private List<LayoutPlanesImpuesto> ItemListado { get; set; } = new();
+    private async Task Cargado()
+    {
+        Errores = new List<string>();
+        foreach (var item in Archivo)
+        {
+            var ds = Excel.ImportExcelDs(item.Datos);
+            foreach (DataTable tabla in ds.Tables)
+            {
+                if (tabla.TableName == "Planes de Impuestos")
+                {
+
+                    ItemListado = DB.ConvertToList<LayoutPlanesImpuesto>(tabla);
+                    foreach (var tItem in ItemListado.Where(x=>string.IsNullOrEmpty(x.Nombre) ==false ))
+                    {
+                        using var context = new KalanDB(DB.connectionString);
+                        try
+                        {
+                            var listado = tItem.ListadodeImpuestos.Split(',');
+                            foreach (var itemImpuesto in listado)
+                            {
+                                var impuesto = context.th_impuestos.FirstOrDefault(x => x.NombreCorto == itemImpuesto);
+                                if (impuesto == null)
+                                {
+                                    Errores.Add($"<strong>{tItem.Nombre}</strong>: No se encontró el impuesto {itemImpuesto}");
+                                    continue;
+                                }
+                            }
+                            if (Errores.Count() > 0)
+                            {
+                                continue;
+                            }
+                            var itemMaestro = new th_plan_impuestos
+                                {
+                                    Activo = true,
+                                    NombreCorto = tItem.Nombre,
+                                    UsuarioCreacion = Usuario.Login,
+                                    Descripcion = tItem.Descripcion,
+                                    Compras = true,
+                                    Ventas = true,
+                                    FechaCreacion = DateTime.Now,
+                                    Id = Guid.NewGuid().ToString()
+                                };
+                            var validacion = context.ValidateEntity(itemMaestro);
+                            if (validacion.Validado)
+                            {
+                                context.th_plan_impuestos.Add(itemMaestro);
+                                try
+                                {
+                                    await context.SaveChangesAsync();
+                                }
+                                catch (Exception ex)
+                                {
+                                    if (ex.InnerException != null)
+                                    {
+                                        Errores.Add($"<strong>{itemMaestro.NombreCorto}</strong>: {Translator.TraducirInglesAEspanol(ex.InnerException.Message)}");
+                                        continue;
+                                    }
+                                    else
+                                    {
+                                        Errores.Add($"<strong>{itemMaestro.NombreCorto}</strong>: {Translator.TraducirInglesAEspanol(ex.Message)}");
+                                        continue;
+                                    }
+                                }
+
+                            }
+                            else
+                            {
+                                foreach (var error in validacion.ListaErrores)
+                                {
+                                    Errores.Add($"<strong>{itemMaestro.NombreCorto}</strong>: {error}");
+                                }
+                                continue;
+                            }
+                            foreach (var itemImpuesto in listado)
+                            {
+                                var itemNuevo = new th_plan_impuestos_detalle
+                                    {
+                                        Activo = true,
+                                        impuestos_id = context.th_impuestos.FirstOrDefault(x => x.NombreCorto == itemImpuesto).Id,
+                                        plan_impuestos_id = itemMaestro.Id,
+                                        FechaCreacion = DateTime.Now,
+                                        UsuarioCreacion = Usuario.Login,
+                                        Id = Guid.NewGuid().ToString()
+                                    };
+                                validacion = context.ValidateEntity(itemNuevo);
+                                if (validacion.Validado)
+                                {
+                                    context.th_plan_impuestos_detalle.Add(itemNuevo);
+                                    try
+                                    {
+                                        await context.SaveChangesAsync();
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        if (ex.InnerException != null)
+                                        {
+                                            Errores.Add($"<strong>{itemMaestro.NombreCorto}</strong>: {Translator.TraducirInglesAEspanol(ex.InnerException.Message)}");
+                                        }
+                                        else
+                                        {
+                                            Errores.Add($"<strong>{itemMaestro.NombreCorto}</strong>: {Translator.TraducirInglesAEspanol(ex.Message)}");
+                                        }
+                                    }
+
+                                }
+                                else
+                                {
+                                    foreach (var error in validacion.ListaErrores)
+                                    {
+                                        Errores.Add($"<strong>{itemMaestro.NombreCorto}</strong>: {error}");
+                                    }
+
+                                }
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            if (ex.InnerException != null)
+                            {
+                                Errores.Add($"<strong>{tItem.Nombre}</strong>: {Translator.TraducirInglesAEspanol(ex.InnerException.Message)}");
+                            }
+                            else
+                            {
+                                Errores.Add($"<strong>{tItem.Nombre}</strong>: {Translator.TraducirInglesAEspanol(ex.Message)}");
+                            }
+                        }
+                        
+                    }
+                }
+            }
+        }
+    }
+}

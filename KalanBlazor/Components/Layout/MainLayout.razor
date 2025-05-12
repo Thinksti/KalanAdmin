@@ -1,0 +1,114 @@
+﻿@using Microsoft.AspNetCore.Components.Authorization
+@inherits LayoutComponentBase
+@inject NavigationManager NavigationManager
+
+<AuthorizeView>
+	<Authorized>
+		<div class="page g-sidenav-show  bg-gray-100">
+			<div class="sidebar">
+				<NavMenu />
+			</div>
+			<main style="margin-top:16px;" class="main-content position-relative max-height-vh-100 h-100 border-radius-lg ps ps--active-x">
+				<nav style="background-color: white;" class="navbar navbar-main navbar-expand-lg px-0 mx-4 shadow-none border-radius-xl" id="navbarBlur" navbar-scroll="true">
+					<div class="container-fluid py-1 px-3">
+						<nav aria-label="breadcrumb">
+						@* 	<ol class="breadcrumb bg-transparent mb-0 pb-0 pt-1 px-0 me-sm-6 me-5">
+								<li class="breadcrumb-item text-sm"><a class="opacity-5 text-dark" href="javascript:;">Páginas</a></li>
+								<li class="breadcrumb-item text-sm text-dark active" aria-current="page">Ventas</li>
+							</ol>
+							<h6 class="font-weight-bolder mb-0">Ventas</h6> *@
+						</nav>
+						<div class="collapse navbar-collapse mt-sm-0 mt-2 me-md-0 me-sm-4" id="navbar">
+							<div class="ms-md-auto pe-md-3 d-flex align-items-center">
+							</div>
+
+							<ul class="navbar-nav  justify-content-end">
+
+								<li class="nav-item d-flex align-items-center">
+									<a href="javascript:;" class="nav-link text-body font-weight-bold px-0">
+										<i class="fa fa-user me-sm-1" aria-hidden="true"></i>
+										<span class="d-sm-inline d-none">Usuario</span>
+									</a>
+								</li>
+								<li class="nav-item d-xl-none ps-3 d-flex align-items-center">
+									<a href="javascript:;" class="nav-link text-body p-0" id="iconNavbarSidenav">
+										<div class="sidenav-toggler-inner">
+											<i class="sidenav-toggler-line"></i>
+
+										</div>
+									</a>
+								</li>
+								<li class="nav-item px-3 d-flex align-items-center">
+									<a href="javascript:;" class="nav-link text-body p-0">
+										<i class="fa fa-cog fixed-plugin-button-nav cursor-pointer" aria-hidden="true"></i>
+									</a>
+								</li>
+								<li class="nav-item dropdown pe-2 d-flex align-items-center">
+									<a href="javascript:;" class="nav-link text-body p-0" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
+										<i class="fa fa-bell cursor-pointer" aria-hidden="true"></i>
+									</a>
+									<ul class="dropdown-menu  dropdown-menu-end  px-2 py-3 me-sm-n4" aria-labelledby="dropdownMenuButton">
+										<li class="mb-2">
+											<a class="dropdown-item border-radius-md" href="javascript:;">
+												<div class="d-flex py-1">
+													@* <div class="my-auto">
+														<img src="_content/shared.kalan.componentes/img/team-2.jpg" class="avatar avatar-sm  me-3 ">
+													</div> *@
+													<div class="d-flex flex-column justify-content-center">
+														<h6 class="text-sm font-weight-normal mb-1">
+														</h6>
+														<p class="text-xs text-secondary mb-0 ">
+															<i class="fa fa-clock me-1" aria-hidden="true"></i>
+														</p>
+													</div>
+												</div>
+											</a>
+										</li>
+
+										<li>
+											<a class="dropdown-item border-radius-md" href="javascript:;">
+												<div class="d-flex py-1">
+													<div class="avatar avatar-sm bg-gradient-secondary  me-3  my-auto">
+														<svg width="12px" height="12px" viewBox="0 0 43 36" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+															<title>credit-card</title>
+
+														</svg>
+													</div>
+													<div class="d-flex flex-column justify-content-center">
+														<h6 class="text-sm font-weight-normal mb-1">
+														</h6>
+														<p class="text-xs text-secondary mb-0 ">
+															<i class="fa fa-clock me-1" aria-hidden="true"></i>
+														</p>
+													</div>
+												</div>
+											</a>
+										</li>
+									</ul>
+								</li>
+							</ul>
+						</div>
+					</div>
+				</nav>
+				<article class="content px-4">
+					
+					@Body
+				</article>
+			</main>
+		</div>
+		<div id="blazor-error-ui">
+			An unhandled error has occurred.
+			<a href="" class="reload">Reload</a>
+			<a class="dismiss">🗙</a>
+		</div>
+	</Authorized>
+	<NotAuthorized>
+		<KalanBlazor.Components.Pages.Login.SignIn></KalanBlazor.Components.Pages.Login.SignIn>
+	</NotAuthorized>
+</AuthorizeView>
+@code {
+	[CascadingParameter] private Task<AuthenticationState> authenticationStateTask { get; set; }
+	[CascadingParameter]
+	public HttpContext? HttpContext { get; set; }
+
+}

@@ -1,0 +1,177 @@
+﻿@page "/ingresos/complemento/crear"
+
+@rendermode InteractiveServer
+@inject KalanDB DB
+@inject Excel Excel
+@inject IWebHostEnvironment WebHostEnvironment
+@inject NavigationManager NavigationManager
+@inject SweetAlertService Swal
+@inject LoadingService Spinner
+@inject UserService Usuario
+@inject TranslatorService Translator
+@inject IConfiguration Configuracion
+
+<SpinnerLoading></SpinnerLoading>
+
+<Contenido Titulo="Generar Complementos de Pago">
+    <Rows>
+        <Cols Col="2">
+            <BuscarCliente @bind-Value="Cliente" @bind-Id_Cliente="Id_Cliente"></BuscarCliente>
+        </Cols>
+        <Cols Col="6">
+            @if (Cliente != null)
+            {
+                <ReadOnly Etiqueta="Nombre Cliente" Value="@Cliente.RazonSocial"></ReadOnly>
+            }
+            else
+            {
+                <ReadOnly Etiqueta="Nombre Cliente" Value=" "></ReadOnly>
+            }
+        </Cols>
+    </Rows>
+    <Rows>
+        <Cols Col="2">
+            @if (Cliente != null)
+            {
+                <BuscarIngreso @bind-Value="Ingreso" @bind-Value:after="TraerAplicaciones" Id_Cliente="@Cliente.Id"></BuscarIngreso>
+            }
+            else
+            {
+                <ReadOnly Etiqueta="Ingreso" Value=" "></ReadOnly>
+            }
+        </Cols>
+        <Cols Col="2">
+            @if (Aplicaciones != null)
+            {
+                <button class="btn btn-primary" @onclick="GenerarComplemento">Generar Complemento</button>
+            }
+
+        </Cols>
+    </Rows>
+    <Rows>
+        <Cols Col="12">
+            @if (Ingreso != null)
+            {
+                <table>
+                    <tr>
+                        <td>Fecha:</td>
+                        <td>@Ingreso.Fecha.ToShortDateString()</td>
+                        <td>Monto Original:</td>
+                        <td>@Ingreso.Original.ToString("c")</td>
+                        <td>Moneda:</td>
+                        <td></td>
+                    </tr>
+                </table>
+            }
+        </Cols>
+
+    </Rows>
+    <hr />
+    <Rows>
+        <Cols Col="12">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Factura</th>
+                        <th>Método de Pago</th>
+                        <th>Fecha</th>
+                        <th>UUID</th>
+                        <th>Monto Factura</th>
+                        <th>Aplicado</th>
+                        <th>Saldo</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Aplicaciones != null)
+                    {
+                        @foreach (var item in Aplicaciones)
+                        {
+                            <tr>
+                                <td>
+                                    @item.cuentascobrar.Factura
+                                </td>
+                                <td>
+                                    @item.cuentascobrar.metodopago_Id
+                                </td>
+                                <td>
+                                    @item.cuentascobrar.Fecha.ToShortDateString()
+                                </td>
+                                <td>
+                                    @item.cuentascobrar.UUID
+                                </td>
+                                <td>
+                                    @item.cuentascobrar.Original.ToString("c")
+                                </td>
+                                <td>
+                                    @item.MontoAplicado.ToString("c")
+                                </td>
+                                <td>
+                                    @item.cuentascobrar.Disponible.ToString("c")
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </Cols>
+    </Rows>
+
+</Contenido>
+@code {
+    private th_clientes Cliente { get; set; }
+    private string Id_Cliente { get; set; }
+    private th_ingresos Ingreso { get; set; }
+    private List<th_cuentascobraraplicaciones> Aplicaciones { get; set; }
+    private async Task TraerAplicaciones()
+    {
+        using var tdb = new KalanDB(DB.connectionString);
+        Aplicaciones = await DB.th_cuentascobraraplicaciones
+            .Where(x => x.ingreso_Id == Ingreso.Id)
+            .Where(x => x.cuentascobrar.metodopago_Id != "PUE")
+            .Include(x => x.cuentascobrar)
+            .IgnoreAutoIncludes()
+        .ToListAsync();
+    }
+    private async Task GenerarComplemento()
+    {
+        var respuestaMensaje = await Swal.FireAsync(new SweetAlertOptions
+            {
+                Title = "Generar Complemento",
+                Text = "¿Está seguro de generar el complemento? El complemento se generara solo de facturas PPD",
+                Icon = SweetAlertIcon.Question,
+                ShowCancelButton = true,
+                ConfirmButtonText = "Si",
+                CancelButtonText = "No"
+            });
+        if (respuestaMensaje.IsConfirmed)
+        {
+            Spinner.IsLoading = true;
+            try
+            {
+                var ruta = System.IO.Path.Combine(WebHostEnvironment.WebRootPath, "Recursos", "cadenaoriginal_4_0.xslt");
+                using var entidad = new KalanDB(DB.connectionString);
+                var configuracion = entidad.th_facturacion_sellos.FirstOrDefault();
+                if (configuracion != null)
+                {
+                    var cfdi = new BL.Ventas.CFDi(ruta, configuracion.Sello_Cer, configuracion.Sello_Key, configuracion.Sello_Password, entidad.connectionString, Excel);
+
+                }
+                
+                Spinner.IsLoading = false;
+            }
+            catch (Exception ex)
+            {
+                var mensaje = Translator.TraducirInglesAEspanol(ex.Message);
+                Spinner.IsLoading = false;
+                await Swal.FireAsync(new SweetAlertOptions
+                    {
+                        Title = "Error",
+                        Text = mensaje,
+                        Icon = SweetAlertIcon.Error
+                    });
+            }           
+            
+        }
+    }
+}
+

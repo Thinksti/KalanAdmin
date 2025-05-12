@@ -1,0 +1,29 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Razor">
+	<PropertyGroup>
+		<TargetFramework>net8.0</TargetFramework>
+		<Nullable>enable</Nullable>
+		<ImplicitUsings>enable</ImplicitUsings>
+	</PropertyGroup>
+	<ItemGroup>
+		<SupportedPlatform Include="browser" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="8.0.10" />
+		<PackageReference Include="Shared.Utilerias" Version="2025.2.15.1953" />
+		<PackageReference Include="Tewr.Blazor.FileReader" Version="3.3.2.23201" />
+		<PackageReference Include="Microsoft.AspNetCore.Components.Authorization" Version="8.0.10" />
+		<PackageReference Include="CurrieTechnologies.Razor.SweetAlert2" Version="5.6.0" />
+	</ItemGroup>
+	<PropertyGroup>
+		<AssemblyVersion>$([System.DateTime]::Now.ToString(yyyy.MM.dd.HHmm))</AssemblyVersion>
+		<Version>$(AssemblyVersion)</Version>
+		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+	</PropertyGroup>
+	<ItemGroup>
+	  <UpToDateCheckInput Remove="Contenido.razor" />
+	</ItemGroup>
+	<ItemGroup>
+	  <_ContentIncludedByDefault Remove="Contenido.razor" />
+	</ItemGroup>
+</Project>

@@ -1,0 +1,103 @@
+﻿@page "/th_clientes/create"
+@rendermode InteractiveServer
+@inject KalanDB DB;
+@inject NavigationManager NavigationManager;
+@inject SweetAlertService Swal;
+<PageTitle>Create</PageTitle>
+<h1>Crear Registro</h1>
+<h4>Clientes</h4>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+
+        <div class="mb-3">
+            <Texto Etiqueta="Nombre Corto" MaxLength="15" @bind-Value="th_clientes.NombreCorto"></Texto>
+        </div>        
+        <div class="mb-3">
+            <Texto Etiqueta="Razón Social" MaxLength="150" @bind-Value="th_clientes.RazonSocial"></Texto>
+        </div>        
+        <div class="mb-3">
+            <Texto Etiqueta="RFC" MaxLength="13" @bind-Value="th_clientes.RFC"></Texto>
+        </div>        
+        <div class="mb-3"> 
+            <Texto Etiqueta="Código Postal" MaxLength="10" @bind-Value="th_clientes.CodigoPostal"></Texto>
+        </div>        
+        <div class="mb-3">
+            <Texto Etiqueta="Dirección" MaxLength="150" @bind-Value="th_clientes.Direccion"></Texto>
+        </div>
+        <div class="mb-3">
+            <Combo Etiqueta="Residencia Fiscal(país)" TItem="th_paises" TValue="string" TextValue="Pais" ItemValue="Codigo" Items="kalanDB.th_paises.ToList()" @bind-Value="th_clientes.ResidenciaFiscal"></Combo>
+        </div>
+        <div class="mb-3">
+            <Texto Etiqueta="Municipio" MaxLength="100" @bind-Value="th_clientes.Municipio"></Texto>
+        </div>
+        <div class="mb-3">
+            <Texto Etiqueta="Estado" MaxLength="100" @bind-Value="th_clientes.Estado"></Texto>
+        </div>
+        <div class="mb-3">
+            <Texto Etiqueta="Registro Id Tributario(solo extranjeros)" MaxLength="20" @bind-Value="th_clientes.NumRegIdTrib"></Texto>
+        </div>
+        <div class="mb-3">
+            <Combo Etiqueta="Régimen Fiscal" TItem="th_regimenfiscal" TValue="string" TextValue="Regimen" ItemValue="Id" Items="kalanDB.th_regimenfiscal.ToList()" @bind-Value="th_clientes.regimenfiscal_Id"></Combo>
+        </div>        
+        <div class="mb-3">  
+            <Combo Etiqueta="Selecciona el Plan de Impuestos" TItem="th_plan_impuestos" TValue="string" TextValue="NombreCorto" ItemValue="Id" Items="kalanDB.th_plan_impuestos.ToList()" @bind-Value="th_clientes.planimpuestos_id"></Combo>
+        </div>
+        <div class="mb-3">
+            <Combo Etiqueta="Uso de CFDi" TItem="th_usocfdi" TValue="string" TextValue="UsoCFDi" ItemValue="Id" Items="kalanDB.th_usocfdi.ToList()" @bind-Value="th_clientes.usocfdi_Id"></Combo>
+        </div>
+        <div class="mb-3">
+            <CuentaContable Etiqueta="Cuenta Contable" @bind-Value="th_clientes.cuentacontable_id"></CuentaContable>
+        </div>
+        <div class="mb-3">
+            <Switch @bind-Value="th_clientes.Activo" Etiqueta="Activo" />
+        </div>        
+        <div class="mb-3 Ocultar">
+            <label for="usuariocreacion" class="form-label">UsuarioCreacion:</label> 
+            <InputText id="usuariocreacion" @bind-Value="th_clientes.UsuarioCreacion" class="form-control" /> 
+        </div>        
+        <div class="mb-3 Ocultar">
+            <label for="fechacreacion" class="form-label">FechaCreacion:</label> 
+            <InputDate id="fechacreacion" @bind-Value="th_clientes.FechaCreacion" class="form-control" /> 
+
+        </div>
+        <button @onclick="Addth_clientes" class="btn btn-primary">Create</button>
+
+    </div>
+</div>
+
+<div>
+    <a href="/th_clientes"><i class="fa-solid fa-arrow-left"></i> Regresar al Index</a>
+</div>
+
+@code {
+
+    public th_clientes th_clientes { get; set; } = new();
+    [CascadingParameter] private Task<AuthenticationState> authenticationStateTask { get; set; }
+    private KalanDB kalanDB
+    {
+        get
+        {
+            return new KalanDB(DB.connectionString);
+        }
+    }
+    public async Task Addth_clientes()
+    {
+        var _authState = await authenticationStateTask;
+        var user = _authState.User;
+        var correo = ((System.Security.Claims.ClaimsIdentity)user.Identity).Name;
+        th_clientes.UsuarioCreacion = correo;
+        th_clientes.FechaCreacion = DateTime.Now;
+        th_clientes.ResidenciaFiscal = "MEX";
+        th_clientes.Id = Guid.NewGuid().ToString();
+        var validaciones = kalanDB.ValidateEntity(th_clientes);
+        if (validaciones.Validado == false)
+        {
+            await Swal.FireAsync("Error", validaciones.Errores.Replace(",","<br />"), icon: SweetAlertIcon.Error);
+             return;
+        }
+        DB.th_clientes.Add(th_clientes);
+        await DB.SaveChangesAsync();
+        NavigationManager.NavigateTo("/th_clientes");
+    }
+}

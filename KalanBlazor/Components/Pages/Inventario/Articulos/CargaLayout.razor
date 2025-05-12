@@ -1,0 +1,199 @@
+﻿@page "/inventario/articulos/cargalayout"
+@using System.Data
+@using KalanBlazor.DTOs.Inventario
+
+
+@rendermode InteractiveServer
+@inject KalanDB DB
+@inject Excel Excel
+@inject NavigationManager NavigationManager
+@inject SweetAlertService Swal
+@inject LoadingService Spinner
+@inject UserService Usuario
+@inject TranslatorService Translator
+<SpinnerLoading></SpinnerLoading>
+<Contenido Titulo="Carga de Layout de Articulos">
+   
+        <div class="row">
+            <div class="col-12">
+                <SubirArchivo Etiqueta="Archivo de Excel con Layout" @bind-Value:after="Cargado" @bind-Value="Archivo" TiposPermitidos=".xlsx" Simple="false" Multiple="false"></SubirArchivo>
+            </div>
+        </div>
+        @if (Errores.Count() > 0)
+        {
+            <div class="row">
+                <div class="col-12">
+                    <h3>Errores de la carga</h3>
+                    <ul>
+                        @foreach (var item in Errores)
+                        {
+                            <li>@((MarkupString)item)</li>
+                        }
+                    </ul>
+                </div>
+            </div>
+        }
+        @if (ItemListado.Count() > 0)
+        {
+            <div class="row">
+                <div class="col-12">
+                    <Tabla TItem="LayoutArticulo" Items="ItemListado" Nombre="Datos del Excel" Descargar="false"></Tabla>
+                </div>
+            </div>
+        }
+        
+  
+</Contenido>
+@code {
+    private List<ArchivoGral> Archivo { get; set; }
+    private List<string> Errores { get; set; } = new();
+    private List<LayoutArticulo> ItemListado { get; set; } = new();
+    private async Task Cargado()
+    {
+        Spinner.IsLoading = true;
+        Errores = new List<string>();
+        foreach (var item in Archivo)
+        {
+            var ds = Excel.ImportExcelDs(item.Datos);
+            foreach (DataTable tabla in ds.Tables)
+            {
+                if (tabla.TableName == "Articulo")
+                {
+
+                    ItemListado = DB.ConvertToList<LayoutArticulo>(tabla);
+                    foreach (var tItem in ItemListado)
+                    {
+                        using var context = new KalanDB(DB.connectionString);
+                        try
+                        {
+                            var tipo = context.th_articulos_tipos.FirstOrDefault(x => x.NombreCorto == tItem.Tipodearticulo);
+                            if(tipo == null)
+                            {
+                                Errores.Add($"<strong>{tItem.Descripcion}</strong>: No se encontró el tipo de artículo {tItem.Tipodearticulo}");
+                                continue;
+                            }
+
+                            var contConfiguracion = context.th_contabilidad_cuenta_configuracion.FirstOrDefault();
+                            var formato = "";
+                            if (contConfiguracion.Segmento1)
+                            {
+                                formato += $"{contConfiguracion.Segmento1Largo}-";
+                            }
+                            if (contConfiguracion.Segmento2)
+                            {
+                                formato += $"{contConfiguracion.Segmento2Largo}-";
+                            }
+                            if (contConfiguracion.Segmento3)
+                            {
+                                formato += $"{contConfiguracion.Segmento3Largo}-";
+                            }
+                            if (contConfiguracion.Segmento4)
+                            {
+                                formato += $"{contConfiguracion.Segmento4Largo}-";
+                            }
+                            if (contConfiguracion.Segmento5)
+                            {
+                                formato += $"{contConfiguracion.Segmento5Largo}-";
+                            }
+                            if (contConfiguracion.Segmento6)
+                            {
+                                formato += $"{contConfiguracion.Segmento6Largo}-";
+                            }
+                            formato = formato.Substring(0, formato.Length - 1);
+                            var segmentos = tItem.CuentaContable.Split('-');
+                            if (segmentos.Length != formato.Split('-').Length)
+                            {
+                                Errores.Add($"<strong>{tItem.Descripcion}</strong>: El formato de la cuenta no coincide con la configuración");
+                                continue;
+                            }
+                            var segmentosString = new List<string>();
+                            for (int i = 0; i < segmentos.Length; i++)
+                            {
+                                if (segmentos[i].Length != int.Parse(formato.Split('-')[i]))
+                                {
+                                    segmentos[i] = segmentos[i].PadLeft(int.Parse(formato.Split('-')[i]), '0');
+                                }
+                                segmentosString.Add(segmentos[i]);
+                            }
+                            if (segmentosString.Count() < 5)
+                            {
+                                for (int i = segmentosString.Count(); i < 6; i++)
+                                {
+                                    segmentosString.Add("");
+                                }
+                            }
+                            tItem.CuentaContable = string.Join("-", segmentosString.Where(x => x != ""));
+                            var cuenta = context.th_contabilidad_cuenta.FirstOrDefault(x => x.CuentaContable == tItem.CuentaContable);
+                            if (cuenta == null)
+                            {
+                                Errores.Add($"<strong>{tItem.Descripcion}</strong>: No se encontró la cuenta contable {tItem.CuentaContable}");
+                                continue;
+                            }
+                            var unidad = context.th_articulos_unidad.FirstOrDefault(x => x.NombreCorto == tItem.Unidad);
+                            if(unidad == null)
+                            {
+                                Errores.Add($"<strong>{tItem.Descripcion}</strong>: No se encontró la unidad {tItem.Unidad}");
+                                continue;
+                            }
+                            var itemNuevo = new th_articulos
+                                {
+                                    Activo = true,
+                                    tipo_id = tipo.Id,
+                                    catalogoproductosat_Id = tItem.ClaveSATsolosisevende,
+                                    unidad_Id = unidad.Id,
+                                    cuentacontable_id = cuenta.Id,
+                                    Descripcion = tItem.Descripcion,
+                                    NombreCorto = tItem.Clave,
+                                    FechaCreacion = DateTime.Now,
+                                    UsuarioCreacion = Usuario.Login,
+                                    Id = Guid.NewGuid().ToString()
+                                };
+                            var validacion = context.ValidateEntity(itemNuevo);
+                            if (validacion.Validado)
+                            {
+                                context.th_articulos.Add(itemNuevo);
+                                try
+                                {
+                                    await context.SaveChangesAsync();
+                                }
+                                catch (Exception ex)
+                                {
+                                    if (ex.InnerException != null)
+                                    {
+                                        Errores.Add($"<strong>{itemNuevo.NombreCorto}</strong>: {Translator.TraducirInglesAEspanol(ex.InnerException.Message)}");
+                                    }
+                                    else
+                                    {
+                                        Errores.Add($"<strong>{itemNuevo.NombreCorto}</strong>: {Translator.TraducirInglesAEspanol(ex.Message)}");
+                                    }
+                                }
+
+                            }
+                            else
+                            {
+                                foreach (var error in validacion.ListaErrores)
+                                {
+                                    Errores.Add($"<strong>{itemNuevo.NombreCorto}</strong>: {error}");
+                                }
+
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            if (ex.InnerException != null)
+                            {
+                                Errores.Add($"<strong>{tItem.Descripcion}</strong>: {Translator.TraducirInglesAEspanol(ex.InnerException.Message)}");
+                            }
+                            else
+                            {
+                                Errores.Add($"<strong>{tItem.Descripcion}</strong>: {Translator.TraducirInglesAEspanol(ex.Message)}");
+                            }
+                        }
+                        
+                    }
+                }
+            }
+        }
+        Spinner.IsLoading = false;
+    }
+}

@@ -1,0 +1,120 @@
+﻿@page "/inventario/articulosproveedor/listado"
+
+@rendermode InteractiveServer
+@inject KalanDB DB
+@inject Excel Excel
+@inject NavigationManager NavigationManager
+
+<Contenido Titulo="Listado de Artículos-Proveedor">
+   
+        <div class="row">
+            <div class="col-12 col-sm-12 col-md-12 col-lg-4 col-xl-4">
+                <a href="/inventario/ArticulosProveedor/crearproveedor"><i class="fas fa-plus"></i> Crear una nueva Relación Proveedor Articulo</a>
+            </div>
+         </div>
+        <div class="row">
+            <div class="col-12 col-sm-12 col-md-12 col-lg-4 col-xl-4">
+                <a href="/inventario/ArticulosProveedor/crear"><i class="fas fa-plus"></i> Crear una nueva Relación Articulo Proveedor</a>
+            </div>
+            <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+            </div>
+            <div class="col-12 col-sm-12 col-md-12 col-lg-4 col-xl-4">
+            </div>
+            <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+                <DescargarArchivo Archivo="@ExcelListado" Etiqueta="Exportar"></DescargarArchivo>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-12">
+                <Texto EsBuscador="true" Etiqueta="Buscar" @bind-Value="buscar"></Texto>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-12">
+                <QuickGrid Pagination="@pagination" Class="table small" Items="listadoFiltrado.AsQueryable()">
+                    <TemplateColumn Context="item" SortBy="@( GridSort<th_articulos_proveedor>.ByAscending(p => p.articulo.NombreCorto))" Sortable="true">
+                        <button class="btn btn-outline-info" @onclick="@(()=>Navegar($"/inventario/articulosproveedor/ver?id={item.Id}"))"><i class="fas fa-info"></i></button>
+                    </TemplateColumn>
+                    <TemplateColumn Title="Proveedor" Context="item" Sortable="true" SortBy="@( GridSort<th_articulos_proveedor>.ByAscending(p => p.proveedor.NombreCorto))">
+                        @item.proveedor.NombreCorto - @item.proveedor.RazonSocial
+                    </TemplateColumn>
+                    <TemplateColumn Title="Articulo" Context="item" Sortable="true" SortBy="@( GridSort<th_articulos_proveedor>.ByAscending(p => p.articulo.NombreCorto))">
+                        @item.articulo.NombreCorto - @item.articulo.Descripcion
+                    </TemplateColumn>
+                    <TemplateColumn Title="Activo" Context="item" Sortable="true" SortBy="@( GridSort<th_articulos_proveedor>.ByAscending(p => p.Activo))">
+                        <Switch Label=" " @bind-Value:after="@(()=>CambiarStatus(item))" @bind-Value="item.Activo"></Switch>
+                    </TemplateColumn>
+                    <PropertyColumn Property="@(item => item.UsuarioCreacion)" Title="Usuario Creo" Sortable="true" />
+                    <PropertyColumn Property="@(item => item.FechaCreacion)" Title="Fecha Creación" Sortable="true" />
+                </QuickGrid>
+                <Paginator State="@pagination" />
+            </div>
+        </div>
+   
+</Contenido>
+
+@code {
+    [CascadingParameter] private Task<AuthenticationState> authenticationStateTask { get; set; }
+    private string Usuario
+    {
+        get
+        {
+            var _authState = authenticationStateTask.Result;
+            var user = _authState.User;
+            return ((System.Security.Claims.ClaimsIdentity)user.Identity).Name;
+        }
+    }
+    PaginationState pagination = new PaginationState { ItemsPerPage = 10 };
+    private string buscar = string.Empty;
+    private List<th_articulos_proveedor> listado = new List<th_articulos_proveedor>();
+    private List<th_articulos_proveedor> listadoFiltrado
+    {
+        get
+        {
+            if (string.IsNullOrEmpty(buscar))
+            {
+                return listado;
+            }
+            return listado.Where(x => 
+                x.proveedor.NombreCorto.ToUpper().Contains(buscar.ToUpper()) ||
+                x.proveedor.RazonSocial.ToUpper().Contains(buscar.ToUpper()) ||
+                x.articulo.NombreCorto.ToUpper().Contains(buscar.ToUpper()) ||
+                x.articulo.Descripcion.ToUpper().Contains(buscar.ToUpper())
+            ).ToList();        
+        }
+    }
+    private ArchivoGral ExcelListado
+    {
+        get
+        {
+            var bytes = Excel.ExportExcel(listado, "Articulos Proveedor");
+            return new ArchivoGral { Nombre = "ArticulosProveedor.xlsx", Datos = bytes };
+        }
+    }
+    protected override async Task OnInitializedAsync()
+    {
+
+        Reporte();
+    }
+    private void Reporte()
+    {
+        this.listado = (from x in DB.th_articulos_proveedor
+                        select x)
+                        .Include(x=>x.proveedor)
+                        .Include(x => x.articulo)
+         .IgnoreAutoIncludes()
+         .AsNoTracking()
+        .ToList();
+    }
+    private void Navegar(string url)
+    {
+        NavigationManager.NavigateTo(url, true);
+    }
+    private async Task CambiarStatus(th_articulos_proveedor item)
+    {
+        item.UsuarioModifica = Usuario;
+        item.FechaModifica = DateTime.Now;
+        DB.th_articulos_proveedor.Update(item);
+        DB.SaveChanges();
+    }
+}

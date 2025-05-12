@@ -1,0 +1,143 @@
+﻿@typeparam TItem
+@inject IJSRuntime JS
+
+<div class="row">
+    <div class="col-12">
+        <Texto Etiqueta="Buscar" @bind-Value="Buscar" EsBuscador="true" @bind-Value:after="Paginar"></Texto>
+    </div>
+</div>
+<br />
+<div class="row">
+    <div class="col-12" >
+        @ChildContent
+    </div>
+</div>
+<div class="row">
+    <div class="col-auto">
+        
+        <nav>
+            <ul class="pagination">
+                <li style="padding-right:5px;">
+                    <select class="form-select" @bind="_itemsPerPage" @bind:after="Paginar">
+                        <option value="10" selected>10</option>
+                        <option value="25">25</option>
+                        <option value="50">50</option>
+                        <option value="100">100</option>
+                    </select>
+                </li>
+                @if (MaxPage > 1)
+                {
+                    <li class="page-item @(_currentPage == 1 ? "disabled" : "")" style="padding-right:5px;">
+                        <button style="width: 90px;border-radius: 50px !important;" class="page-link" @onclick="() => ChangePage(_currentPage - 1)">Anterior</button>
+                    </li>
+                    @foreach (var pageNum in Paginas)
+                    {
+                        <li class="page-item page-item-paginado @(pageNum == _currentPage ? "active" : "")">
+                            <button class="page-link page-link-paginado" @onclick="() => ChangePage(pageNum)"> @pageNum</button>
+                        </li>
+                    }
+                    <li class="page-item @(_currentPage == MaxPage ? "disabled" : "")">
+                        <button style="width: 90px;border-radius: 50px !important;" class="page-link" @onclick="() => ChangePage(_currentPage + 1)">
+                            Siguiente
+                        </button>
+                    </li>
+                }
+                
+            </ul>
+        </nav>
+    </div>
+    <div class="col-auto" style="padding-top:7px;">
+        @if (Registros != null)
+        {
+            <span class="paginado-contador">Total de Registros: </span> <span class="paginado-contador">@Registros.Count()</span>
+        }
+    </div>
+</div>
+
+
+@code {
+    [Parameter] 
+    public RenderFragment ChildContent { get; set; }
+    [Parameter] 
+    public List<TItem> Registros 
+    {
+        get
+        {
+            return _Registros;
+        }
+        set
+        {
+            _Registros = value;
+            if (_Registros != value)
+            {
+                Paginar();
+                InvokeAsync(StateHasChanged);
+            }
+        }
+    }
+    private List<TItem> _Registros;
+    [Parameter]
+    public IEnumerable<TItem> Paginados { get; set; }
+    [Parameter]
+    public EventCallback<List<TItem>> PaginadosChanged { get; set; }
+    private ElementReference scrollContainer;
+    private IEnumerable<TItem> _listFiltrado { get; set; }
+
+    private int _currentPage = 1;
+    private int _itemsPerPage = 10;
+    private const int MaxPageButtons = 10;
+    private string Buscar { get; set; } = "";
+    private int MaxPage => (int)Math.Ceiling((double)(_listFiltrado?.Count() ?? 1) / _itemsPerPage);
+    private int StartPage => Math.Max(1, _currentPage - MaxPageButtons / 2);
+    private int EndPage => Math.Min(MaxPage, StartPage + MaxPageButtons - 1);
+    public List<int> Paginas
+    {
+        get
+        {
+            var listado = new List<int>();
+            for (var pageNum = StartPage; pageNum <= EndPage; pageNum++)
+            {
+                listado.Add(pageNum);
+            }
+            return listado;
+        }
+    }
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await Paginar();
+        }
+    }
+    private async Task Filtrar()
+    {
+        if (Registros != null)
+        {
+            _listFiltrado = Registros?
+                .Where(item => typeof(TItem).GetProperties()
+                .Any(prop => prop.GetValue(item)?.ToString()?
+                .Contains(Buscar, StringComparison.InvariantCultureIgnoreCase) == true));
+            //ChangePage(1);
+            await InvokeAsync(StateHasChanged);
+        }
+
+    }
+    public async Task Paginar()
+    {
+        if (Registros != null)
+        {
+            await Filtrar();
+            Paginados = _listFiltrado?
+            .Skip((_currentPage - 1) * _itemsPerPage)
+            .Take(_itemsPerPage);
+            await PaginadosChanged.InvokeAsync(Paginados.ToList());
+            await InvokeAsync(StateHasChanged);
+        }        
+    }
+    private void ChangePage(int page)
+    {
+        _currentPage = page;
+        Paginar();
+    }
+ 
+}

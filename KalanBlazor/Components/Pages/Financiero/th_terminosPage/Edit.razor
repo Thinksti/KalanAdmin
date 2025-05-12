@@ -1,0 +1,121 @@
+﻿@page "/th_terminos/edit"
+@rendermode InteractiveServer
+@inject KalanDB DB
+@inject Excel Excel
+@inject NavigationManager NavigationManager
+@inject SweetAlertService Swal
+@inject LoadingService Spinner
+<SpinnerLoading></SpinnerLoading>
+
+<Contenido Titulo="Editar Terminos de Credito">
+ 
+        @if (entidad is null)
+        {
+            <p><em>Loading...</em></p>
+        }
+        else
+        {
+            <div class="row">
+                <div class="col-md-4">
+ 
+                        <div class="mb-3"> 
+                             <Texto Etiqueta="Términos de Crédito" @bind-Value="entidad.Condicion"></Texto>
+      
+                        </div>
+                        <div class="mb-3">
+            
+                               <Texto Etiqueta="Descripción" @bind-Value="entidad.Descripcion"></Texto>
+   
+                        </div>
+                        <div class="mb-3">
+                            <Entero Etiqueta="Dias" Min="0" @bind-Value="entidad.Dias"></Entero>
+           
+                        </div>
+                        <div class="mb-3">
+                             <Switch Etiqueta="Activo" @bind-Value="entidad.Activo"></Switch>
+ 
+                        </div>
+                        <div class="mb-3 Ocultar">
+                            <label for="usuariocreacion" class="form-label">UsuarioCreacion:</label>
+                            <InputText id="usuariocreacion" @bind-Value="entidad.UsuarioCreacion" class="form-control" />
+    
+                        </div>
+                        <div class="mb-3 Ocultar">
+                            <label for="fechacreacion" class="form-label">FechaCreacion:</label>
+                            <InputDate id="fechacreacion" @bind-Value="entidad.FechaCreacion" class="form-control" />
+               
+                        </div>
+
+                            <button @onclick="accion" class="btn btn-primary">Actualizar</button>
+       
+                </div>
+            </div>
+        }
+        <div>
+            <a href="/th_terminos"><i class="fa-solid fa-arrow-left"></i> Regresar al Index</a>
+        </div>
+   
+</Contenido>
+@code {
+    [SupplyParameterFromQuery]
+    public string Id { get; set; }
+    [SupplyParameterFromForm]
+    public th_condicionescredito? entidad { get; set; } = new();
+    [CascadingParameter] private Task<AuthenticationState> authenticationStateTask { get; set; }
+    protected override async Task OnInitializedAsync()
+    {
+        entidad = await DB.th_condicionescredito.FirstOrDefaultAsync(m => m.Id == Id);
+
+        if (entidad is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+        }
+        entidad.FechaModifica = DateTime.Now;
+    }
+    private KalanDB kalanDB
+    {
+        get
+        {
+            return new KalanDB(DB.connectionString);
+        }
+    }
+    public async Task accion()
+    { 
+        var _authState = await authenticationStateTask;
+        var user = _authState.User;
+        var correo = ((System.Security.Claims.ClaimsIdentity)user.Identity).Name;
+        entidad.FechaModifica = DateTime.Now;
+        entidad.UsuarioModifica = correo;
+        //DB.Attach(entidad!).State = EntityState.Modified;
+
+
+        var validacion = DB.ValidateEntity(entidad);
+        if (validacion.Validado)
+        {
+            DB.th_condicionescredito.Add(entidad);
+            try
+            {
+                await DB.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                 
+            }
+
+        }
+        else
+        {
+             
+        }
+
+
+        
+         
+        NavigationManager.NavigateTo("/th_terminos");
+    }
+
+    bool Exists(string id)
+    {
+        return DB.th_condicionescredito.Any(e => e.Id == id);
+    }
+}

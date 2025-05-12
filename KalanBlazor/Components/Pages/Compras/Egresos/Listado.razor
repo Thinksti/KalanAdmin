@@ -1,0 +1,105 @@
+﻿@page "/egresos/listado"
+@using KalanBlazor.DTOs.Compras
+@rendermode InteractiveServer
+@inject KalanDB DB
+@inject Excel Excel
+@inject NavigationManager NavigationManager
+
+<h1>Listado de Pagos a Proveedores</h1>
+
+<div class="row">
+    <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+        <Fecha Etiqueta="Fecha Inicio" Max="@DateTime.Now" @bind-Value="FechaInicio"></Fecha>
+    </div>
+    <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+        <Fecha Etiqueta="Fecha Fin" Max="@DateTime.Now" @bind-Value="FechaFin"></Fecha>
+    </div>
+    <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+        <button @onclick="Reporte" class="btn btn-primary">Buscar</button>
+    </div>
+    <div class="col-12 col-sm-12 col-md-12 col-lg-4 col-xl-4">
+        
+    </div>
+    <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+        <DescargarArchivo Archivo="@ExcelListado" Etiqueta="Exportar"></DescargarArchivo>
+    </div>
+</div>
+ 
+  <QuickGrid Pagination="@pagination" Class="table small" Items="th_egresos.AsQueryable()">
+    <TemplateColumn Title="Documento" Context="th_egresos" Sortable="true">
+        <button class="btn btn-sm btn-outline-info" @onclick="@(()=>Navegar($"/egresos/ver?Id={th_egresos.Id}"))">PGO-@th_egresos.Egreso.ToString("D7")</button>
+        @if (th_egresos.Activo)
+        {
+            <button class="btn btn-sm btn-danger" @onclick="@(()=>Navegar($"/egresos/Cancelar?Id={th_egresos.Id}"))"><i class="fa-solid fa-trash-can"></i></button>
+        }
+        @if (th_egresos.Disponible > 0)
+        {
+            <button class="btn btn-sm btn-outline-secondary" @onclick="@(()=>Navegar($"/Compras/Facturas/Pagar?Id={th_egresos.Id}"))"><i class="fa-solid fa-cash-register"></i></button>
+        }
+    </TemplateColumn>
+    <PropertyColumn Property="@(c => c.bancos.Chequera)" Title="Chequera" Sortable="true" />
+    <PropertyColumn Property="@(c => c.Observaciones)" Title="Observaciones" Sortable="true" />
+    <TemplateColumn Title="Proveedor" Context="th_egresos" Sortable="true">
+        <labe>@th_egresos.proveedor.NombreCorto-@th_egresos.proveedor.RazonSocial</labe>
+    </TemplateColumn>
+    <PropertyColumn Property="@(c => c.Fecha)" Title="Fecha" Format="d" Sortable="true" /> 
+    <PropertyColumn Property="@(c => c.Original)" Title="Monto Original" Format="c" Align="Align.Center" Sortable="true" />
+    <PropertyColumn Property="@(c => c.Disponible)" Title="Monto Disponible" Format="c" Align="Align.Center" Sortable="true" />
+    <TemplateColumn Title="Activo" Context="th_egresos">
+        <Switch disabled Label=" " @bind-Value="th_egresos.Activo"></Switch>
+    </TemplateColumn>
+    <PropertyColumn Property="@(c => c.UsuarioCreacion)" Title="Usuario" Sortable="true" />
+</QuickGrid>
+<Paginator State="@pagination" />
+ 
+@code {
+    PaginationState pagination = new PaginationState { ItemsPerPage = 10 };
+    private List<th_egresos> th_egresos = new List<th_egresos>();
+    private List<ListadoPagos> listadoPagos = new List<ListadoPagos>();
+    private DateTime FechaInicio { get; set; } 
+    private DateTime FechaFin { get; set; }
+    private string Buscar { get; set; }
+    private ArchivoGral ExcelListado
+    {
+        get
+        {
+            var reporteExcel = th_egresos.Select(x => new ListadoPagos
+                {
+                    Documento = $"PGO-{x.Egreso.ToString("D7")}",
+                    Activo = x.Activo,
+                    Chequera = x.bancos.Chequera,
+                    Fecha = x.Fecha,
+                    Observaciones = x.Observaciones,
+                    Monto_Disponible = x.Disponible,
+                    Monto_Original = x.Original,
+                    Proveedor = $"{x.proveedor.NombreCorto}-{x.proveedor.RazonSocial}",
+                    Usuario = x.UsuarioCreacion
+                }).ToList();
+            var bytes = Excel.ExportExcel(reporteExcel, "Pagos a Proveedores");
+            return new ArchivoGral { Nombre = "PagosProveedores.xlsx", Datos = bytes };
+        }
+    }
+    protected override async Task OnInitializedAsync()
+    {
+
+        FechaInicio = DateTime.Now.AddMonths(-1).Date;
+        FechaFin = DateTime.Now.Date;
+        Reporte();
+
+    }
+    private void Reporte()
+    {
+        this.th_egresos = (from x in DB.th_egresos where x.Fecha >= FechaInicio && x.Fecha <= FechaFin 
+        select x)
+        .Include(x=>x.bancos)
+        .Include(x=>x.proveedor)
+        .IgnoreAutoIncludes()
+        .AsNoTracking()
+        .OrderByDescending(x => x.Egreso)
+        .ToList();
+    }
+    private void Navegar(string url)
+    {
+        NavigationManager.NavigateTo(url, true);
+    }
+}

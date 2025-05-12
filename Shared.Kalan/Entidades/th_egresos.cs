@@ -1,0 +1,53 @@
+﻿using System;
+using System.Collections.Generic;
+
+namespace Shared.Kalan.Entidades;
+
+public partial class th_egresos
+{
+    public string Id { get; set; } = null!;
+
+    public int Egreso { get; set; }
+
+    public decimal Original { get; set; }
+
+    public decimal Disponible { get; set; }
+
+    public string bancos_id { get; set; } = null!;
+
+    public string? formapago_id { get; set; }
+
+    public string proveedor_Id { get; set; } = null!;
+
+    public DateTime Fecha { get; set; }
+
+    public bool Conciliado { get; set; }
+
+    public string? Observaciones { get; set; }
+
+    public string moneda_Id { get; set; } = null!;
+
+    public string tipocambio_Id { get; set; } = null!;
+
+    public string? asiento_Id { get; set; }
+
+    public string? asientocancelado_Id { get; set; }
+
+    public bool Activo { get; set; }
+
+    public string UsuarioCreacion { get; set; } = null!;
+
+    public DateTime FechaCreacion { get; set; }
+
+    public string? UsuarioModifica { get; set; }
+
+    public DateTime? FechaModifica { get; set; }
+
+    public virtual th_bancos bancos { get; set; } = null!;
+
+    public virtual th_formapago? formapago { get; set; }
+
+    public virtual th_proveedores proveedor { get; set; } = null!;
+
+    public virtual ICollection<th_cuentaspagaraplicaciones> th_cuentaspagaraplicaciones { get; set; } = new List<th_cuentaspagaraplicaciones>();
+}

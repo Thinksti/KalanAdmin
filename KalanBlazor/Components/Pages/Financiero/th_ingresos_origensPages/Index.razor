@@ -1,0 +1,36 @@
+﻿@page "/th_origenes"
+
+@inject KalanDB DB
+@inject NavigationManager NavigationManager
+@rendermode InteractiveServer
+
+<PageTitle>Index</PageTitle>
+
+<h1>Orígenes de Ingreso</h1>
+
+<p>
+    <a href="th_origenes/create"><i class="fas fa-plus"></i> Crear nuevo Registro</a>
+</p>
+
+<QuickGrid Class="table" Items="DB.th_ingresos_origen">
+    <TemplateColumn Context="entidad">
+        <button class="btn btn-outline-warning" @onclick="@(()=>Navegar($"th_origenes/edit?id={entidad.Id}"))"><i class="fa-solid fa-pen-to-square"></i></button>
+        <button class="btn btn-outline-info" @onclick="@(()=>Navegar($"th_origenes/details?id={entidad.Id}"))"><i class="fas fa-info"></i></button>
+        <button class="btn btn-outline-danger" @onclick="@(()=>Navegar($"th_origenes/delete?id={entidad.Id}"))"><i class="fas fa-trash"></i></button>
+    </TemplateColumn>
+    <PropertyColumn Property="entidad => entidad.Origen" />
+    <PropertyColumn Property="entidad => entidad.Observaciones" />
+    <PropertyColumn Property="entidad => entidad.Activo" />
+    <PropertyColumn Property="entidad => entidad.UsuarioCreacion" />
+    <PropertyColumn Property="entidad => entidad.FechaCreacion" />
+    <PropertyColumn Property="entidad => entidad.UsuarioModifica" />
+    <PropertyColumn Property="entidad => entidad.FechaModifica" />
+
+
+</QuickGrid>
+@code {
+    private void Navegar(string url)
+    {
+        NavigationManager.NavigateTo(url, true);
+    }
+}

@@ -1,0 +1,104 @@
+﻿@page "/inventario/unidad/crear"
+
+@rendermode InteractiveServer
+@inject KalanDB DB
+@inject Excel Excel
+@inject NavigationManager NavigationManager
+@inject SweetAlertService Swal
+@inject LoadingService Spinner
+<SpinnerLoading></SpinnerLoading>
+
+<Contenido Titulo="Creación de Articulo">
+  
+ 
+        <div class="row">
+            <div class="col-12 col-sm-12 col-md-12 col-lg-6 col-xl-4">
+                <Texto MaxLength="15" Etiqueta="Nombre de la Unidad" @bind-Value="item.NombreCorto"></Texto>
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-12 col-sm-12 col-md-12 col-lg-6 col-xl-6">
+                <Texto MaxLength="15" Etiqueta="Calve del SAT" @bind-Value="item.ClaveSAT"></Texto>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+                <Switch Etiqueta="Articulo Activo" @bind-Value="item.Activo"></Switch>
+            </div>
+        </div> 
+ 
+        <div class="row">
+            <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+                <button @onclick="Guardar" class="btn btn-primary">Guardar Unidad</button>
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+                <a href="/inventario/unidad/listado"><i class="fa-solid fa-arrow-left"></i> Regresar al Index</a>
+            </div>
+        </div>
+    
+</Contenido>
+
+@code {
+    [CascadingParameter] private Task<AuthenticationState> authenticationStateTask { get; set; }
+    private th_articulos_unidad item { get; set; } = new();   
+    protected override async Task OnInitializedAsync()
+    {
+ 
+
+    }
+    private string Usuario
+    {
+        get
+        {
+            var _authState = authenticationStateTask.Result;
+            var user = _authState.User;
+            return ((System.Security.Claims.ClaimsIdentity)user.Identity).Name;
+        }
+    }
+    private async Task<IEnumerable<th_catproductosat>> SearchItems(string value)
+    {
+        if (string.IsNullOrEmpty(value))
+        {
+            return DB.th_catproductosat.Take(10).IgnoreAutoIncludes().AsEnumerable();
+        }
+        else
+        {
+            return DB.th_catproductosat.Where(x => x.Id.ToUpper().Contains(value.ToUpper()) || x.Descripcion.ToUpper().Contains(value.ToUpper())).IgnoreAutoIncludes().Take(10).AsEnumerable();
+        }
+
+    }
+    private async Task<IEnumerable<th_catproductosat>> SearchExacto(string value)
+    {
+        return DB.th_catproductosat.Where(c => c.Id.ToUpper() == value.ToUpper()).IgnoreAutoIncludes().ToList().AsEnumerable();
+    }
+    private async Task Guardar()
+    {
+        
+        try
+        {
+ 
+            item.Id = Guid.NewGuid().ToString();
+            item.FechaCreacion = DateTime.Now;
+            item.UsuarioCreacion = Usuario;
+            var validaciones = DB.ValidateEntity(item);
+            if (validaciones.ListaErrores.Count() > 0)
+            {
+                await Swal.FireAsync("Error", validaciones.Errores, SweetAlertIcon.Error);
+                return;
+            }
+            await DB.th_articulos_unidad.AddAsync(item);
+            await DB.SaveChangesAsync();
+            NavigationManager.NavigateTo("/inventario/unidad/listado");
+        }
+        catch (Exception ex)
+        {
+            await Swal.FireAsync("Error", ex.Message, SweetAlertIcon.Error);
+            throw;
+        }
+    }
+
+}

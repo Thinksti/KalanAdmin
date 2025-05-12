@@ -1,0 +1,149 @@
+﻿@page "/th_bancos/edit"
+@inject KalanDB DB
+@rendermode InteractiveServer
+@inject NavigationManager NavigationManager
+@using Microsoft.EntityFrameworkCore 
+<PageTitle>Edit</PageTitle>
+
+<h1>Editar</h1>
+
+<h4>Chequera</h4>
+<hr />
+@if (th_bancos is null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <div class="row">
+        <div class="col-md-4">
+            <EditForm  Model="th_bancos" OnValidSubmit="Updateth_bancos" FormName="edit" Enhance>
+                <DataAnnotationsValidator />
+                <ValidationSummary />
+                <input type="hidden" name="th_bancos.Id" value="@th_bancos.Id" />
+                <div class="mb-3">
+                    <label for="chequera" class="form-label">Chequera:</label>
+                    <InputText id="chequera" @bind-Value="th_bancos.Chequera" class="form-control" />
+                    <ValidationMessage For="() => th_bancos.Chequera" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="banco" class="form-label">Banco:</label>
+                    <InputText id="banco" @bind-Value="th_bancos.Banco" class="form-control" />
+                    <ValidationMessage For="() => th_bancos.Banco" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="cuenta" class="form-label">Cuenta:</label>
+                    <InputText id="cuenta" @bind-Value="th_bancos.Cuenta" class="form-control" />
+                    <ValidationMessage For="() => th_bancos.Cuenta" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="saldo" class="form-label">Saldo:</label>
+                    <InputNumber id="saldo" @bind-Value="th_bancos.Saldo" class="form-control" />
+                    <ValidationMessage For="() => th_bancos.Saldo" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <Combo Etiqueta="Moneda"
+                           TItem="th_monedas"
+                           TValue="string"
+                           ItemValue="Id"
+                           TextValue="NombreCorto"
+                           Items="MonedasList"
+                           @bind-Value="th_bancos.moneda_Id">
+                    </Combo>
+                </div>
+                <div class="mb-3">
+                    <CuentaContable  Etiqueta="Cuenta Contable del Banco" @bind-Value="th_bancos.cuentacontable_id"></CuentaContable>
+                </div>
+                <div class="mb-3">
+                    <label for="activo" class="form-label">Activo:</label>
+                    <InputCheckbox id="activo" @bind-Value="th_bancos.Activo" class="form-check-input" />
+                    <ValidationMessage For="() => th_bancos.Activo" class="text-danger" />
+                </div>
+                <button type="submit" class="btn btn-primary">Guardar</button>
+                <div class="Ocultar">
+                    <div class="mb-3">
+                        <label for="usuariocreacion" class="form-label">UsuarioCreacion:</label>
+                        <InputText id="usuariocreacion" @bind-Value="th_bancos.UsuarioCreacion" class="form-control" />
+                        <ValidationMessage For="() => th_bancos.UsuarioCreacion" class="text-danger" />
+                    </div>
+                    <div class="mb-3">
+                        <label for="fechacreacion" class="form-label">FechaCreacion:</label>
+                        <InputDate id="fechacreacion" @bind-Value="th_bancos.FechaCreacion" class="form-control" />
+                        <ValidationMessage For="() => th_bancos.FechaCreacion" class="text-danger" />
+                    </div>
+                    <div class="mb-3">
+                        <label for="usuariomodifica" class="form-label">UsuarioModifica:</label>
+                        <InputText id="usuariomodifica" @bind-Value="th_bancos.UsuarioModifica" class="form-control" />
+                        <ValidationMessage For="() => th_bancos.UsuarioModifica" class="text-danger" />
+                    </div>
+                    <div class="mb-3">
+                        <label for="fechamodifica" class="form-label">FechaModifica:</label>
+                        <InputDate id="fechamodifica" @bind-Value="th_bancos.FechaModifica" class="form-control" />
+                        <ValidationMessage For="() => th_bancos.FechaModifica" class="text-danger" />
+                    </div>
+                </div>
+               
+            </EditForm>
+        </div>
+    </div>
+}
+
+<div>
+    <a href="/th_bancos"><i class="fa-solid fa-arrow-left"></i> Regresar al Index</a>
+</div>
+
+@code {
+    [SupplyParameterFromQuery]
+    public string Id { get; set; }
+
+    [SupplyParameterFromForm]
+    public th_bancos? th_bancos { get; set; }
+    [CascadingParameter] private Task<AuthenticationState> authenticationStateTask { get; set; }
+    private List<th_monedas> MonedasList { get; set; }
+    public string MonedaId { get; set; }
+    public th_monedas Moneda { get; set; }
+    protected override async Task OnInitializedAsync()
+    {
+        MonedaId = DB.th_contabilidad_cuenta_configuracion.First().moneda_Id;
+        await InvokeAsync(StateHasChanged);
+        MonedasList = DB.th_monedas.ToList();
+        th_bancos ??= (from m in DB.th_bancos where m.Id == Id select m).AsNoTracking().IgnoreAutoIncludes().FirstOrDefault(); 
+        //DB.th_bancos.FirstOrDefault(m => m.Id == Id); //DB.th_bancos.First(m => m.Id == Id
+        if (th_bancos is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+        }
+        th_bancos.FechaModifica = DateTime.Now;
+    } 
+    public async Task Updateth_bancos()
+    {
+       
+        var _authState = await authenticationStateTask;
+        var user = _authState.User;
+        th_bancos.FechaModifica = DateTime.Now;
+        th_bancos.UsuarioModifica = ((System.Security.Claims.ClaimsIdentity)user.Identity).Name;
+        DB.Attach(th_bancos!).State = EntityState.Modified;
+        try
+        {
+            await DB.SaveChangesAsync();
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            if (!th_bancosExists(th_bancos!.Id))
+            {
+                NavigationManager.NavigateTo("notfound");
+            }
+            else
+            {
+                throw;
+            }
+        }
+
+        NavigationManager.NavigateTo("/th_bancos");
+    }
+
+    bool th_bancosExists(string id)
+    {
+        return DB.th_bancos.Any(e => e.Id == id);
+    }
+}

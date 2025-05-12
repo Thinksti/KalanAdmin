@@ -1,0 +1,76 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+	<PropertyGroup>
+		<TargetFramework>net8.0</TargetFramework>
+		<Nullable>enable</Nullable>
+		<BlazorWebAssemblyLoadAllGlobalizationData>true</BlazorWebAssemblyLoadAllGlobalizationData>
+		<ImplicitUsings>enable</ImplicitUsings>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<Compile Remove="BL\**" />
+		<Compile Remove="Components\Account\**" />
+		<Compile Remove="Connected Services\**" />
+		<Compile Remove="Data\Migrations\**" />
+		<Compile Remove="DTOs\**" />
+		<Compile Remove="Reportes\**" />
+		<Compile Remove="Seguridad\**" />
+		<Content Remove="BL\**" />
+		<Content Remove="Components\Account\**" />
+		<Content Remove="Connected Services\**" />
+		<Content Remove="Data\Migrations\**" />
+		<Content Remove="DTOs\**" />
+		<Content Remove="Reportes\**" />
+		<Content Remove="Seguridad\**" />
+		<EmbeddedResource Remove="BL\**" />
+		<EmbeddedResource Remove="Components\Account\**" />
+		<EmbeddedResource Remove="Connected Services\**" />
+		<EmbeddedResource Remove="Data\Migrations\**" />
+		<EmbeddedResource Remove="DTOs\**" />
+		<EmbeddedResource Remove="Reportes\**" />
+		<EmbeddedResource Remove="Seguridad\**" />
+		<None Remove="BL\**" />
+		<None Remove="Components\Account\**" />
+		<None Remove="Connected Services\**" />
+		<None Remove="Data\Migrations\**" />
+		<None Remove="DTOs\**" />
+		<None Remove="Reportes\**" />
+		<None Remove="Seguridad\**" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Content Remove="wwwroot\Recursos\cadenaoriginal_4_0.xslt" />
+	  <Content Remove="wwwroot\Recursos\fx_2010_g.xsd" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <None Include="wwwroot\Recursos\cadenaoriginal_4_0.xslt">
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	  </None>
+	  <None Include="wwwroot\Recursos\fx_2010_g.xsd">
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	  </None>
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Microsoft.ApplicationInsights.AspNetCore" Version="2.22.0" />
+		<PackageReference Include="Microsoft.AspNetCore.Components.QuickGrid.EntityFrameworkAdapter" Version="8.0.10" />
+		<PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="8.0.10" />
+		<PackageReference Include="Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore" Version="8.0.10" />
+		<PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="8.0.10" />
+		<PackageReference Include="Shared.Kalan.Componentes" Version="2025.2.17.2359" />
+		<PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="8.0.6" />
+		<PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.21.0" />
+	
+	</ItemGroup>
+
+	<ItemGroup>
+	  <ProjectReference Include="..\BL\BL.csproj" />
+	</ItemGroup>
+
+	<PropertyGroup>
+	 
+		<UserSecretsId>11804d38-9ee1-425d-959e-8a9cc6d9862f</UserSecretsId>
+ 
+	</PropertyGroup>
+</Project>

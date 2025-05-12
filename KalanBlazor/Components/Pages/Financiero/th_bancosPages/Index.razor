@@ -1,0 +1,36 @@
+﻿@page "/th_bancos" 
+@inject KalanDB DB
+@inject NavigationManager NavigationManager
+@rendermode InteractiveServer
+<PageTitle>Index</PageTitle>
+
+<h1>Catalogo de Chequeras</h1>
+
+<p>
+    <a href="th_bancos/create"><i class="fas fa-plus"></i> Crear una nueva Chequera</a>
+</p>
+
+<QuickGrid Class="table" Items="DB.th_bancos">
+    <TemplateColumn Context="th_bancos">
+        <button class="btn btn-outline-warning" @onclick="@(()=>Navegar($"th_bancos/edit?id={th_bancos.Id}"))"><i class="fa-solid fa-pen-to-square"></i></button>
+        <button class="btn btn-outline-info" @onclick="@(()=>Navegar($"th_bancos/details?id={th_bancos.Id}"))"><i class="fas fa-info"></i></button>
+        <button class="btn btn-outline-danger" @onclick="@(()=>Navegar($"th_bancos/delete?id={th_bancos.Id}"))"><i class="fas fa-trash"></i></button>
+    </TemplateColumn>
+    <PropertyColumn  Property="th_bancos => th_bancos.Chequera" />
+    <PropertyColumn Property="th_bancos => th_bancos.Banco" />
+    <PropertyColumn Property="th_bancos => th_bancos.Cuenta"  />
+    <PropertyColumn Property="th_bancos => th_bancos.Saldo" Format="c" />
+    <TemplateColumn Title="Activo" Context="th_bancos">
+        <Switch disabled Label=" " @bind-Value="th_bancos.Activo" ></Switch>
+        </TemplateColumn>
+    @* <PropertyColumn Property="th_bancos => th_bancos.Activo" /> *@
+    <PropertyColumn Title="Usuario" Property="th_bancos => th_bancos.UsuarioCreacion" />
+    <PropertyColumn Title="Fecha" Property="th_bancos => th_bancos.FechaCreacion" Format="d" />
+
+</QuickGrid>
+@code {
+    private void Navegar(string url)
+    {
+        NavigationManager.NavigateTo(url, true);
+    }
+}

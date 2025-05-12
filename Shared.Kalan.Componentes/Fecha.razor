@@ -1,0 +1,74 @@
+﻿@if (string.IsNullOrEmpty(Etiqueta))
+{
+    <input id="txt_@id" class="form-control" @attributes="AdditionalAttributes" type="date" @bind="Value" @bind:after="ValidarValor" />
+}
+else
+{
+    <div class="form-floating">
+        <input id="txt_@id" class="form-control" @attributes="AdditionalAttributes" type="date"  @bind="Value" @bind:after="ValidarValor" placeholder="@Etiqueta" />
+        <label for="txt_@id">@Etiqueta</label>
+    </div>
+}
+
+@code {
+    [Parameter(CaptureUnmatchedValues = true)] public IDictionary<string, object> AdditionalAttributes { get; set; }
+    [Parameter] public EventCallback<DateTime> ValueChanged { get; set; }
+    [Parameter] public string Etiqueta { get; set; }
+    [Parameter] public DateTime? Min { get; set; }
+    [Parameter] public DateTime? Max { get; set; }
+    [Parameter] public DateTime Value 
+    {
+        get
+        {
+            return _Value;    
+        }
+        set
+        {
+            if (_Value != value)
+            {
+                ValueChanged.InvokeAsync(value);
+            }
+            _Value = value;
+        }
+    }
+    public DateTime _Value;
+    private string id { get; set; }
+    private async Task OnInputChange(ChangeEventArgs args)
+    {
+        this.id = Guid.NewGuid().ToString().Replace("-", "");
+        if (Max == null)
+        {
+            Max = DateTime.MaxValue;
+        }
+        if (Min == null)
+        {
+            Min = DateTime.MinValue;
+        }
+        if (args.Value != null)
+        {
+            Value = Convert.ToDateTime(args.Value);
+            await ValueChanged.InvokeAsync(Value);
+        }        
+    }
+    private async Task ValidarValor()
+    {
+        if (Max == null)
+        {
+            Max = DateTime.MaxValue;
+        }
+        if (Min == null)
+        {
+            Min = DateTime.MinValue;
+        }
+        if (Value < Min.Value)
+        {
+            Value = Min.Value;
+        }
+        if (Value > Max.Value)
+        {
+            Value = Max.Value;
+        }
+        await ValueChanged.InvokeAsync(Value);
+        await InvokeAsync(() => StateHasChanged());
+    }
+}

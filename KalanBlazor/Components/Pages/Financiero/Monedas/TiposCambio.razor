@@ -1,0 +1,180 @@
+﻿@page "/financiero/monedas/tiposcambio"
+
+@rendermode InteractiveServer
+@inject KalanDB DB 
+@inject NavigationManager NavigationManager
+<Contenido Titulo="Tipos de Cambio">
+  
+        <div class="row">
+            <div class="col-12 col-sm-12 col-md-6 col-lg-3 col-xl-2">
+               @if (MonedasList!=null)
+                {
+                    <Combo Etiqueta="Moneda"
+                           TItem="th_monedas"
+                           TValue="string"
+                           ItemValue="Id"
+                           TextValue="NombreCorto"
+                           Items="MonedasList"
+                           @bind-Item="Moneda"
+                           @bind-Value="MonedaId"
+                           @bind-Item:after="CambiarMoneda">
+                    </Combo>
+                } 
+                
+            </div>
+            <div class="col-12 col-sm-12 col-md-6 col-lg-3 col-xl-2">
+                <Fecha Max="@DateTime.Now.Date" Min="@DateTime.Now.AddYears(-1).Date" Etiqueta="Fecha" @bind-Value="Fecha" @bind-Value:after="CambiarMoneda"></Fecha>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-12 col-sm-12 col-md-6 col-lg-3 col-xl-2">
+                <ReadOnly Etiqueta="Origen del Tipo de Cambio" Value="Usuario"></ReadOnly>
+            </div>
+            <div class="col-12 col-sm-12 col-md-6 col-lg-3 col-xl-2">
+                <Numerico Etiqueta="Tipo de Cambio" Min="0" Max="1000" @bind-Value="TipoCambioValue"></Numerico> 
+            </div>
+            <div class="col-12 col-sm-12 col-md-6 col-lg-3 col-xl-2">
+                <button class="btn btn-primary" @onclick="AgregarTC">Asignar Tipo de Cambio</button> 
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-12 col-sm-12 col-md-12 col-lg-8 col-xl-6">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Moneda</th>
+                            <th>Origen</th>
+                            <th>Fecha</th>
+                            <th>Activo</th>
+                            <th>Tipo de Cambio</th>
+                            <th>Usuario</th> 
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (TiposCambioList != null)
+                        {
+                            @foreach (var item in TiposCambioList)
+                            {
+                                <tr>
+                                    <td>@Moneda.NombreCorto</td>
+                                    <td>@item.Origen</td>
+                                    <td>@item.Fecha.ToShortDateString()</td>
+                                    <td>
+                                        @if (item.Origen == "Usuario")
+                                        {
+                                            <Switch Etiqueta=" " @bind-Value="item.Activo" @bind-Value:after="@(()=>ActualizarRegistro(item))"></Switch>
+                                        }
+                                        else
+                                        {
+                                            <Switch Etiqueta=" " @bind-Value="item.Activo" disabled></Switch>
+                                        }
+                                    </td>
+                                    <td>@item.TipoCambio</td>
+                                    <td>@item.UsuarioCreacion</td>
+                                    
+                                </tr>
+                            }
+                        }                        
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+   
+</Contenido>
+@code {
+    private List<th_monedas> MonedasList { get; set; }
+    public string MonedaId { get; set; }
+    public string Id { get; set; }
+    public decimal TipoCambioValue { get;set; }
+    public DateTime Fecha { get; set; }
+    public th_monedas Moneda { get; set; }
+    private List<th_tiposcambio> TiposCambioList { get; set; }
+    [CascadingParameter] private Task<AuthenticationState> authenticationStateTask { get; set; }
+    private string Usuario
+    {
+        get
+        {
+            var _authState = authenticationStateTask.Result;
+            var user = _authState.User;
+            return ((System.Security.Claims.ClaimsIdentity)user.Identity).Name;
+        }
+    }
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            using (var db = new KalanDB(DB.connectionString))
+            {
+                MonedaId = db.th_contabilidad_cuenta_configuracion.First().moneda_Id;
+                await InvokeAsync(StateHasChanged);
+                MonedasList = db.th_monedas.ToList();
+                if (MonedasList != null)
+                {
+                    Moneda = MonedasList.Where(x => x.Id == MonedaId).First();
+                }                
+                await InvokeAsync(StateHasChanged);
+            }
+            Fecha = DateTime.Now.Date;
+            await InvokeAsync(StateHasChanged);
+            await CambiarMoneda();
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private async Task AgregarTC()
+    {
+        using(var db = new KalanDB(DB.connectionString))
+        {
+            if (string.IsNullOrEmpty(Id))
+            {
+                th_tiposcambio item = new th_tiposcambio();
+                item.Id = Guid.NewGuid().ToString();
+                item.Activo = true;
+                item.Fecha = this.Fecha;
+                item.FechaCreacion = DateTime.Now;
+                item.UsuarioCreacion = Usuario;
+                item.Origen = "Usuario";
+                item.moneda_Id = MonedaId;
+                item.TipoCambio = TipoCambioValue;
+                db.th_tiposcambio.Add(item);
+                db.SaveChanges();
+            }
+            else
+            {
+                th_tiposcambio item = db.th_tiposcambio.Find(Id);
+                item.Activo = true;
+                item.Fecha = this.Fecha;
+                item.FechaModifica = DateTime.Now;
+                item.UsuarioModifica = Usuario;
+                item.Origen = "Usuario";
+                item.TipoCambio = TipoCambioValue;
+                db.th_tiposcambio.Update(item);
+                db.SaveChanges();
+            }
+        }
+        await CambiarMoneda();
+        await InvokeAsync(StateHasChanged);
+    }
+    private async Task CambiarMoneda()
+    {
+        using (var db = new KalanDB(DB.connectionString))
+        {
+            TiposCambioList = await db.th_tiposcambio.Where(m => m.Fecha == Fecha && m.moneda_Id == MonedaId).OrderBy(x => x.Origen).ToListAsync();
+        }
+
+        await InvokeAsync(StateHasChanged);
+    }
+    private async Task ActualizarRegistro(th_tiposcambio item)
+    {
+        using (var db = new KalanDB(DB.connectionString))
+        {
+            item.FechaModifica = DateTime.Now;
+            item.UsuarioModifica = Usuario; 
+            item.TipoCambio = TipoCambioValue;
+            db.th_tiposcambio.Update(item);
+            db.SaveChanges();
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+}

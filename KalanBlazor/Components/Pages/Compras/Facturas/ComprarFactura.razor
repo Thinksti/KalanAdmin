@@ -1,0 +1,454 @@
+﻿@page "/compras/facturas/comprarfactura"
+
+@rendermode InteractiveServer
+@inject KalanDB DB
+@inject Excel Excel
+@inject NavigationManager NavigationManager
+@inject SweetAlertService Swal
+@inject LoadingService Spinner
+@inject IContabilidad Contabilidad
+<SpinnerLoading></SpinnerLoading>
+
+<Contenido Titulo="Capturar Factura de Proveedor">
+
+    <div class="row">
+        <div class="col-12 col-sm-12 col-md-6 col-lg-3 col-xl-3">
+            <Buscador TValue="string"
+                      Etiqueta="Id Proveedor"
+                      @bind-Item="th_Proveedor"
+                      TItem="th_proveedores"
+                      @bind-Value="Factura.proveedor_Id"
+                      @bind-Value:after="ValidarArticulos"
+                      SearchItems="SearchItemsProveedores"
+                      SearchExacto="SearchExactoProveedores"
+                      Llave="NombreCorto"></Buscador>
+        </div>
+        <div class="col-12 col-sm-12 col-md-6 col-lg-6 col-xl-6">
+            @if (th_Proveedor != null)
+            {
+                <ReadOnly Etiqueta="Razón Social" Value="@th_Proveedor.RazonSocial"></ReadOnly>
+            }
+            else
+            {
+                <ReadOnly Etiqueta="Razón Social" Value=" "></ReadOnly>
+            }
+        </div>
+        <div class="col-12 col-sm-12 col-md-6 col-lg-3 col-xl-3">
+            <Fecha Etiqueta="Fecha Factura" Max="@DateTime.Now" Min="@DateTime.Now.AddYears(-1)" @bind-Value="Factura.Fecha" @bind-Value:after="@(()=>InvokeAsync(StateHasChanged))"></Fecha>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-12 col-sm-12 col-md-6 col-lg-3 col-xl-3">
+            <Texto Etiqueta="Numero de Factura" MaxLength="36" @bind-Value="Factura.Factura"></Texto>
+        </div>
+        <div class="col-12 col-sm-12 col-md-6 col-lg-3 col-xl-3">
+            <Texto Etiqueta="UUID de la Factura" MaxLength="36" @bind-Value="Factura.UUID"></Texto>
+        </div>
+        <div class="col-12 col-sm-12 col-md-6 col-lg-3 col-xl-3">
+            <div class="form-floating">
+                <select @bind="Factura.metodopago_Id" class="form-select">
+                    <option value="" selected disabled>Método de Pago</option>
+                    @foreach (var item in DB.th_metodopago)
+                    {
+                        <option value="@item.Id">@item.Id</option>
+                    }
+                </select>
+                <label>Método de Pago</label>
+            </div>
+        </div>
+        <div class="col-12 col-sm-12 col-md-6 col-lg-3 col-xl-3">
+            <Monedas @bind-ValueFecha="Factura.Fecha"
+                     @bind-ValueTipoCambio="Factura.tipocambio_Id"
+                     @bind-ValueMoneda="Factura.moneda_Id">
+            </Monedas>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12 col-sm-12 col-md-12 col-lg-12 col-xl-12">
+            <TextoLargo rows="5" Etiqueta="Observaciones de la factura" MaxLength="400" @bind-Value="Factura.Observaciones"></TextoLargo>
+        </div>
+    </div>
+    <br />
+    <hr />
+    <div class="row">
+        <div class="col-12 col-sm-12 col-md-6 col-lg-2 col-xl-2">
+            @if (th_Proveedor != null)
+            {
+                <Buscador Etiqueta="Articulo"
+                          TItem="th_articulos"
+                          TValue="string"
+                          Llave="NombreCorto"
+                          @bind-Value="ArticuloId"
+                          @bind-Item:after="ValidarArticulo"
+                          SearchExacto="SearchExactoArticulo"
+                          SearchItems="SearchItemsArticulo"
+                          @bind-Item="Articulo">
+                </Buscador>
+            }
+            else
+            {
+                <ReadOnly Etiqueta="Articulo" Value=" "></ReadOnly>
+            }
+        </div>
+        <div class="col-12 col-sm-12 col-md-6 col-lg-4 col-xl-4">
+            @if (Articulo != null)
+            {
+                <ReadOnly Etiqueta="Descripción del Articulo" Value="@Articulo.Descripcion"></ReadOnly>
+            }
+            else
+            {
+                <ReadOnly Etiqueta="Descripción del Articulo" Value=" "></ReadOnly>
+            }
+        </div>
+        <div class="col-12 col-sm-12 col-md-6 col-lg-1 col-xl-1">
+            <Numerico Etiqueta="Cantidad" Min="1" Max="100000" @bind-Value="Cantidad"></Numerico>
+        </div>
+        <div class="col-12 col-sm-12 col-md-6 col-lg-2 col-xl-2">
+            <Numerico Etiqueta="Unitario" Min="0" Max="100000" @bind-Value="Unitario"></Numerico>
+        </div>
+        <div class="col-12 col-sm-12 col-md-6 col-lg-2 col-xl-2">
+            <ReadOnly Etiqueta="Importe" Value="@Importe"></ReadOnly>
+        </div>
+        <div class="col-12 col-sm-12 col-md-6 col-lg-1 col-xl-1">
+            <button style="width:100%;height:100%;" @onclick="AgregarPartida" class="btn btn-secondary"><i class="fa-solid fa-plus fa-xl"></i></button>
+        </div>
+    </div>
+    <hr />
+    <br />
+    <div class="row">
+        <div class="col-12">
+            <QuickGrid Class="table small" Items="Detalles.AsQueryable()">
+                <PropertyColumn Property="@(c => c.Partida)" Title="Partida" Align="Align.Center" Sortable="true" />
+                <TemplateColumn Title="Proveedor" Context="item" Sortable="true">
+                    @item.articulo.NombreCorto -@item.articulo.Descripcion
+                </TemplateColumn>
+                <PropertyColumn Property="@(c => c.Cantidad)" Title="Cantidad" Align="Align.Center" Sortable="true" />
+                <PropertyColumn Property="@(c => c.Unitario)" Format="c" Title="Unitario" Align="Align.Center" Sortable="true" />
+                <PropertyColumn Property="@(c => c.SubTotal)" Format="c" Title="Importe" Align="Align.Center" Sortable="true" />
+                <PropertyColumn Property="@(c => c.Impuesto)" Format="c" Title="Impuesto" Align="Align.Center" Sortable="true" />
+                <PropertyColumn Property="@(c => c.Total)" Title="Total" Format="c" Align="Align.Center" Sortable="true" />
+                <TemplateColumn Title="Quitar Partida" Align="Align.Center" Context="item">
+                    <button class="btn btn-sm btn-danger" @onclick="@(()=>EliminarPartida(item.Partida))"><i class="fa-solid fa-trash-can"></i></button>
+                </TemplateColumn>
+            </QuickGrid>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-12 col-sm-12 col-md-12 col-lg-10 col-xl-10">
+        </div>
+        <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+            <table style="width:100%;">
+                <tr>
+                    <td>SubTotal</td>
+                    <td style="text-align:right;">@SubTotal.ToString("c")</td>
+                </tr>
+                <tr>
+                    <td>Impuesto</td>
+                    <td style="text-align:right;">@Impuesto.ToString("c")</td>
+                </tr>
+                <tr>
+                    <td>Total</td>
+                    <td style="text-align:right;">@Total.ToString("c")</td>
+                </tr>
+            </table>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-12">
+            <button class="btn btn-primary" @onclick="Guardar">Guardar Compra</button>
+        </div>
+
+    </div>
+
+</Contenido>
+
+@code {
+    [CascadingParameter] private Task<AuthenticationState> authenticationStateTask { get; set; }
+    private th_compra_factura Factura { get; set; } = new th_compra_factura();
+    private List<th_compra_factura_detalle> Detalles { get; set; } = new List<th_compra_factura_detalle>();
+    private th_proveedores th_Proveedor { get; set; }
+    private th_articulos Articulo { get; set; }
+    private string ArticuloId { get; set; }
+    private decimal SubTotal
+    {
+        get
+        {
+            return Detalles.Sum(x => x.SubTotal);
+        }
+    }
+    private decimal Impuesto
+    {
+        get
+        {
+            return Detalles.Sum(x => x.Impuesto);
+        }
+    }
+    private decimal Total
+    {
+        get
+        {
+            return Detalles.Sum(x => x.Total);
+        }
+    }
+    private decimal Cantidad { get; set; }
+    private decimal Unitario { get; set; }
+    private string Usuario
+    {
+        get
+        {
+            var _authState = authenticationStateTask.Result;
+            var user = _authState.User;
+            return ((System.Security.Claims.ClaimsIdentity)user.Identity).Name;
+        }
+    }
+    private string Importe
+    {
+        get
+        {
+            return (Cantidad * Unitario).ToString("c");
+        }
+    }
+    protected override async Task OnInitializedAsync()
+    {
+        Factura.Fecha = DateTime.Now.Date;
+        Factura.Id = Guid.NewGuid().ToString();
+    }
+    private async Task ValidarArticulo()
+    {
+        if (Articulo != null)
+        {
+            Unitario = Articulo.th_articulos_proveedor.Where(x => x.proveedor_Id == th_Proveedor.Id).First().CostoActual;
+        }
+    }
+    private async Task ValidarArticulos()
+    {
+        var articulos = DB.th_articulos_proveedor.Where(x => x.proveedor_Id == th_Proveedor.Id).Count();
+        if (articulos == 0)
+        {
+            await Swal.FireAsync("Error", "El proveedor no tiene asignado ningún Articulo", SweetAlertIcon.Error);
+            th_Proveedor = null;
+            Factura.proveedor_Id = "";
+            return;
+        }
+    }
+    private async Task<IEnumerable<th_articulos>> SearchItemsArticulo(string value)
+    {
+        using (var tdb = new KalanDB(DB.connectionString))
+        {
+            return tdb.th_articulos
+     .Where(c => c.NombreCorto.Contains(value) || c.Descripcion.Contains(value))
+     .Where(c => c.th_articulos_proveedor.Where(x => x.proveedor_Id == th_Proveedor.Id).Any())
+     .Include(x => x.ImpPlanCompra).ThenInclude(x => x.th_plan_impuestos_detalle).ThenInclude(x => x.impuestos)
+     .Include(x => x.th_articulos_proveedor)
+     .IgnoreAutoIncludes()
+     .AsNoTracking()
+     .ToList()
+     .AsEnumerable();
+        }
+
+    }
+    private async Task<IEnumerable<th_articulos>> SearchExactoArticulo(string value)
+    {
+        using (var tdb = new KalanDB(DB.connectionString))
+        {
+            return tdb.th_articulos
+            .Where(c => c.NombreCorto == value)
+            .Where(c => c.th_articulos_proveedor.Where(x => x.proveedor_Id == th_Proveedor.Id).Any())
+            .Include(x => x.ImpPlanCompra).ThenInclude(x => x.th_plan_impuestos_detalle).ThenInclude(x => x.impuestos)
+            .Include(x => x.th_articulos_proveedor)
+            .IgnoreAutoIncludes()
+            .AsNoTracking()
+            .ToList()
+            .AsEnumerable();
+        }
+
+    }
+    private async Task AgregarPartida()
+    {
+        if (Cantidad * Unitario == 0)
+        {
+            await Swal.FireAsync("Error", "El monto no puede ser 0", SweetAlertIcon.Error);
+            return;
+        }
+        if (Articulo == null)
+        {
+            await Swal.FireAsync("Error", "Seleccione un articulo", SweetAlertIcon.Error);
+            return;
+        }
+        using (var tdb = new KalanDB(DB.connectionString))
+        {
+            var relacionArticulo = Articulo
+            .th_articulos_proveedor
+            .Where(x => x.proveedor_Id == th_Proveedor.Id)
+            .First();
+            relacionArticulo.CostoActual = Unitario;
+            tdb.th_articulos_proveedor.Update(relacionArticulo);
+            tdb.SaveChanges();
+            decimal impuesto = 0;
+            string planImpuestos = string.Empty;
+            switch (Articulo.OpImpCompra)
+            {
+                case 1:
+                    impuesto = 0;
+                    break;
+                case 2:
+                    planImpuestos = th_Proveedor.planimpuestos_id;
+                    if (th_Proveedor.planimpuestos != null)
+                    {
+                        foreach (var detalleImpuestos in th_Proveedor.planimpuestos.th_plan_impuestos_detalle)
+                        {
+                            impuesto = impuesto + (detalleImpuestos.impuestos.Porcentaje * (Cantidad * Unitario)) / 100;
+                        }
+                    }
+                    break;
+                case 3:
+                    planImpuestos = Articulo.ImpPlanCompra_id;
+                    if (Articulo.ImpPlanCompra != null)
+                    {
+                        foreach (var detalleImpuestos in Articulo.ImpPlanCompra.th_plan_impuestos_detalle)
+                        {
+                            impuesto = impuesto + (detalleImpuestos.impuestos.Porcentaje * (Cantidad * Unitario)) / 100;
+                        }
+                    }
+                    break;
+            }
+
+            var conceptoPartida = new th_compra_factura_detalle
+                {
+                    Partida = Detalles.Count + 1,
+                    articulo_Id = Articulo.Id,
+                    Cantidad = Cantidad,
+                    Unitario = Unitario,
+                    SubTotal = Cantidad * Unitario,
+                    Impuesto = impuesto,
+                    Total = (Cantidad * Unitario) + impuesto,
+                    Id = Guid.NewGuid().ToString(),
+                    factura_Id = Factura.Id,
+                    FechaCreacion = DateTime.Now,
+                    UsuarioCreacion = Usuario,
+                    planimpuestos_Id = planImpuestos,
+                    articulo = Articulo
+                };
+            Detalles.Add(conceptoPartida);
+            Cantidad = 1;
+            Unitario = 0;
+            Articulo = null;
+            ArticuloId = string.Empty;
+        }
+
+    }
+    private async Task EliminarPartida(int partida)
+    {
+        Detalles.Remove(Detalles.FirstOrDefault(x => x.Partida == partida));
+        await InvokeAsync(() =>
+          {
+              StateHasChanged();
+          });
+    }
+    private async Task<IEnumerable<th_proveedores>> SearchItemsProveedores(string value)
+    {
+        using (var tdb = new KalanDB(DB.connectionString))
+        {
+            return tdb.th_proveedores
+                    .Where(c => c.NombreCorto.Contains(value) || c.RazonSocial.Contains(value))
+                    .Include(x => x.planimpuestos).ThenInclude(x => x.th_plan_impuestos_detalle).ThenInclude(x => x.impuestos)
+                    .Include(x => x.th_articulos_proveedor)
+                    .IgnoreAutoIncludes()
+                    .AsNoTracking()
+                    .ToList()
+                    .AsEnumerable();
+        }
+    }
+    private async Task<IEnumerable<th_proveedores>> SearchExactoProveedores(string value)
+    {
+        using (var tdb = new KalanDB(DB.connectionString))
+        {
+            return tdb.th_proveedores
+     .Where(c => c.NombreCorto == value)
+     .Include(x => x.planimpuestos).ThenInclude(x => x.th_plan_impuestos_detalle).ThenInclude(x => x.impuestos)
+     .Include(x => x.th_articulos_proveedor)
+     .IgnoreAutoIncludes()
+     .AsNoTracking()
+     .ToList()
+     .AsEnumerable();
+        }
+
+    }
+    private async Task Guardar()
+    {
+        if (Detalles.Count == 0)
+        {
+            await Swal.FireAsync("Error", "No se han capturado partidas", "error");
+            return;
+        }
+        if (string.IsNullOrEmpty(Factura.Factura))
+        {
+            await Swal.FireAsync("Error", "Capture el numero de factura", SweetAlertIcon.Error);
+            return;
+        }
+        if (string.IsNullOrEmpty(Factura.metodopago_Id))
+        {
+            await Swal.FireAsync("Error", "Seleccione el método de pago primero", SweetAlertIcon.Error);
+            return;
+        }
+        using (var entidad = new KalanDB(DB.connectionString))
+        {
+            using (var transaccion = entidad.Database.BeginTransaction())
+            {
+                try
+                {
+                    Factura.proveedor_Id = th_Proveedor.Id;
+                    th_cuentaspagar cuentaspagar = new th_cuentaspagar
+                        {
+                            Activo = true,
+                            Disponible = Detalles.Sum(x => x.Total),
+                            Factura = Factura.Factura,
+                            Fecha = Factura.Fecha,
+                            FechaCreacion = DateTime.Now,
+                            Id = Factura.Id,
+                            metodopago_Id = Factura.metodopago_Id,
+                            Observaciones = Factura.Observaciones,
+                            Original = Detalles.Sum(x => x.Total),
+                            proveedor_Id = Factura.proveedor_Id,
+                            UsuarioCreacion = Usuario,
+                            UUID = Factura.UUID,
+                            moneda_Id = Factura.moneda_Id,
+                            tipocambio_Id = Factura.tipocambio_Id
+                        };
+                    entidad.th_cuentaspagar.Add(cuentaspagar);
+                    entidad.SaveChanges();
+                    Factura.SubTotal = SubTotal;
+                    Factura.MontoImpuestos = Impuesto;
+                    Factura.Total = Total;
+                    Factura.Activo = true;
+                    Factura.FechaCreacion = DateTime.Now;
+                    Factura.UsuarioCreacion = Usuario;
+                    entidad.th_compra_factura.Add(Factura);
+                    entidad.SaveChanges();
+                    foreach (var item in Detalles)
+                    {
+                        item.FechaCreacion = DateTime.Now;
+                        item.UsuarioCreacion = Usuario;
+                        item.articulo = null;
+                        entidad.th_compra_factura_detalle.Add(item);
+                        entidad.SaveChanges();
+                    }
+                    await Contabilidad.ComprasFactura(Factura.Id, Usuario);
+                    transaccion.Commit();
+                    Detalles = new();
+                    await Swal.FireAsync("Guardado", "La factura ha sido guardada", SweetAlertIcon.Success);
+                    NavigationManager.NavigateTo("/compras/facturas/comprarfactura", true);
+                }
+                catch (Exception ex)
+                {
+                    transaccion.Rollback();
+                    await Swal.FireAsync("Error", ex.Message, SweetAlertIcon.Error);
+                }
+
+            }
+        }
+
+
+    }
+}

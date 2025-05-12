@@ -1,0 +1,180 @@
+﻿@page "/th_proveedores/edit"
+@inject KalanDB DB;
+@inject NavigationManager NavigationManager;
+@inject SweetAlertService Swal
+@rendermode InteractiveServer
+<PageTitle>Edit</PageTitle>
+<Contenido Titulo="Editar Proveedores">
+  
+        @if (th_proveedores is null)
+        {
+            <p><em>Loading...</em></p>
+        }
+        else
+        {
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <Texto Etiqueta="Nombre Corto" MaxLength="15" @bind-Value="th_proveedores.NombreCorto"></Texto>
+                    </div>
+                    <div class="mb-3">
+                        <Texto Etiqueta="Razón Social" MaxLength="250" @bind-Value="th_proveedores.RazonSocial"></Texto>
+
+                    </div>
+                    <div class="mb-3">
+                        <Texto Etiqueta="RFC" MaxLength="13" @bind-Value="th_proveedores.RFC"></Texto>
+                    </div>
+                    <div class="mb-3">
+                        <Texto Etiqueta="Código Postal" MaxLength="5" @bind-Value="th_proveedores.CodigoPostal"></Texto>
+                    </div>
+                    <div class="mb-3">
+                        <Texto Etiqueta="Dirección" MaxLength="250" @bind-Value="th_proveedores.Direccion"></Texto>
+                    </div>
+                    <div class="mb-3">
+                        <Combo Etiqueta="Régimen Fiscal"
+                               @bind-Value="th_proveedores.regimenfiscal_Id"
+                               ItemValue="Id"
+                               TextValue="Regimen"
+                               Items="kalanDB.th_regimenfiscal.ToList()">
+                        </Combo>
+                    </div>
+                    <div class="mb-3">
+                        <Combo Etiqueta="Uso de CFDi"
+                               @bind-Value="th_proveedores.usocfdi_Id"
+                               ItemValue="Id"
+                               TextValue="UsoCFDi"
+                               Items="kalanDB.th_usocfdi.ToList()">
+                        </Combo>
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-floating">
+                            <Combo Etiqueta="Plan de Impuestos"
+                                   @bind-Value="th_proveedores.planimpuestos_id"
+                                   ItemValue="Id"
+                                   TextValue="NombreCorto"
+                                   Items="kalanDB.th_plan_impuestos.ToList()">
+                            </Combo>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <CuentaContable Etiqueta="Cuenta Contable Proveedor" @bind-Value="th_proveedores.cuentacontable_id"></CuentaContable>
+                    </div>
+                    <div class="mb-3">
+                        <Switch Etiqueta="Activo" @bind-Value="th_proveedores.Activo"></Switch>
+                    </div>
+                    <div class="mb-3 Ocultar">
+                        <label for="usuariocreacion" class="form-label">UsuarioCreacion:</label>
+                        <InputText id="usuariocreacion" @bind-Value="th_proveedores.UsuarioCreacion" class="form-control" />
+                    </div>
+                    <div class="mb-3 Ocultar">
+                        <label for="fechacreacion" class="form-label">FechaCreacion:</label>
+                        <InputDate id="fechacreacion" @bind-Value="th_proveedores.FechaCreacion" class="form-control" />
+
+                    </div>
+                    <button @onclick="Updateth_proveedores" class="btn btn-primary">Update</button>
+                </div>
+            </div>
+        }
+
+        <div>
+            <a href="/th_proveedores"><i class="fa-solid fa-arrow-left"></i> Regresar al Index</a>
+        </div>
+ 
+</Contenido>
+
+@code {
+    [SupplyParameterFromQuery]
+    public string Id { get; set; }
+
+    [SupplyParameterFromForm]
+    public th_proveedores th_proveedores { get; set; }
+    private KalanDB kalanDB
+    {
+        get
+        {
+            return new KalanDB(DB.connectionString);
+        }
+
+    }
+    [CascadingParameter] private Task<AuthenticationState> authenticationStateTask { get; set; }
+    protected override async Task OnInitializedAsync()
+    {
+        th_proveedores ??= await DB.th_proveedores.FirstOrDefaultAsync(m => m.Id == Id);
+
+        if (th_proveedores is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+        }
+        th_proveedores.FechaModifica = DateTime.Now;
+    }
+
+    // To protect from overposting attacks, enable the specific properties you want to bind to.
+    // For more details, see https://aka.ms/RazorPagesCRUD.
+    public async Task Updateth_proveedores()
+    {
+        if (string.IsNullOrEmpty(th_proveedores.CodigoPostal))
+        {
+            await Swal.FireAsync("Error", "Captura el Código postal", SweetAlertIcon.Error);
+            return;
+        }
+        if (string.IsNullOrEmpty(th_proveedores.Direccion))
+        {
+            await Swal.FireAsync("Error", "Captura la Dirección", SweetAlertIcon.Error);
+            return;
+        }
+        if (string.IsNullOrEmpty(th_proveedores.NombreCorto))
+        {
+            await Swal.FireAsync("Error", "Captura el Nombre Corto", SweetAlertIcon.Error);
+            return;
+        }
+        if (string.IsNullOrEmpty(th_proveedores.RazonSocial))
+        {
+            await Swal.FireAsync("Error", "Captura la Razón Social", SweetAlertIcon.Error);
+            return;
+        }
+        if (string.IsNullOrEmpty(th_proveedores.RFC))
+        {
+            await Swal.FireAsync("Error", "Captura el RFC", SweetAlertIcon.Error);
+            return;
+        }
+        if (th_proveedores.regimenfiscal_Id == null)
+        {
+            await Swal.FireAsync("Error", "Selecciona el Régimen Fiscal", SweetAlertIcon.Error);
+            return;
+        }
+        if (th_proveedores.usocfdi_Id == null)
+        {
+            await Swal.FireAsync("Error", "Selecciona el Uso de CFDi", SweetAlertIcon.Error);
+            return;
+        }
+        var _authState = await authenticationStateTask;
+        var user = _authState.User;
+        var correo = ((System.Security.Claims.ClaimsIdentity)user.Identity).Name;
+        th_proveedores.FechaModifica = DateTime.Now;
+        th_proveedores.UsuarioModifica = correo;
+        DB.Attach(th_proveedores!).State = EntityState.Modified;
+
+        try
+        {
+            await DB.SaveChangesAsync();
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            if (!th_proveedoresExists(th_proveedores!.Id))
+            {
+                NavigationManager.NavigateTo("notfound");
+            }
+            else
+            {
+                throw;
+            }
+        }
+
+        NavigationManager.NavigateTo("/th_proveedores");
+    }
+
+    bool th_proveedoresExists(string id)
+    {
+        return DB.th_proveedores.Any(e => e.Id == id);
+    }
+}

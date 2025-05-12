@@ -1,0 +1,270 @@
+﻿@typeparam TItem
+@inject IJSRuntime JS
+
+
+
+<div class="row">
+    <div class="col-10">
+        <h2>@Nombre</h2>
+    </div>
+    <div class="col-2">
+        @if (Descargar)
+        {
+            <button class="btn btn-primary" @onclick="_Descargar"><i class="fa-solid fa-download"></i> Descargar</button>
+        }
+
+    </div>
+</div>
+<br />
+@if (Items != null && Items.Any())
+{
+    <div class="row">
+        <div class="col-12">
+            <div class="form-floating">
+                <input type="text" class="form-control" id="txt_Buscar" @bind="SearchTerm" @bind:event="oninput" placeholder="Buscar">
+                <label for="txt_Buscar">Buscar</label>
+            </div>
+        </div>
+    </div>
+    <div class="table-responsive">
+        <table class="table small">
+            <thead>
+                <tr>
+                    @foreach (var property in typeof(TItem).GetProperties())
+                    {
+                        @* <th @onclick="(() => SortTable(property.Name))">   *@
+                        <th >
+                            <div>
+                                @* <span @onclick="(() => SortByPropertyName(property.Name))"> *@
+                                    @property.Name
+                                    @if (CurrentSortColumn == property.Name)
+                                    {
+                                        @if (IsSortAscending)
+                                        {
+
+                                            <i class="fa-solid fa-arrow-up-a-z"></i>
+                                        }
+                                        else
+                                        {
+                                            <i class="fa-solid fa-arrow-down-z-a"></i>
+                                        }
+                                    }
+                           @*      </span> *@
+                            </div>                            
+                        </th>
+                    }
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in PaginatedItems)
+                {
+                    <tr>
+                        @foreach (var property in typeof(TItem).GetProperties())
+                        {
+                            @switch (@property.PropertyType.FullName)
+                            {
+                                case "System.DateTime":
+                                    <td>
+                                        <span>
+                                        @if (Convert.ToDateTime(property.GetValue(item)).Minute == 0 && Convert.ToDateTime(property.GetValue(item)).Hour == 0 && Convert.ToDateTime(property.GetValue(item)).Minute == 0)
+                                        {
+                                            @(Convert.ToDateTime(property.GetValue(item)).ToShortDateString())
+                                        }
+                                        else
+                                        {
+                                            @(Convert.ToDateTime(property.GetValue(item)))
+                                        }
+                                        </span>
+                                    </td>
+                                    break;
+                                case "System.Decimal":
+                                    <td style="text-align:right;"><span>@(Convert.ToDecimal(property.GetValue(item)).ToString("n2"))</span></td>
+                                    break;
+                                case "System.Boolean":
+                                    <td>
+                                        <span>
+                                            @if (Convert.ToBoolean(property.GetValue(item)))
+                                            {
+                                                <div class="form-check" style="margin-left:40%">
+                                                    <input class="form-check-input" type="checkbox" value="" disabled checked>
+                                                    <label class="form-check-label"></label>
+                                                </div>
+                                            }
+                                            else
+                                            {
+                                                <div class="form-check" style="margin-left:40%">
+                                                    <input class="form-check-input" type="checkbox" value="" disabled>
+                                                    <label class="form-check-label"></label>
+                                                </div>
+                                            }
+                                        </span>
+                                    </td>
+                                    break;
+                                default:
+                                    @if (property.GetValue(item) != null)
+                                    {
+                                        @if (property.GetValue(item).ToString().Length == 1)
+                                        {
+                                            <td style="text-align:center;">
+                                               <span> @property.GetValue(item)</span>
+                                            </td>
+                                        }
+                                        else
+                                        {
+                                            <td>
+                                              <span>  @property.GetValue(item)</span>
+                                            </td>
+
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <td>
+                                            
+                                        </td>
+                                    }
+                                    break;
+                            }
+                        }
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+    @if (Items.Count() > _itemsPerPage)
+    {
+        <nav>
+            <ul class="pagination">
+                <li class="page-item @(_currentPage == 1 ? "disabled" : "")">
+                    <button style="width: 90px;border-radius: 50px !important;" class="page-link" @onclick="() => ChangePage(_currentPage - 1)">Anterior</button>
+                </li>
+                @foreach (var pageNum in Paginas)
+                {
+                    <li class="page-item @(pageNum == _currentPage ? "active" : "")">
+                        <button class="page-link" @onclick="() => ChangePage(pageNum)"> @pageNum</button>
+                    </li>
+                }
+                <li class="page-item @(_currentPage == MaxPage ? "disabled" : "")">
+                    <button style="width: 90px;border-radius: 50px !important;" class="page-link" @onclick="() => ChangePage(_currentPage + 1)">
+                        Siguiente
+                    </button>
+                </li>
+            </ul>
+        </nav>
+    }    
+}
+else
+{
+    <div>No se encontraron datos para mostrar.</div>
+}
+
+
+@code {
+
+    [Parameter]
+    public List<TItem> Items { get; set; }
+    [Parameter] public string Nombre { get; set; }
+    [Parameter] public bool Descargar { get; set; } = true;
+    public List<int> Paginas
+    {
+        get
+        {
+            var listado = new List<int>();
+            for (var pageNum = StartPage; pageNum <= EndPage; pageNum++)
+            {
+                listado.Add(pageNum);
+            }
+            return listado;
+        }
+    }
+    private string SearchTerm { get; set; } = string.Empty;
+
+    private string CurrentSortColumn { get; set; }
+    private bool IsSortAscending { get; set; } = true;
+
+    private IEnumerable<TItem> FilteredItems => Items?
+        .Where(item => typeof(TItem).GetProperties()
+        .Any(prop => prop.GetValue(item)?.ToString()?
+        .Contains(SearchTerm, StringComparison.InvariantCultureIgnoreCase) == true));
+
+    private int _currentPage = 1;
+    private const int _itemsPerPage = 10;
+    private const int MaxPageButtons = 10;
+    private IEnumerable<TItem> PaginatedItems => FilteredItems?
+        .Skip((_currentPage - 1) * _itemsPerPage)
+        .Take(_itemsPerPage);
+
+    private int MaxPage => (int)Math.Ceiling((double)(FilteredItems?.Count() ?? 1) / _itemsPerPage);
+
+    private int StartPage => Math.Max(1, _currentPage - MaxPageButtons / 2);
+    private int EndPage => Math.Min(MaxPage, StartPage + MaxPageButtons - 1);
+    public async Task SortByPropertyName(string propertyName )
+    {
+        List<TItem> t_Items = new();
+        t_Items.AddRange(Items);
+        Items = null;
+        await InvokeAsync(delegate
+        {
+            StateHasChanged();
+        });
+        CurrentSortColumn = propertyName;
+        IsSortAscending = !IsSortAscending;
+        PropertyInfo propertyInfo = typeof(TItem).GetProperty(propertyName);
+        if (IsSortAscending)
+        {
+            t_Items = t_Items.OrderBy(item => propertyInfo.GetValue(item, null)).ToList();
+        }
+        else
+        {
+            t_Items = t_Items.OrderByDescending(item => propertyInfo.GetValue(item, null)).ToList();
+        }
+        Items = new();
+        await InvokeAsync(delegate
+        {
+            StateHasChanged();
+        });
+        Items.AddRange(t_Items);
+        await InvokeAsync(delegate
+        {
+            StateHasChanged();
+        });
+    }
+    private void ChangePage(int page)
+    {
+        _currentPage = page;
+    }
+
+    private void NextPage()
+    {
+        if (_currentPage < MaxPage)
+        {
+            _currentPage++;
+        }
+    }
+
+    private void PreviousPage()
+    {
+        if (_currentPage > 1)
+        {
+            _currentPage--;
+        }
+    }
+ 
+    private async Task _Descargar()
+    {
+        var excel = new Shared.Utilerias.Excel.Excel();
+        var bytes = excel.ExportExcel<TItem>(Items, Nombre);
+        var base64 = Convert.ToBase64String(bytes);
+        await DownloadFileFromStream(new MemoryStream(Convert.FromBase64String(base64)), $"{Nombre}.xlsx");
+        await InvokeAsync(delegate
+        {
+            StateHasChanged();
+        });
+
+    }
+    private async Task DownloadFileFromStream(Stream fileStream, string fileName)
+    {
+        using DotNetStreamReference streamRef = new DotNetStreamReference(fileStream);
+        await JS.InvokeVoidAsync("downloadFileFromStream", fileName, streamRef);
+    }
+}

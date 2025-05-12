@@ -1,0 +1,45 @@
+﻿@page "/inventario/articulosproveedor/ver"
+@rendermode InteractiveServer
+@inject KalanDB DB
+@inject Excel Excel
+@inject NavigationManager NavigationManager
+@inject SweetAlertService Swal
+@inject LoadingService Spinner
+<SpinnerLoading></SpinnerLoading>
+
+<Contenido Titulo="Ver Relación Articulo-Proveedor">
+  
+        <div class="row">
+            <div class="col-12">
+                <KalanBlazor.Components.Pages.Inventario.Componente.Articulo item="@item.articulo"></KalanBlazor.Components.Pages.Inventario.Componente.Articulo>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-12">
+                <KalanBlazor.Components.Pages.Inventario.Componente.Proveedor item="@item.proveedor"></KalanBlazor.Components.Pages.Inventario.Componente.Proveedor>
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-12">
+                <Switch Etiqueta="Activo" disabled @bind-Value="item.Activo"></Switch>
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+                <a href="/inventario/articulosproveedor/listado"><i class="fa-solid fa-arrow-left"></i> Regresar al Index</a>
+            </div>
+        </div>
+     
+</Contenido>
+
+@code {
+    [Parameter][SupplyParameterFromQuery] public string id { get; set; }
+    [CascadingParameter] private Task<AuthenticationState> authenticationStateTask { get; set; }
+    private th_articulos_proveedor item { get; set; }
+    protected override async Task OnInitializedAsync()
+    {
+        item = DB.th_articulos_proveedor.Where(x => x.Id == id).Include(x => x.proveedor).Include(x => x.articulo).FirstOrDefault();
+    }
+}

@@ -1,0 +1,80 @@
+﻿@page "/financiero/monedas/cancelar"
+
+@rendermode InteractiveServer
+@inject KalanDB DB
+@inject Excel Excel
+@inject NavigationManager NavigationManager
+@inject SweetAlertService Swal
+@inject LoadingService Spinner
+<SpinnerLoading></SpinnerLoading>
+
+<Contenido Titulo="Eliminar la Moneda">
+    
+        <div class="row">
+            <div class="col-12 col-sm-12 col-md-12 col-lg-6 col-xl-4">
+                <Texto MaxLength="15" disabled Etiqueta="Nombre de la Moneda" @bind-Value="item.NombreCorto"></Texto>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-12 col-sm-12 col-md-12 col-lg-6 col-xl-6">
+                <Texto MaxLength="100" disabled Etiqueta="Descripción de la Moneda" @bind-Value="item.Descripcion"></Texto>
+            </div>
+        </div>
+
+
+        <div class="row">
+            <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+                <Switch disabled Etiqueta="Moneda Activa" @bind-Value="item.Activo"></Switch>
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+                <button @onclick="Guardar" class="btn btn-danger">Eliminar Moneda</button>
+            </div>
+        </div>
+  
+        <div class="row">
+            <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+                <a href="/financiero/monedas/listado"><i class="fa-solid fa-arrow-left"></i> Regresar al Index</a>
+            </div>
+        </div>
+    
+</Contenido>
+
+@code {
+    [Parameter][SupplyParameterFromQuery] public string id { get; set; }
+    [CascadingParameter] private Task<AuthenticationState> authenticationStateTask { get; set; }
+    private th_monedas item { get; set; } = new();
+    protected override async Task OnInitializedAsync()
+    {
+        item = await DB.th_monedas.FirstOrDefaultAsync(m => m.Id == id);
+        if (item is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+        }
+    }
+    private string Usuario
+    {
+        get
+        {
+            var _authState = authenticationStateTask.Result;
+            var user = _authState.User;
+            return ((System.Security.Claims.ClaimsIdentity)user.Identity).Name;
+        }
+    }
+    private async Task Guardar()
+    {
+        try
+        {
+            DB.th_monedas.Remove(item);
+            await DB.SaveChangesAsync();
+            NavigationManager.NavigateTo("/financiero/monedas/listado");
+        }
+        catch (Exception ex)
+        {
+            await Swal.FireAsync("Error", ex.Message, SweetAlertIcon.Error);
+        }        
+    }
+}

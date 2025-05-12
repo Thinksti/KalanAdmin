@@ -1,0 +1,91 @@
+﻿.textareaaltura {
+    height: 100px !important;
+}
+.resaltadoKalan {
+    font-weight: 800;
+    color: #cb0c9f !important;
+}
+.resaltado {
+    font-weight: 800;
+}
+.resaltadoKalanSub {
+    font-weight: 800;
+    color: #D57A88 !important;
+}
+.spinner-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 9999;
+}
+div .row {
+    margin-top:10px;
+}
+.componentesKalan {
+    border-color: #ab9591 !important;
+}
+input {
+    border-color: #ab9591 !important;
+}
+.input-group input {
+    border-top-right-radius: 0rem !important;
+    border-bottom-right-radius: 0rem !important;
+}
+.input-group button {
+    height: 58px !important;
+}
+hr {
+    border: solid 1px !important;
+}
+.file-upload-wrapper {
+    position: relative;
+    width: 100%;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.file-upload {
+    border: 2px dashed #007bff;
+    border-radius: 5px;
+    padding: 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.3s;
+}
+
+    .file-upload:hover {
+        border-color: #0056b3;
+    }
+
+.file-upload-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.file-upload-drag {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+    .file-upload-drag i {
+        font-size: 3rem;
+        color: #007bff;
+        margin-bottom: 10px;
+    }
+
+    .file-upload-drag p {
+        margin: 0;
+        font-size: 1.2rem;
+        color: #6c757d;
+    }
+
+    .file-upload-drag button {
+        margin-top: 10px;
+    }

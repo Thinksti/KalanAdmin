@@ -1,0 +1,22 @@
+﻿<div class="@GetColumnClasses()">
+    @ChildContent
+</div>
+
+@code {
+    [Parameter] public RenderFragment ChildContent { get; set; } // Contenido del componente
+    [Parameter] public int Col { get; set; } = 12; // Valor predeterminado para col-xl
+    [Parameter] public string AdditionalClasses { get; set; } // Clases adicionales
+
+    // Método para calcular las clases de columna
+    private string GetColumnClasses()
+    {
+        // Validar que Cols esté entre 1 y 12
+        var cols = Math.Clamp(Col, 1, 12);
+
+        // Calcular las clases responsivas
+        var responsiveClasses = ResponsiveColumnCalculator.CalculateResponsiveColumns(cols);
+
+        // Construir la cadena de clases
+        return $"col-12 col-sm-{responsiveClasses.colSm} col-md-{responsiveClasses.colMd} col-lg-{responsiveClasses.colLg} col-xl-{cols} {AdditionalClasses}";
+    }
+}

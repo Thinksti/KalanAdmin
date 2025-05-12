@@ -1,0 +1,248 @@
+﻿@page "/financiero/cuentas/cancelar"
+
+@rendermode InteractiveServer
+@inject KalanDB DB
+@inject Excel Excel
+@inject NavigationManager NavigationManager
+@inject SweetAlertService Swal
+@inject LoadingService Spinner
+<SpinnerLoading></SpinnerLoading>
+
+<Contenido Titulo="Eliminar la Cuenta Contable">
+   
+        <div class="row">
+            @if (itemConfig.Segmento1)
+            {
+                <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+                    @if (this.itemConfig.Costos == 1)
+                    {
+                        <Texto disabled EsBuscador="true" MaxLength="@itemConfig.Segmento1Largo" Etiqueta="Segmento Costos" @bind-Value="item.Segmento1"></Texto>
+                    }
+                    else
+                    {
+                        @if (this.itemConfig.Detalle == 1)
+                        {
+                            <Texto disabled EsBuscador="true" MaxLength="@itemConfig.Segmento1Largo" Etiqueta="Segmento Detalle" @bind-Value="item.Segmento1"></Texto>
+                        }
+                        else
+                        {
+                            @if (this.itemConfig.Mayor == 1)
+                            {
+                                <Texto disabled EsBuscador="true" MaxLength="@itemConfig.Segmento1Largo" Etiqueta="Segmento Mayor" @bind-Value="item.Segmento1"></Texto>
+                            }
+                            else
+                            {
+                                <Texto disabled EsBuscador="true" MaxLength="@itemConfig.Segmento1Largo" Etiqueta="Segmento 1" @bind-Value="item.Segmento1"></Texto>
+                            }
+                        }
+                    }
+                </div>
+            }
+            @if (itemConfig.Segmento2)
+            {
+                <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+                    @if (this.itemConfig.Costos == 2)
+                    {
+                        <Texto disabled EsBuscador="true" MaxLength="@itemConfig.Segmento2Largo" Etiqueta="Segmento Costos" @bind-Value="item.Segmento2"></Texto>
+                    }
+                    else
+                    {
+                        @if (this.itemConfig.Detalle == 2)
+                        {
+                            <Texto disabled EsBuscador="true" MaxLength="@itemConfig.Segmento2Largo" Etiqueta="Segmento Detalle" @bind-Value="item.Segmento2"></Texto>
+                        }
+                        else
+                        {
+                            @if (this.itemConfig.Mayor == 2)
+                            {
+                                <Texto disabled EsBuscador="true" MaxLength="@itemConfig.Segmento2Largo" Etiqueta="Segmento Mayor" @bind-Value="item.Segmento2"></Texto>
+                            }
+                            else
+                            {
+                                <Texto disabled EsBuscador="true" MaxLength="@itemConfig.Segmento2Largo" Etiqueta="Segmento 2" @bind-Value="item.Segmento2"></Texto>
+                            }
+                        }
+                    }
+                </div>
+            }
+            @if (itemConfig.Segmento3)
+            {
+                <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+                    @if (this.itemConfig.Costos == 3)
+                    {
+                        <Texto disabled EsBuscador="true" MaxLength="@itemConfig.Segmento3Largo" Etiqueta="Segmento Costos" @bind-Value="item.Segmento3"></Texto>
+                    }
+                    else
+                    {
+                        @if (this.itemConfig.Detalle == 3)
+                        {
+                            <Texto disabled EsBuscador="true" MaxLength="@itemConfig.Segmento3Largo" Etiqueta="Segmento Detalle" @bind-Value="item.Segmento3"></Texto>
+                        }
+                        else
+                        {
+                            @if (this.itemConfig.Mayor == 3)
+                            {
+                                <Texto disabled EsBuscador="true" MaxLength="@itemConfig.Segmento3Largo" Etiqueta="Segmento Mayor" @bind-Value="item.Segmento3"></Texto>
+                            }
+                            else
+                            {
+                                <Texto disabled EsBuscador="true" MaxLength="@itemConfig.Segmento3Largo" Etiqueta="Segmento 3" @bind-Value="item.Segmento3"></Texto>
+                            }
+                        }
+                    }
+                </div>
+            }
+            @if (itemConfig.Segmento4)
+            {
+                <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+                    @if (this.itemConfig.Costos == 4)
+                    {
+                        <Texto disabled EsBuscador="true" MaxLength="@itemConfig.Segmento4Largo" Etiqueta="Segmento Costos" @bind-Value="item.Segmento4"></Texto>
+                    }
+                    else
+                    {
+                        @if (this.itemConfig.Detalle == 4)
+                        {
+                            <Texto disabled EsBuscador="true" MaxLength="@itemConfig.Segmento4Largo" Etiqueta="Segmento Detalle" @bind-Value="item.Segmento4"></Texto>
+                        }
+                        else
+                        {
+                            @if (this.itemConfig.Mayor == 4)
+                            {
+                                <Texto disabled EsBuscador="true" MaxLength="@itemConfig.Segmento4Largo" Etiqueta="Segmento Mayor" @bind-Value="item.Segmento4"></Texto>
+                            }
+                            else
+                            {
+                                <Texto disabled EsBuscador="true" MaxLength="@itemConfig.Segmento4Largo" Etiqueta="Segmento 4" @bind-Value="item.Segmento4"></Texto>
+                            }
+                        }
+                    }
+                </div>
+            }
+            @if (itemConfig.Segmento5)
+            {
+                <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+                    @if (this.itemConfig.Costos == 5)
+                    {
+                        <Texto disabled EsBuscador="true" MaxLength="@itemConfig.Segmento5Largo" Etiqueta="Segmento Costos" @bind-Value="item.Segmento5"></Texto>
+                    }
+                    else
+                    {
+                        @if (this.itemConfig.Detalle == 5)
+                        {
+                            <Texto disabled EsBuscador="true" MaxLength="@itemConfig.Segmento5Largo" Etiqueta="Segmento Detalle" @bind-Value="item.Segmento5"></Texto>
+                        }
+                        else
+                        {
+                            @if (this.itemConfig.Mayor == 5)
+                            {
+                                <Texto disabled EsBuscador="true" MaxLength="@itemConfig.Segmento5Largo" Etiqueta="Segmento Mayor" @bind-Value="item.Segmento5"></Texto>
+                            }
+                            else
+                            {
+                                <Texto disabled EsBuscador="true" MaxLength="@itemConfig.Segmento5Largo" Etiqueta="Segmento 5" @bind-Value="item.Segmento5"></Texto>
+                            }
+                        }
+                    }
+                </div>
+            }
+            @if (itemConfig.Segmento6)
+            {
+                <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+                    @if (this.itemConfig.Costos == 6)
+                    {
+                        <Texto disabled EsBuscador="true" MaxLength="@itemConfig.Segmento6Largo" Etiqueta="Segmento Costos" @bind-Value="item.Segmento6"></Texto>
+                    }
+                    else
+                    {
+                        @if (this.itemConfig.Detalle == 6)
+                        {
+                            <Texto disabled EsBuscador="true" MaxLength="@itemConfig.Segmento6Largo" Etiqueta="Segmento Detalle" @bind-Value="item.Segmento6"></Texto>
+                        }
+                        else
+                        {
+                            @if (this.itemConfig.Mayor == 6)
+                            {
+                                <Texto disabled EsBuscador="true" MaxLength="@itemConfig.Segmento6Largo" Etiqueta="Segmento Mayor" @bind-Value="item.Segmento6"></Texto>
+                            }
+                            else
+                            {
+                                <Texto disabled EsBuscador="true" MaxLength="@itemConfig.Segmento6Largo" Etiqueta="Segmento 6" @bind-Value="item.Segmento6"></Texto>
+                            }
+                        }
+                    }
+                </div>
+            }
+        </div>
+        <div class="row">
+            <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+                <ReadOnly Etiqueta="Cuenta Contable" Value="@item.CuentaContable"></ReadOnly>
+            </div>
+            <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+                <ReadOnly Etiqueta="Categoría Contable" Value="@item.categoria.Categoria"></ReadOnly>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-12 col-sm-12 col-md-12 col-lg-6 col-xl-6">
+                <Texto disabled MaxLength="150" Etiqueta="Descripción la Cuenta Contable" @bind-Value="item.Descripcion"></Texto>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+                <Switch disabled Etiqueta="Cuenta Activa" @bind-Value="item.Activo"></Switch>
+            </div>
+        </div>
+
+ 
+        
+        <div class="row">
+            <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+                <button @onclick="Guardar" class="btn btn-danger">Eliminar Impuesto</button>
+            </div>
+        </div>
+  
+        <div class="row">
+            <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+                <a href="/financiero/cuentas/listado"><i class="fa-solid fa-arrow-left"></i> Regresar al Index</a>
+            </div>
+        </div>
+ 
+</Contenido>
+
+@code {
+    [Parameter][SupplyParameterFromQuery] public string id { get; set; }
+    [CascadingParameter] private Task<AuthenticationState> authenticationStateTask { get; set; }
+    private th_contabilidad_cuenta item { get; set; } = new();
+    private th_contabilidad_cuenta_configuracion itemConfig { get; set; }
+    protected override async Task OnInitializedAsync()
+    {
+        itemConfig = DB.th_contabilidad_cuenta_configuracion.FirstOrDefault();
+        item = DB.th_contabilidad_cuenta.Where(m => m.Id == id).Include(x => x.categoria).FirstOrDefault();
+        if (item is null)
+        {
+            NavigationManager.NavigateTo("/financiero/cuentas/listado");
+        }
+    }
+    private string Usuario
+    {
+        get
+        {
+            var _authState = authenticationStateTask.Result;
+            var user = _authState.User;
+            return ((System.Security.Claims.ClaimsIdentity)user.Identity).Name;
+        }
+    }
+    private async Task Guardar()
+    {
+        try
+        {
+            DB.th_contabilidad_cuenta.Remove(item);
+            await DB.SaveChangesAsync();
+            NavigationManager.NavigateTo("/financiero/cuentas/listado");
+        }
+        catch (Exception ex)
+        {
+            await Swal.FireAsync("Error", ex.Message, SweetAlertIcon.Error);
+        }        
+    }
+}

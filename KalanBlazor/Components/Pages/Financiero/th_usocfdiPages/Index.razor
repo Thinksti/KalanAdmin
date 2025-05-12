@@ -1,0 +1,35 @@
+﻿@page "/th_usocfdis"
+@using Microsoft.AspNetCore.Components.QuickGrid
+@inject KalanDB DB
+@inject NavigationManager NavigationManager
+@rendermode InteractiveServer
+
+<PageTitle>Index</PageTitle>
+
+<h1>Usos de CFDi</h1>
+
+<p>
+    <a href="th_usocfdis/create"><i class="fas fa-plus"></i> Crear Nuevo</a>
+</p>
+
+<QuickGrid Class="table" Items="DB.th_usocfdi">
+    <TemplateColumn Context="th_usocfdi">
+        <button class="btn btn-outline-warning" @onclick="@(()=>Navegar($"th_usocfdis/edit?id={th_usocfdi.Id}"))"><i class="fa-solid fa-pen-to-square"></i></button>
+        <button class="btn btn-outline-info" @onclick="@(()=>Navegar($"th_usocfdis/details?id={th_usocfdi.Id}"))"><i class="fas fa-info"></i></button>
+        <button class="btn btn-outline-danger" @onclick="@(()=>Navegar($"th_usocfdis/delete?id={th_usocfdi.Id}"))"><i class="fas fa-trash"></i></button>
+    </TemplateColumn>
+    <PropertyColumn Property="th_usocfdi => th_usocfdi.UsoCFDi" />
+    <PropertyColumn Property="th_usocfdi => th_usocfdi.Activo" />
+    <PropertyColumn Property="th_usocfdi => th_usocfdi.UsuarioCreacion" />
+    <PropertyColumn Property="th_usocfdi => th_usocfdi.FechaCreacion" />
+    <PropertyColumn Property="th_usocfdi => th_usocfdi.UsuarioModifica" />
+    <PropertyColumn Property="th_usocfdi => th_usocfdi.FechaModifica" />
+
+
+</QuickGrid>
+@code {
+    private void Navegar(string url)
+    {
+        NavigationManager.NavigateTo(url, true);
+    }
+}

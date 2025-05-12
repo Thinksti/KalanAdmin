@@ -1,0 +1,335 @@
+﻿@page "/financiero/cuentas/crear"
+
+@rendermode InteractiveServer
+@inject KalanDB DB
+@inject Excel Excel
+@inject NavigationManager NavigationManager
+@inject SweetAlertService Swal
+@inject LoadingService Spinner
+<SpinnerLoading></SpinnerLoading>
+
+<Contenido Titulo="Crear una nueva Cuenta Contable">
+ 
+        <div class="row">
+            @if (itemConfig.Segmento1)
+            {
+                <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+                    @if(this.itemConfig.Costos == 1)
+                    {
+                        <Texto EsBuscador="true" MaxLength="@itemConfig.Segmento1Largo" Etiqueta="Segmento Costos" @bind-Value="item.Segmento1"></Texto>
+                    }
+                    else
+                    {
+                        @if (this.itemConfig.Detalle == 1)
+                        {
+                            <Texto EsBuscador="true" MaxLength="@itemConfig.Segmento1Largo" Etiqueta="Segmento Detalle" @bind-Value="item.Segmento1"></Texto>
+                        }
+                        else
+                        {
+                            @if (this.itemConfig.Mayor == 1)
+                            {
+                                <Texto EsBuscador="true" MaxLength="@itemConfig.Segmento1Largo" Etiqueta="Segmento Mayor" @bind-Value="item.Segmento1"></Texto>
+                            }
+                            else
+                            {
+                                <Texto EsBuscador="true" MaxLength="@itemConfig.Segmento1Largo" Etiqueta="Segmento 1" @bind-Value="item.Segmento1"></Texto>
+                            }
+                        }
+                    }
+                </div>
+            }
+            @if (itemConfig.Segmento2)
+            {
+                <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+                    @if (this.itemConfig.Costos == 2)
+                    {
+                        <Texto EsBuscador="true" MaxLength="@itemConfig.Segmento2Largo" Etiqueta="Segmento Costos" @bind-Value="item.Segmento2"></Texto>
+                    }
+                    else
+                    {
+                        @if (this.itemConfig.Detalle == 2)
+                        {
+                            <Texto EsBuscador="true" MaxLength="@itemConfig.Segmento2Largo" Etiqueta="Segmento Detalle" @bind-Value="item.Segmento2"></Texto>
+                        }
+                        else
+                        {
+                            @if (this.itemConfig.Mayor == 2)
+                            {
+                                <Texto EsBuscador="true" MaxLength="@itemConfig.Segmento2Largo" Etiqueta="Segmento Mayor" @bind-Value="item.Segmento2"></Texto>
+                            }
+                            else
+                            {
+                                <Texto EsBuscador="true" MaxLength="@itemConfig.Segmento2Largo" Etiqueta="Segmento 2" @bind-Value="item.Segmento2"></Texto>
+                            }
+                        }
+                    }
+                </div>
+            }
+            @if (itemConfig.Segmento3)
+            {
+                <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+                    @if (this.itemConfig.Costos == 3)
+                    {
+                        <Texto EsBuscador="true" MaxLength="@itemConfig.Segmento3Largo" Etiqueta="Segmento Costos" @bind-Value="item.Segmento3"></Texto>
+                    }
+                    else
+                    {
+                        @if (this.itemConfig.Detalle == 3)
+                        {
+                            <Texto EsBuscador="true" MaxLength="@itemConfig.Segmento3Largo" Etiqueta="Segmento Detalle" @bind-Value="item.Segmento3"></Texto>
+                        }
+                        else
+                        {
+                            @if (this.itemConfig.Mayor == 3)
+                            {
+                                <Texto EsBuscador="true" MaxLength="@itemConfig.Segmento3Largo" Etiqueta="Segmento Mayor" @bind-Value="item.Segmento3"></Texto>
+                            }
+                            else
+                            {
+                                <Texto EsBuscador="true" MaxLength="@itemConfig.Segmento3Largo" Etiqueta="Segmento 3" @bind-Value="item.Segmento3"></Texto>
+                            }
+                        }
+                    }
+                </div>
+            }
+            @if (itemConfig.Segmento4)
+            {
+                <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+                    @if (this.itemConfig.Costos == 4)
+                    {
+                        <Texto EsBuscador="true" MaxLength="@itemConfig.Segmento4Largo" Etiqueta="Segmento Costos" @bind-Value="item.Segmento4"></Texto>
+                    }
+                    else
+                    {
+                        @if (this.itemConfig.Detalle == 4)
+                        {
+                            <Texto EsBuscador="true" MaxLength="@itemConfig.Segmento4Largo" Etiqueta="Segmento Detalle" @bind-Value="item.Segmento4"></Texto>
+                        }
+                        else
+                        {
+                            @if (this.itemConfig.Mayor == 4)
+                            {
+                                <Texto EsBuscador="true" MaxLength="@itemConfig.Segmento4Largo" Etiqueta="Segmento Mayor" @bind-Value="item.Segmento4"></Texto>
+                            }
+                            else
+                            {
+                                <Texto EsBuscador="true" MaxLength="@itemConfig.Segmento4Largo" Etiqueta="Segmento 4" @bind-Value="item.Segmento4"></Texto>
+                            }
+                        }
+                    }
+                </div>
+            }
+            @if (itemConfig.Segmento5)
+            {
+                <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+                    @if (this.itemConfig.Costos == 5)
+                    {
+                        <Texto EsBuscador="true" MaxLength="@itemConfig.Segmento5Largo" Etiqueta="Segmento Costos" @bind-Value="item.Segmento5"></Texto>
+                    }
+                    else
+                    {
+                        @if (this.itemConfig.Detalle == 5)
+                        {
+                            <Texto EsBuscador="true" MaxLength="@itemConfig.Segmento5Largo" Etiqueta="Segmento Detalle" @bind-Value="item.Segmento5"></Texto>
+                        }
+                        else
+                        {
+                            @if (this.itemConfig.Mayor == 5)
+                            {
+                                <Texto EsBuscador="true" MaxLength="@itemConfig.Segmento5Largo" Etiqueta="Segmento Mayor" @bind-Value="item.Segmento5"></Texto>
+                            }
+                            else
+                            {
+                                <Texto EsBuscador="true" MaxLength="@itemConfig.Segmento5Largo" Etiqueta="Segmento 5" @bind-Value="item.Segmento5"></Texto>
+                            }
+                        }
+                    }
+                </div>
+            }
+            @if (itemConfig.Segmento6)
+            {
+                <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+                    @if (this.itemConfig.Costos == 6)
+                    {
+                        <Texto EsBuscador="true" MaxLength="@itemConfig.Segmento6Largo" Etiqueta="Segmento Costos" @bind-Value="item.Segmento6"></Texto>
+                    }
+                    else
+                    {
+                        @if (this.itemConfig.Detalle == 6)
+                        {
+                            <Texto EsBuscador="true" MaxLength="@itemConfig.Segmento6Largo" Etiqueta="Segmento Detalle" @bind-Value="item.Segmento6"></Texto>
+                        }
+                        else
+                        {
+                            @if (this.itemConfig.Mayor == 6)
+                            {
+                                <Texto EsBuscador="true" MaxLength="@itemConfig.Segmento6Largo" Etiqueta="Segmento Mayor" @bind-Value="item.Segmento6"></Texto>
+                            }
+                            else
+                            {
+                                <Texto EsBuscador="true" MaxLength="@itemConfig.Segmento6Largo" Etiqueta="Segmento 6" @bind-Value="item.Segmento6"></Texto>
+                            }
+                        }
+                    }
+                </div>
+            }
+        </div>
+        <div class="row">
+            <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+                <ReadOnly Etiqueta="Cuenta Contable" Value="@CuentaContable"></ReadOnly>
+            </div>
+            <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+                <Combo Etiqueta="Categoría Contable" TItem="th_contabilidad_cuenta_categoria" TextValue="Categoria" ItemValue="Id" Items="Categorias" ItemChanged="CambiarCategoria" TValue="string" @bind-Value="item.categoria_id"></Combo>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-12 col-sm-12 col-md-12 col-lg-6 col-xl-6">
+                <Texto MaxLength="150" Etiqueta="Descripción la Cuenta Contable" @bind-Value="item.Descripcion"></Texto>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+                <Switch Etiqueta="Cuenta Activa" @bind-Value="item.Activo"></Switch>
+            </div>
+        </div>
+  
+        <div class="row">
+            <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+                <button @onclick="Guardar" class="btn btn-primary">Guardar Cuenta Contable</button>
+            </div>
+        </div>
+     
+        <div class="row">
+            <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+                <a href="/financiero/cuentas/listado"><i class="fa-solid fa-arrow-left"></i> Regresar al Index</a>
+            </div>
+        </div>
+    
+</Contenido>
+
+@code {
+    [CascadingParameter] private Task<AuthenticationState> authenticationStateTask { get; set; }
+    private th_contabilidad_cuenta item { get; set; } = new();
+    private List<th_contabilidad_cuenta_categoria> Categorias { get; set; }
+    private th_contabilidad_cuenta_configuracion itemConfig { get; set; }
+    private string CuentaContable
+    {
+        get
+        {
+            var cc = "";
+            if (itemConfig.Segmento1)
+            {
+                cc += $"{item.Segmento1}";
+            }
+            if (itemConfig.Segmento2)
+            {
+                cc += $"-{item.Segmento2}";
+            }
+            if (itemConfig.Segmento3)
+            {
+                cc += $"-{item.Segmento3}";
+            }
+            if (itemConfig.Segmento4)
+            {
+                cc += $"-{item.Segmento4}";
+            }
+            if (itemConfig.Segmento5)
+            {
+                cc += $"-{item.Segmento5}";
+            }
+            if (itemConfig.Segmento6)
+            {
+                cc += $"-{item.Segmento6}";
+            }
+            return cc;
+        }
+    }
+    private string Usuario
+    {
+        get
+        {
+            var _authState = authenticationStateTask.Result;
+            var user = _authState.User;
+            return ((System.Security.Claims.ClaimsIdentity)user.Identity).Name;
+        }
+    }
+    protected override async Task OnInitializedAsync()
+    {
+        itemConfig = DB.th_contabilidad_cuenta_configuracion.FirstOrDefault();
+        Categorias = DB.th_contabilidad_cuenta_categoria.OrderBy(x=>x.Categoria).ToList();
+        item.Activo = true;
+    }
+    public bool TodosCaracteresSonNumeros(string input)
+    {
+        return input.All(char.IsDigit);
+    }
+    private async Task CambiarCategoria(th_contabilidad_cuenta_categoria categoria)
+    {
+        switch(itemConfig.Mayor)
+        {
+            case 1:
+                item.Segmento1 = categoria.Segmento;
+                break;
+            case 2:
+                item.Segmento2 = categoria.Segmento;
+                break;
+            case 3:
+                item.Segmento3 = categoria.Segmento;
+                break;
+            case 4:
+                item.Segmento4 = categoria.Segmento;
+                break;
+            case 5:
+                item.Segmento5 = categoria.Segmento;
+                break;
+            case 6:
+                item.Segmento6 = categoria.Segmento;
+                break;
+            default:
+                break;
+        }
+
+    }
+    private async Task Guardar()
+    {
+        if (CuentaContable.Contains("--") || CuentaContable.StartsWith("--") || CuentaContable.EndsWith("--"))
+        {
+            await Swal.FireAsync("Error","Cuenta Contable invalida",SweetAlertIcon.Error);
+            return;
+        }   
+        if (TodosCaracteresSonNumeros(CuentaContable.Replace("-", "")) == false)
+        {
+            await Swal.FireAsync("Error", "Cuenta Contable invalida solo Números", SweetAlertIcon.Error);
+            return;
+        }
+        if (string.IsNullOrEmpty(item.Descripcion))
+        {
+            await Swal.FireAsync("Error", "La descripción de la cuenta es requerida", SweetAlertIcon.Error);
+            return;
+        }
+        if (string.IsNullOrEmpty(item.categoria_id))
+        {
+            await Swal.FireAsync("Error", "La Categoría de la cuenta es requerida", SweetAlertIcon.Error);
+            return;
+        }
+        try
+        {
+            using (var context = new KalanDB(DB.connectionString))
+            {
+                item.CuentaContable = this.CuentaContable;
+                item.Id = Guid.NewGuid().ToString();
+                item.FechaCreacion = DateTime.Now;
+                item.UsuarioCreacion = Usuario;
+                await context.th_contabilidad_cuenta.AddAsync(item);
+                await context.SaveChangesAsync();
+            }
+            
+            NavigationManager.NavigateTo("/financiero/cuentas/listado");
+        }
+        catch (Exception ex)
+        {
+            await Swal.FireAsync("Error", ex.Message, SweetAlertIcon.Error);
+            throw;
+        }        
+    }
+}

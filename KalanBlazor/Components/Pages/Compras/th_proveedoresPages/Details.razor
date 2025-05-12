@@ -1,0 +1,70 @@
+﻿@page "/th_proveedores/details"
+@inject KalanDB DB
+
+@inject NavigationManager NavigationManager
+@using Microsoft.EntityFrameworkCore
+
+<PageTitle>Details</PageTitle>
+
+<h1>Detalles</h1>
+
+<div>
+    <h4>Proveedores</h4>
+    <hr />
+    @if (th_proveedores is null)
+    {
+        <p><em>Loading...</em></p>
+    }
+    else {
+        <dl class="row">
+            <dt class="col-sm-2">NombreCorto</dt>
+            <dd class="col-sm-10">@th_proveedores.NombreCorto</dd>
+            <dt class="col-sm-2">RazonSocial</dt>
+            <dd class="col-sm-10">@th_proveedores.RazonSocial</dd>
+            <dt class="col-sm-2">RFC</dt>
+            <dd class="col-sm-10">@th_proveedores.RFC</dd>
+            <dt class="col-sm-2">CodigoPostal</dt>
+            <dd class="col-sm-10">@th_proveedores.CodigoPostal</dd>
+            <dt class="col-sm-2">Direccion</dt>
+            <dd class="col-sm-10">@th_proveedores.Direccion</dd>
+            <dt class="col-sm-2">regimenfiscal_Id</dt>
+            <dd class="col-sm-10">@th_proveedores.regimenfiscal_Id</dd>
+            <dt class="col-sm-2">usocfdi_Id</dt>
+            <dd class="col-sm-10">@th_proveedores.usocfdi_Id</dd>
+            <dd class="col-sm-10">
+                <KalanBlazor.Components.Pages.Financiero.Cuentas.CuentaContable Disabled="true" Etiqueta="Cuenta Contable Proveedor" @bind-Value="th_proveedores.cuentacontable_id"></KalanBlazor.Components.Pages.Financiero.Cuentas.CuentaContable>
+            </dd>
+            <dt class="col-sm-2">Activo</dt>
+            <dd class="col-sm-10">@th_proveedores.Activo</dd>
+            <dt class="col-sm-2">UsuarioCreacion</dt>
+            <dd class="col-sm-10">@th_proveedores.UsuarioCreacion</dd>
+            <dt class="col-sm-2">FechaCreacion</dt>
+            <dd class="col-sm-10">@th_proveedores.FechaCreacion</dd>
+            <dt class="col-sm-2">UsuarioModifica</dt>
+            <dd class="col-sm-10">@th_proveedores.UsuarioModifica</dd>
+            <dt class="col-sm-2">FechaModifica</dt>
+            <dd class="col-sm-10">@th_proveedores.FechaModifica</dd>
+        </dl>
+        <div>
+            <a href="@($"/th_proveedores/edit?id={th_proveedores.Id}")"><i class="fa-solid fa-pen-to-square"></i> Editar</a> |
+            <a href="@($"/th_proveedores")"><i class="fa-solid fa-arrow-left"></i> Regresar al Index</a>
+        </div>
+    }
+</div>
+
+@code {
+    th_proveedores? th_proveedores;
+
+    [SupplyParameterFromQuery]
+    public string Id { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        th_proveedores = await DB.th_proveedores.FirstOrDefaultAsync(m => m.Id == Id);
+
+        if (th_proveedores is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+        }
+    }
+}

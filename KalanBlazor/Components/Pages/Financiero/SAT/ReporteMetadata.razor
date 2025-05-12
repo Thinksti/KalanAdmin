@@ -1,0 +1,259 @@
+﻿@page "/Financiero/SAT/reportemetadata"
+@inject KalanDB DB
+@inject SweetAlertService Swal
+@inject NavigationManager NavigationManager
+@rendermode InteractiveServer
+@inject LoadingService Spinner
+<SpinnerLoading></SpinnerLoading>
+
+<h1>Reporte de metadatos del SAT</h1>
+<div class="row">
+    <div class="col-12 col-sm-12 col-md-12 col-lg-6 col-xl-4">
+        <Fecha Etiqueta="Fecha Inicial" @bind-Value="Inicial"></Fecha>
+    </div>
+    <div class="col-12 col-sm-12 col-md-12 col-lg-6 col-xl-4">
+        <Fecha Etiqueta="Fecha Inicial" @bind-Value="Final"></Fecha>
+    </div>
+    <div class="col-12 col-sm-12 col-md-12 col-lg-6 col-xl-4">
+        <button @onclick="Buscar" class="btn btn-primary">Buscar</button>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12 col-sm-12 col-md-6 col-lg-4 col-xl-3">
+        <div class="card">
+            <div class="card-header">
+                Ingreso
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-6">
+                        Ingreso
+                    </div>
+                    <div class="col-6" style="text-align:right">
+                        @Ingreso.ToString("C")
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-6">
+                        Cancelado
+                    </div>
+                    <div class="col-6" style="text-align:right">
+                        @IngresoCancelado.ToString("C")
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-sm-12 col-md-6 col-lg-4 col-xl-3">
+        <div class="card">
+            <div class="card-header">
+                Egreso
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-6">
+                        Egreso
+                    </div>
+                    <div class="col-6" style="text-align:right">
+                        @Egreso.ToString("C")
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-6">
+                        Cancelado
+                    </div>
+                    <div class="col-6" style="text-align:right">
+                        @EgresoCancelado.ToString("C")
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-sm-12 col-md-6 col-lg-4 col-xl-3">
+        <div class="card">
+            <div class="card-header">
+                Devoluciones, Descuentos y Bonificaciones
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-6">
+                        Emitidos
+                    </div>
+                    <div class="col-6" style="text-align:right">
+                        @DevolucionesEmitidas.ToString("C")
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-6">
+                        Recibidos
+                    </div>
+                    <div class="col-6" style="text-align:right">
+                        @DevolucionesRecibidas.ToString("C")
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-sm-12 col-md-6 col-lg-4 col-xl-3">
+        <div class="card">
+            <div class="card-header">
+                Nomina
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-6">
+                        Emitida
+                    </div>
+                    <div class="col-6" style="text-align:right">
+                        @NominaEmitidas.ToString("C")
+                    </div>
+                </div>
+                 
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        @if (Metadata != null)
+        {
+            <Tabla TItem="th_sat_metadata" Items="Metadata" Descargar="true" Nombre="Metadatos"></Tabla>
+        }
+    </div>
+</div>
+@code {
+    private List<th_sat_metadata> Metadata { get; set; }
+    private DateTime Inicial { get; set; }
+    private DateTime Final { get; set; }
+    private string RFC { get; set; }
+    private decimal Ingreso
+    {
+        get
+        {
+            if (Metadata == null)
+            {
+                return 0;
+            }
+            else
+            {
+                return Metadata.Where(x => x.efectocomprobante == "I" && x.rfcemisor == this.RFC).Sum(x => x.monto);
+            }
+        }
+    }
+    private decimal IngresoCancelado
+    {
+        get
+        {
+            if (Metadata == null)
+            {
+                return 0;
+            }
+            else
+            {
+                return Metadata.Where(x => x.efectocomprobante == "I" && x.rfcemisor == this.RFC && x.estatus == false).Sum(x => x.monto);
+            }
+        }
+    }
+    private decimal Egreso
+    {
+        get
+        {
+            if (Metadata == null)
+            {
+                return 0;
+            }
+            else
+            {
+                return Metadata.Where(x => x.efectocomprobante == "I" && x.rfcemisor != this.RFC).Sum(x => x.monto);
+            }
+        }
+    }
+    private decimal EgresoCancelado
+    {
+        get
+        {
+            if (Metadata == null)
+            {
+                return 0;
+            }
+            else
+            {
+                return Metadata.Where(x => x.efectocomprobante == "I" && x.rfcemisor != this.RFC && x.estatus == false).Sum(x => x.monto);
+            }
+        }
+    }
+    private decimal NominaEmitidas
+    {
+        get
+        {
+            if (Metadata == null)
+            {
+                return 0;
+            }
+            else
+            {
+                return Metadata.Where(x => x.efectocomprobante == "N" && x.rfcemisor == this.RFC && x.estatus == true).Sum(x => x.monto);
+            }
+        }
+    }
+    private decimal DevolucionesEmitidas
+    {
+        get
+        {
+            if (Metadata == null)
+            {
+                return 0;
+            }
+            else
+            {
+                return Metadata.Where(x => x.efectocomprobante == "E" && x.rfcemisor == this.RFC && x.estatus == true).Sum(x => x.monto);
+            }
+        }
+    }
+    private decimal DevolucionesRecibidas
+    {
+        get
+        {
+            if (Metadata == null)
+            {
+                return 0;
+            }
+            else
+            {
+                return Metadata.Where(x => x.efectocomprobante == "E" && x.rfcemisor != this.RFC && x.estatus == true).Sum(x => x.monto);
+            }
+        }
+    }
+    protected override async Task OnInitializedAsync()
+    {
+        Inicial = DateTime.Now.AddMonths(-1).Date;
+        Final = DateTime.Now.Date;
+        var conf = DB.th_contabilidad_configuracion.FirstOrDefault();
+        if (conf != null)
+        {
+            this.RFC = conf.RFC;
+        }
+        else
+        {
+            this.RFC = "";
+        }
+    }
+    private async Task Buscar()
+    {
+        Spinner.IsLoading = true;
+        try
+        {
+            Metadata = await DB.th_sat_metadata.Where(x => x.fechaemision >= Inicial && x.fechaemision <= Final.AddHours(23).AddMinutes(59).AddSeconds(59)).ToListAsync();
+            Spinner.IsLoading = false;
+        }
+        catch (Exception ex)
+        {
+            Spinner.IsLoading = false;
+            await Swal.FireAsync("Error", ex.Message, SweetAlertIcon.Error);
+        }
+        
+        
+    }
+}

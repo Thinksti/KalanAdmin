@@ -1,0 +1,178 @@
+﻿@page "/inventario/articulosproveedor/crearproveedor"
+
+@rendermode InteractiveServer
+@inject KalanDB DB
+@inject Excel Excel
+@inject NavigationManager NavigationManager
+@inject SweetAlertService Swal
+@inject LoadingService Spinner
+<SpinnerLoading></SpinnerLoading>
+
+<Contenido Titulo="Creación de Relación Proveedor-Articulo">
+ 
+        <div class="row">
+            <div class="col-12 col-sm-12 col-md-12 col-lg-3 col-xl-3">
+                <Buscador Etiqueta="Proveedor"
+                          TItem="th_proveedores"
+                          TValue="string"
+                          Llave="NombreCorto"
+                          @bind-Item="itemProveedor"
+                          @bind-Item:after="ProveedorAsignado"
+                          SearchExacto="SearchExactoProveedores"
+                          SearchItems="SearchItemsProveedores">
+                </Buscador>
+            </div>
+        </div>
+        
+        
+        <div class="row">
+            <div class="col-12">
+                <Texto EsBuscador="true" Etiqueta="Buscar Articulo" @bind-Value="buscar"></Texto>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-12">
+                <QuickGrid Class="table small" Items="ArticulosFiltrado.AsQueryable()">
+                    <PropertyColumn Property="@(item => item.NombreCorto)" Title="Nombre Corto" Sortable="true" />
+                    <PropertyColumn Property="@(item => item.Descripcion)" Title="Descripción" Sortable="true" />
+                    <TemplateColumn Title="Activo" Context="item" SortBy="@( GridSort<th_articulos>.ByAscending(p => p.Activo))">
+                        <Switch Etiqueta=" " ValueChanged="@((value)=>OnValueChanged(item.Id))" Value="@( EsSeleccionado(item.Id))"></Switch>
+                    </TemplateColumn>
+                </QuickGrid>
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-12">
+                <button @onclick="Guardar" class="btn btn-primary">
+                    <i class="fa-regular fa-floppy-disk"></i> Guardar
+                </button>
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+                <a href="/inventario/articulosproveedor/listado"><i class="fa-solid fa-arrow-left"></i> Regresar al Index</a>
+            </div>
+        </div>
+ 
+</Contenido>
+
+@code {
+    [CascadingParameter] private Task<AuthenticationState> authenticationStateTask { get; set; }
+    private th_articulos_proveedor item { get; set; } = new();
+    private List<th_articulos> Articulos { get; set; }
+    private List<th_articulos> ArticulosFiltrado
+    {
+        get
+        {
+            if (string.IsNullOrEmpty(buscar))
+            {
+                return Articulos;
+            }
+            else
+            {
+                return Articulos.Where(x => x.NombreCorto.ToUpper().Contains(buscar.ToUpper()) || x.Descripcion.ToUpper().Contains(buscar.ToUpper())).ToList();
+            }
+        }
+    }
+    private List<string> ArticuloSeleccionados { get; set; } = new();
+    private th_proveedores itemProveedor { get; set; }
+    private string buscar { get; set; }
+    private bool EsSeleccionado(string Id)
+    {
+        return ArticuloSeleccionados.Contains(Id);
+    }
+    private async Task OnValueChanged(string Id)
+    {
+        if (ArticuloSeleccionados.Contains(Id))
+        {
+            ArticuloSeleccionados.Remove(Id);
+        }
+        else
+        {
+            ArticuloSeleccionados.Add(Id);
+        }
+    }
+    private async Task ProveedorAsignado()
+    {
+        ArticuloSeleccionados = new();
+        if (itemProveedor != null)
+        {
+            ArticuloSeleccionados = DB.th_articulos_proveedor.Where(x => x.proveedor_Id == itemProveedor.Id).Select(x => x.articulo_Id).ToList();
+        }
+    }
+    protected override async Task OnInitializedAsync()
+    {
+        Articulos = DB.th_articulos.Where(x => x.Activo).ToList();
+    }
+    private string Usuario
+    {
+        get
+        {
+            var _authState = authenticationStateTask.Result;
+            var user = _authState.User;
+            return ((System.Security.Claims.ClaimsIdentity)user.Identity).Name;
+        }
+    }
+    private async Task<IEnumerable<th_articulos>> SearchItemsArticulos(string value)
+    {
+        return DB.th_articulos.Where(c => c.NombreCorto.Contains(value) || c.Descripcion.Contains(value)).IgnoreAutoIncludes().ToList().AsEnumerable();
+    }
+    private async Task<IEnumerable<th_articulos>> SearchExactoArticulos(string value)
+    {
+        return DB.th_articulos.Where(c => c.NombreCorto == value).IgnoreAutoIncludes().ToList().AsEnumerable();
+    }
+    private async Task<IEnumerable<th_proveedores>> SearchItemsProveedores(string value)
+    {
+        return DB.th_proveedores.Where(c => c.NombreCorto.Contains(value) || c.RazonSocial.Contains(value)).IgnoreAutoIncludes().ToList().AsEnumerable();
+    }
+    private async Task<IEnumerable<th_proveedores>> SearchExactoProveedores(string value)
+    {
+        return DB.th_proveedores.Where(c => c.NombreCorto == value).IgnoreAutoIncludes().ToList().AsEnumerable();
+    }
+    private async Task Guardar()
+    {
+        if (itemProveedor == null)
+        {
+            await Swal.FireAsync("Error", "Selecciona un Proveedor", SweetAlertIcon.Error);
+        }
+        if (ArticuloSeleccionados.Count() == 0)
+        {
+            await Swal.FireAsync("Error", "Selecciona un Articulo", SweetAlertIcon.Error); 
+        }
+        try
+        {
+            foreach (var artID in ArticuloSeleccionados)
+            {
+                var existe = DB.th_articulos_proveedor.Where(x => x.articulo_Id == artID && x.proveedor_Id == itemProveedor.Id).FirstOrDefault();
+                if (existe == null)
+                {
+                    item.proveedor_Id = itemProveedor.Id;
+                    item.Activo = true;
+                    item.articulo_Id = artID;
+                    item.Id = Guid.NewGuid().ToString();
+                    item.FechaCreacion = DateTime.Now;
+                    item.UsuarioCreacion = Usuario;
+                    await DB.th_articulos_proveedor.AddAsync(item);
+                    await DB.SaveChangesAsync();
+                }
+                else
+                {
+                    existe.FechaModifica = DateTime.Now;
+                    existe.UsuarioModifica = Usuario;
+                    existe.Activo = true;
+                    DB.th_articulos_proveedor.Update(existe);
+                    await DB.SaveChangesAsync();
+                }
+            }
+
+            NavigationManager.NavigateTo("/inventario/articulosproveedor/listado");
+        }
+        catch (Exception ex)
+        {
+            await Swal.FireAsync("Error", ex.Message, SweetAlertIcon.Error);
+            throw;
+        }
+    }
+}

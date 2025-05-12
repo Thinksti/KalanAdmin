@@ -1,0 +1,73 @@
+﻿@page "/financiero/cuentas/categorias/listado"
+
+@rendermode InteractiveServer
+@inject KalanDB DB
+@inject Excel Excel
+@inject NavigationManager NavigationManager
+
+<Contenido Titulo="Listado de Categorías de Cuentas Contables">
+ 
+        <div class="row">
+            <div class="col-12 col-sm-12 col-md-12 col-lg-4 col-xl-4">
+                <a href="/financiero/cuentas/categorias/crear"><i class="fas fa-plus"></i> Crear un nueva Categoría</a>
+            </div>
+            <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+                <a href="/financiero/cuentas/categorias/cargalayout"><i class="fa-solid fa-table-list"></i> Cargar por Layout</a>
+            </div>
+            <div class="col-12 col-sm-12 col-md-12 col-lg-4 col-xl-4">
+                <button class="btn btn-link" @onclick="@(()=>NavigationManager.NavigateTo("/recursos/layout.xlsx"))"><i class="fa-regular fa-file-excel"></i> Descargar Layout</button>
+            </div>
+            <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+                <DescargarArchivo Archivo="@ExcelListado" Etiqueta="Exportar"></DescargarArchivo>
+            </div>
+        </div>
+        <QuickGrid Pagination="@pagination" Class="table small" Items="listado.AsQueryable()">
+            <TemplateColumn Title="" Context="item" Sortable="true">
+                <button class="btn btn-outline-warning" @onclick="@(()=>Navegar($"/financiero/cuentas/categorias/editar?id={item.Id}"))"><i class="fa-solid fa-pen-to-square"></i></button>
+                <button class="btn btn-outline-info" @onclick="@(()=>Navegar($"/financiero/cuentas/categorias/ver?id={item.Id}"))"><i class="fas fa-info"></i></button>
+                <button class="btn btn-outline-danger" @onclick="@(()=>Navegar($"/financiero/cuentas/categorias/cancelar?id={item.Id}"))"><i class="fas fa-trash"></i></button>
+            </TemplateColumn>
+            <PropertyColumn Property="@(item => item.Categoria)" Title="Categoría" Sortable="true" />
+            <PropertyColumn Property="@(item => item.Descripcion)" Title="Descripción" Sortable="true" />
+            <PropertyColumn Property="@(item => item.Segmento)" Title="Segmento" Sortable="true" />
+            <PropertyColumn Property="@(item => item.AgrupadorSAT)" Title="Agrupador SAT" Sortable="true" />
+            <TemplateColumn Title="Activo" Context="item" Sortable="true">
+                <Switch disabled Label=" " @bind-Value="item.Activo"></Switch>
+            </TemplateColumn>
+            <PropertyColumn Property="@(item => item.UsuarioCreacion)" Title="Usuario Creo" Sortable="true" />
+            <PropertyColumn Property="@(item => item.FechaCreacion)" Title="Fecha Creación" Sortable="true" />
+        </QuickGrid>
+        <Paginator State="@pagination" />
+   
+</Contenido>
+
+@code {
+    PaginationState pagination = new PaginationState { ItemsPerPage = 10 };
+    private List<th_contabilidad_cuenta_categoria> listado = new List<th_contabilidad_cuenta_categoria>();
+
+    private ArchivoGral ExcelListado
+    {
+        get
+        {
+            var bytes = Excel.ExportExcel(listado, "Impuestos");
+            return new ArchivoGral { Nombre = "Impuestos.xlsx", Datos = bytes };
+        }
+    }
+    protected override async Task OnInitializedAsync()
+    {
+
+        Reporte();
+    }
+    private void Reporte()
+    {
+        this.listado = (from x in DB.th_contabilidad_cuenta_categoria
+                        select x)
+         .IgnoreAutoIncludes()
+         .AsNoTracking()
+        .ToList();
+    }
+    private void Navegar(string url)
+    {
+        NavigationManager.NavigateTo(url, true);
+    }
+}

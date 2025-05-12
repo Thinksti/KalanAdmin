@@ -1,0 +1,42 @@
+﻿
+@inject IJSRuntime JSRuntime
+<div style="margin-top:10px; margin-left:-7px;" class="card">
+    <div class="card-body">
+        <h3 style="margin-left:40px;" class="card-title resaltado">@Titulo</h3>
+        <button style="position:absolute; margin-top:-55px; margin-left:-65px; width:10px !important; height:40px;" @onclick="GoBack" class="btn btn-lg btn-link">
+            <i class="fa-solid fa-arrow-left fa-2xl"></i>
+        </button>
+        @if (string.IsNullOrEmpty(SubTitulo) == false)
+        {
+            <div class="row">
+                <div class="col-12">
+                    <h4 class="resaltadoKalanSub">@SubTitulo</h4>
+                </div>
+            </div>
+            <hr class="resaltadoKalan" />
+        }
+        else
+        {
+            <div class="row">
+                <div class="col-12">
+                    <hr class="resaltadoKalan" />
+                </div>
+            </div>
+        }        
+        <div class="row">
+            <div class="col-12">
+                @ChildContent
+            </div>
+        </div>        
+    </div>    
+</div>
+
+@code {
+    [Parameter] public RenderFragment ChildContent { get; set; }
+    [Parameter] public string Titulo { get; set; } = string.Empty;
+    [Parameter] public string SubTitulo { get; set; } = string.Empty;
+    private async Task GoBack()
+    {
+        await JSRuntime.InvokeVoidAsync("history.back");
+    }
+}

@@ -1,0 +1,197 @@
+﻿
+@inject IJSRuntime JS
+@typeparam TItem
+@typeparam TValue
+
+<div class="form-floating input-group">
+    <input type="text" class="form-control" id="@id_objeto" @attributes="AdditionalAttributes" @bind="Exacto" @bind:after="BuscarExacto" placeholder="@Etiqueta">
+    <label for="@id_objeto"> @Etiqueta</label>
+    <button class="btn btn-outline-secondary" @onclick="showModal"><i class="fa-solid fa-magnifying-glass"></i></button>
+</div>
+<div class="modal fade" id="modal_@id_objeto" tabindex="-1" aria-labelledby="modalLabel_@id_objeto" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1 class="modal-title fs-5" id="modalLabel_@id_objeto">@Etiqueta</h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-12">
+                        <div class="form-floating">
+                            <input type="text" @bind="Buscar" @bind:event="oninput" @bind:after="BuscarItems" class="form-control" placeholder="Buscar">
+                            <label>Buscar</label>
+                        </div>
+                    </div>
+                </div>
+                <table class="table small">
+                    <thead>
+                        <tr>
+                            @foreach (var item in Columnas)
+                            {
+                                <th>@item</th>
+                            }
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Items != null)
+                        {
+                            @foreach (var item in Items)
+                            {
+                                <tr>
+                                    @foreach (var columna in Columnas.Where(x=>x!=null))
+                                    {
+                                        @if (columna == Llave)
+                                        {
+                                            <td><button class="btn btn-link" @onclick="@(()=>OnItemChanged(item))">@item.GetType().GetProperty(columna).GetValue(item)</button></td>
+                                        }
+                                        else
+                                        {
+                                            <td>@item.GetType().GetProperty(columna).GetValue(item)</td>
+                                        }
+                                    }
+                                </tr>
+                            }
+                        }                        
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+@code {
+    [Parameter] public TValue Value 
+    { 
+        get
+        {
+            return _Value;
+        }
+        set
+        {
+            if (value != null)
+            {
+                if (value.Equals(_Value)==false)
+                {
+                    _Value = value;
+                    Exacto = value.ToString();
+                    BuscarExacto();
+                }                
+            }
+        }
+    }
+    private TValue _Value;
+    [Parameter] public EventCallback<TValue> ValueChanged { get; set; }
+    [Parameter] public TItem Item { get; set; }
+    [Parameter] public EventCallback<TItem> ItemChanged { get; set; }
+    [Parameter] public Func<string, Task<IEnumerable<TItem>>> SearchItems { get; set; }
+    [Parameter] public Func<string, Task<IEnumerable<TItem>>> SearchExacto { get; set; }
+    [Parameter] public string Etiqueta { get; set; }
+    [Parameter] public string Llave { get; set; }
+    
+    [Parameter] public List<string> Columnas { get; set; }
+    [Parameter(CaptureUnmatchedValues = true)] public IDictionary<string, object> AdditionalAttributes { get; set; }
+    private string Exacto { get; set; }
+    private string Buscar { get; set; }
+    private string id_objeto { get; set; }
+    private List<TItem> Items { get; set; }
+    protected override async Task OnInitializedAsync()
+    {
+        this.id_objeto = Guid.NewGuid().ToString().Replace("-", "");
+        if (Columnas == null)
+        {
+            await GetPropertyNames();
+        }
+        if(Columnas.Contains(Llave)==false)
+        {
+            Columnas.Add(Llave);
+        }
+    }
+
+    public async Task GetPropertyNames()
+    {
+        Columnas = typeof(TItem).GetProperties().Select(property => property.Name).Take(5).ToList();
+    }
+    private async Task BuscarExacto()
+    {
+        if (Exacto != null)
+        {
+            if (Exacto != "")
+            {
+                var t = await SearchExacto.Invoke(Exacto);
+                if (t.Count() == 1)
+                {
+                    await ItemChanged.InvokeAsync(t.First());
+                    await ValueChanged.InvokeAsync(ValorLlave(t.First()));
+                    Exacto = ValorLlave(t.First()).ToString();
+                }
+            }
+            else
+            {
+                await ItemChanged.InvokeAsync(default);
+                await ValueChanged.InvokeAsync(default);
+                this.Item = default;
+                this.Value = default;
+            }
+        }
+        else
+        {
+            await ItemChanged.InvokeAsync(default);
+            await ValueChanged.InvokeAsync(default);
+            this.Item = default;
+            this.Value = default;
+        }
+    }
+    private async Task BuscarItems()
+    {
+        var t = await SearchItems.Invoke(Buscar);
+        Items = t.ToList();        
+        await InvokeAsync(() =>
+            {
+                StateHasChanged();
+            });
+    }
+    private async Task BuscarItemsInicial()
+    {
+        var t = await SearchItems.Invoke(string.Empty);
+        Items = t.ToList();
+        await InvokeAsync(() =>
+            {
+                StateHasChanged();
+            });
+    }
+    private async Task hideModal()
+    {
+        await JS.InvokeVoidAsync("HideModal", $"modal_{id_objeto}");
+    }
+    private async Task showModal()
+    {
+        await BuscarItemsInicial();
+        await JS.InvokeVoidAsync("ShowModal", $"modal_{id_objeto}");
+    }
+    private TValue ValorLlave(TItem item)
+    {
+        foreach (var property in typeof(TItem).GetProperties())
+        {
+            if (property.Name == Llave)
+            {
+                try
+                {
+                    return (TValue)property.GetValue(item);
+                }
+                catch (Exception ex)
+                {
+                    return default;
+                }
+
+            }
+        }
+        return default;
+    }
+    private async Task OnItemChanged(TItem item)
+    {
+        await ItemChanged.InvokeAsync(item);
+        await ValueChanged.InvokeAsync(ValorLlave(item));
+        this.Exacto = ValorLlave(item).ToString();
+        await hideModal();
+    }
+}

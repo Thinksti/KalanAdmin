@@ -1,0 +1,117 @@
+﻿@inject KalanDB DB
+<div class="row" style="margin-top:0px !important;">
+    <div class="col-12 col-sm-12 col-md-6 col-lg-6 col-xl-6">
+        @if (MonedaFija)
+        {
+            <Combo Etiqueta="Moneda"
+                   disabled
+                   TItem="th_monedas"
+                   Items="@MonedasList"
+                   TValue="string"
+                   ItemValue="Id"
+                   TextValue="NombreCorto" 
+                   @bind-Value="ValueMoneda"
+                   @bind-Value:after="CambiarMoneda">
+            </Combo>
+        }
+        else
+        {
+            <Combo Etiqueta="Moneda"
+                   TItem="th_monedas"
+                   Items="@MonedasList"
+                   TValue="string"
+                   ItemValue="Id"
+                   TextValue="NombreCorto"
+                   @bind-Value="ValueMoneda"
+                   @bind-Value:after="CambiarMoneda">
+            </Combo>
+        }
+    </div>
+    <div class="col-12 col-sm-12 col-md-6 col-lg-6 col-xl-6">
+        @if(MonedaFija && MonedaFuncional == ValueMoneda)
+        {
+            <Combo Etiqueta="Tipo Cambio"
+                   disabled
+                   TItem="th_tiposcambio"
+                   Items="@TiposCambioList"
+                   TValue="string"
+                   ItemValue="Id"
+                   TextValue="TipoCambio"
+                   @bind-Value="ValueTipoCambio"
+                   @bind-Value:after="@(()=>ValueTipoCambioChanged.InvokeAsync(ValueTipoCambio))">
+            </Combo>
+        }
+        else
+        {
+            <Combo Etiqueta="Tipo Cambio"
+                   TItem="th_tiposcambio"
+                   Items="@TiposCambioList"
+                   TValue="string"
+                   ItemValue="Id"
+                   TextValue="TipoCambio"
+                   @bind-Value="ValueTipoCambio"
+                   @bind-Value:after="@(()=>ValueTipoCambioChanged.InvokeAsync(ValueTipoCambio))">
+            </Combo>
+        }
+    </div>
+</div>
+@code {
+    [Parameter] public DateTime ValueFecha 
+    {
+        get
+        {
+            return _ValueFecha;    
+        }
+        set
+        {
+            if (_ValueFecha != value)
+            {
+                _ValueFecha = value;
+                if (_ValueFecha != DateTime.MinValue)
+                {
+                    if (string.IsNullOrEmpty(ValueMoneda) == false)
+                    {
+                        CambiarMoneda();
+                    }
+                }
+            }                        
+        }
+    }
+    private DateTime _ValueFecha;
+    [Parameter] public string ValueMoneda { get; set; }
+    [Parameter] public string ValueTipoCambio { get; set; }
+    [Parameter] public EventCallback<string> ValueMonedaChanged { get; set; }
+    [Parameter] public EventCallback<DateTime> ValueFechaChanged { get; set; }
+    [Parameter] public EventCallback<string> ValueTipoCambioChanged { get; set; }
+    [Parameter] public bool MonedaFija { get; set; }  
+    private List<th_monedas> MonedasList { get; set; }
+    private List<th_tiposcambio> TiposCambioList { get; set; }
+    private string MonedaFuncional { get; set; }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            MonedaFuncional = DB.th_contabilidad_cuenta_configuracion.First().moneda_Id;
+            MonedasList = await DB.th_monedas.ToListAsync();
+            if (string.IsNullOrEmpty(ValueMoneda))
+            {
+                ValueMoneda = DB.th_contabilidad_cuenta_configuracion.First().moneda_Id;
+            }            
+            await CambiarMoneda();
+            StateHasChanged();
+        }
+    }
+ 
+    private async Task CambiarMoneda()
+    {
+        TiposCambioList = await DB.th_tiposcambio.Where(m => m.Fecha == ValueFecha && m.moneda_Id == ValueMoneda).OrderBy(x => x.Origen).ToListAsync();
+        if (TiposCambioList.Any())
+        {
+            await ValueMonedaChanged.InvokeAsync(ValueMoneda);
+            ValueTipoCambio = TiposCambioList.FirstOrDefault().Id;
+            await ValueTipoCambioChanged.InvokeAsync(ValueTipoCambio);
+        }
+
+    }
+}

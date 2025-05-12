@@ -1,0 +1,59 @@
+﻿@page "/inventario/unidad/ver"
+
+@rendermode InteractiveServer
+@inject KalanDB DB
+@inject Excel Excel
+@inject NavigationManager NavigationManager
+@inject SweetAlertService Swal
+@inject LoadingService Spinner
+<SpinnerLoading></SpinnerLoading>
+
+<Contenido Titulo="Ver Articulo">
+   
+        <div class="row">
+            <div class="col-12 col-sm-12 col-md-12 col-lg-6 col-xl-4">
+                <Texto disabled MaxLength="15" Etiqueta="Nombre de la Unidad" @bind-Value="item.NombreCorto"></Texto>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-12 col-sm-12 col-md-12 col-lg-6 col-xl-6">
+                <Texto disabled MaxLength="15" Etiqueta="Calve del SAT" @bind-Value="item.ClaveSAT"></Texto>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+                <Switch disabled Etiqueta="Articulo Activo" @bind-Value="item.Activo"></Switch>
+            </div>
+        </div> 
+        <div class="row">
+            <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+                <a href="/inventario/unidad/listado"><i class="fa-solid fa-arrow-left"></i> Regresar al Index</a>
+            </div>
+        </div>
+   
+</Contenido>
+
+@code {
+    [Parameter][SupplyParameterFromQuery] public string id { get; set; }
+    [CascadingParameter] private Task<AuthenticationState> authenticationStateTask { get; set; }
+    private th_articulos_unidad item { get; set; } = new(); 
+    protected override async Task OnInitializedAsync()
+    {
+        item = await DB.th_articulos_unidad.FindAsync(id);
+        if (item is null)
+        {
+            NavigationManager.NavigateTo("/inventario/unidad/listado");
+        } 
+    }
+    private string Usuario
+    {
+        get
+        {
+            var _authState = authenticationStateTask.Result;
+            var user = _authState.User;
+            return ((System.Security.Claims.ClaimsIdentity)user.Identity).Name;
+        }
+    }
+    
+}

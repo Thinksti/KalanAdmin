@@ -1,0 +1,35 @@
+﻿@page "/th_regimenfiscals"
+@using Microsoft.AspNetCore.Components.QuickGrid
+@inject KalanDB DB
+@inject NavigationManager NavigationManager
+@rendermode InteractiveServer
+
+<PageTitle>Index</PageTitle>
+
+<h1>Régimen Fiscal</h1>
+
+<p>
+    <a href="th_regimenfiscals/create"><i class="fas fa-plus"></i> Crear nuevo Registro</a>
+</p>
+
+<QuickGrid Class="table" Items="DB.th_regimenfiscal">
+    <TemplateColumn Context="th_regimenfiscal">
+        <button class="btn btn-outline-warning" @onclick="@(()=>Navegar($"th_regimenfiscals/edit?id={th_regimenfiscal.Id}"))"><i class="fa-solid fa-pen-to-square"></i></button>
+        <button class="btn btn-outline-info" @onclick="@(()=>Navegar($"th_regimenfiscals/details?id={th_regimenfiscal.Id}"))"><i class="fas fa-info"></i></button>
+        <button class="btn btn-outline-danger" @onclick="@(()=>Navegar($"th_regimenfiscals/delete?id={th_regimenfiscal.Id}"))"><i class="fas fa-trash"></i></button>
+    </TemplateColumn>
+    <PropertyColumn Property="th_regimenfiscal => th_regimenfiscal.Regimen" />
+    <PropertyColumn Property="th_regimenfiscal => th_regimenfiscal.Activo" />
+    <PropertyColumn Property="th_regimenfiscal => th_regimenfiscal.UsuarioCreacion" />
+    <PropertyColumn Property="th_regimenfiscal => th_regimenfiscal.FechaCreacion" />
+    <PropertyColumn Property="th_regimenfiscal => th_regimenfiscal.UsuarioModifica" />
+    <PropertyColumn Property="th_regimenfiscal => th_regimenfiscal.FechaModifica" />
+
+
+</QuickGrid>
+@code {
+    private void Navegar(string url)
+    {
+        NavigationManager.NavigateTo(url, true);
+    }
+}

@@ -1,0 +1,74 @@
+﻿@page "/login/usuarios/Editar"
+@using Shared.Kalan.Entidades
+@rendermode InteractiveServer
+@inject KalanDB DB
+@inject NavigationManager NavigationManager
+@inject SweetAlertService Swal
+
+<h1>Editar Rol</h1>
+<hr />
+@if (_item is null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <div class="row">
+        <div class="col-md-4">
+            <EditForm method="post" Model="_item" OnValidSubmit="Guardar" FormName="edit" Enhance>
+                <DataAnnotationsValidator />
+                <ValidationSummary class="text-danger" />
+                <div class="mb-3">
+                    <label for="name" class="form-label">Usuario:</label>
+                    <InputText maxlength="15" id="name" @bind-Value="_item.UserName" class="form-control" />
+                    <ValidationMessage For="() => _item.UserName" class="text-danger" />
+                </div> 
+                
+                <button type="submit" class="btn btn-primary">Editar</button>
+            </EditForm>
+        </div>
+        <div>
+            <a href="/login/usuarios/listado"><i class="fa-solid fa-arrow-left"></i> Regresar al Index</a>
+        </div>
+    </div>
+}
+
+@code {
+    [SupplyParameterFromQuery]
+    public string Id { get; set; }
+    [CascadingParameter] private Task<AuthenticationState> authenticationStateTask { get; set; }
+    [SupplyParameterFromForm]
+    private aspnetusers? _item { get; set; }
+    protected override async Task OnInitializedAsync()
+    {
+        _item ??= await DB.aspnetusers.FirstOrDefaultAsync(m => m.Id == Id);
+    }
+    private async Task Guardar()
+    {
+        using (var db = new KalanDB(DB.connectionString))
+        { 
+            db.Attach(_item!).State = EntityState.Modified;
+            try
+            {
+                await db.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!ItemExists(_item!.Id))
+                {
+                    NavigationManager.NavigateTo("notfound");
+                }
+                else
+                {
+                    throw;
+                }
+            }
+            await Swal.FireAsync("Usuario Editado", "El usuario ha sido editado correctamente", SweetAlertIcon.Success);
+            NavigationManager.NavigateTo("/login/usuarios/listado");
+        }
+    }
+    bool ItemExists(string id)
+    {
+        return DB.aspnetroles.Any(e => e.Id == id);
+    }
+}

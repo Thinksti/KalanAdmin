@@ -1,0 +1,69 @@
+﻿@page "/th_regimenfiscals/create"
+@inject KalanDB DB
+
+@inject NavigationManager NavigationManager
+
+<PageTitle>Create</PageTitle>
+
+<h1>Crear Registro</h1>
+
+<h4>Regimen Fiscal</h4>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <EditForm method="post" Model="th_regimenfiscal" OnValidSubmit="Addth_regimenfiscal" FormName="create" Enhance>
+            <DataAnnotationsValidator />
+            <ValidationSummary class="text-danger" />
+            <div class="mb-3">
+                <label for="regimen" class="form-label">Id Regimen:</label>
+                <InputText id="regimen" @bind-Value="th_regimenfiscal.Id" class="form-control" />
+                <ValidationMessage For="() => th_regimenfiscal.Id" class="text-danger" />
+            </div>
+            <div class="mb-3">
+                <label for="regimen" class="form-label">Regimen:</label> 
+                <InputText id="regimen" @bind-Value="th_regimenfiscal.Regimen" class="form-control" /> 
+                <ValidationMessage For="() => th_regimenfiscal.Regimen" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <label for="activo" class="form-label">Activo:</label> 
+                <InputCheckbox id="activo" @bind-Value="th_regimenfiscal.Activo" class="form-check-input" /> 
+                <ValidationMessage For="() => th_regimenfiscal.Activo" class="text-danger" /> 
+            </div>        
+            <div class="mb-3 Ocultar">
+                <label for="usuariocreacion" class="form-label">UsuarioCreacion:</label> 
+                <InputText id="usuariocreacion" @bind-Value="th_regimenfiscal.UsuarioCreacion" class="form-control" /> 
+                <ValidationMessage For="() => th_regimenfiscal.UsuarioCreacion" class="text-danger" /> 
+            </div>        
+            <div class="mb-3 Ocultar">
+                <label for="fechacreacion" class="form-label">FechaCreacion:</label> 
+                <InputDate id="fechacreacion" @bind-Value="th_regimenfiscal.FechaCreacion" class="form-control" /> 
+                <ValidationMessage For="() => th_regimenfiscal.FechaCreacion" class="text-danger" /> 
+            </div>        
+             
+            <button type="submit" class="btn btn-primary">Create</button>
+        </EditForm>
+    </div>
+</div>
+
+<div>
+    <a href="/th_regimenfiscals"><i class="fa-solid fa-arrow-left"></i> Regresar al Index</a>
+</div>
+
+@code {
+
+    [SupplyParameterFromForm]
+    public th_regimenfiscal th_regimenfiscal { get; set; } = new();
+    [CascadingParameter] private Task<AuthenticationState> authenticationStateTask { get; set; }
+    // To protect from overposting attacks, see https://aka.ms/RazorPagesCRUD
+    public async Task Addth_regimenfiscal()
+    {
+        var _authState = await authenticationStateTask;
+        var user = _authState.User;
+        var correo = ((System.Security.Claims.ClaimsIdentity)user.Identity).Name;
+        th_regimenfiscal.FechaCreacion = DateTime.Now;
+        th_regimenfiscal.UsuarioCreacion = correo;
+        DB.th_regimenfiscal.Add(th_regimenfiscal);
+        await DB.SaveChangesAsync();
+        NavigationManager.NavigateTo("/th_regimenfiscals");
+    }
+}

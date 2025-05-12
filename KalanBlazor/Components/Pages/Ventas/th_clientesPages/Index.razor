@@ -1,0 +1,41 @@
+﻿@page "/th_clientes"
+@using Microsoft.AspNetCore.Components.QuickGrid
+@inject KalanDB DB
+ @inject NavigationManager NavigationManager
+@rendermode InteractiveServer
+
+<PageTitle>Index</PageTitle>
+
+<h1>Catalogo de Clientes</h1>
+
+<p>
+    <a href="th_clientes/create"><i class="fas fa-plus"></i> Crear nuevo Registro</a>
+</p>
+
+<QuickGrid Class="table" Items="DB.th_clientes">
+    <TemplateColumn Context="th_clientes">
+        <button class="btn btn-outline-warning" @onclick="@(()=>Navegar($"th_clientes/edit?id={th_clientes.Id}"))"><i class="fa-solid fa-pen-to-square"></i></button>
+        <button class="btn btn-outline-info" @onclick="@(()=>Navegar($"th_clientes/details?id={th_clientes.Id}"))"><i class="fas fa-info"></i></button>
+        <button class="btn btn-outline-danger" @onclick="@(()=>Navegar($"th_clientes/delete?id={th_clientes.Id}"))"><i class="fas fa-trash"></i></button>
+    </TemplateColumn>
+    <PropertyColumn Property="th_clientes => th_clientes.NombreCorto" />
+    <PropertyColumn Property="th_clientes => th_clientes.RazonSocial" />
+    <PropertyColumn Property="th_clientes => th_clientes.RFC" />
+    <PropertyColumn Property="th_clientes => th_clientes.CodigoPostal" />
+    <PropertyColumn Property="th_clientes => th_clientes.Direccion" />
+    <PropertyColumn Property="th_clientes => th_clientes.regimenfiscal_Id" />
+    <PropertyColumn Property="th_clientes => th_clientes.usocfdi_Id" />
+    <PropertyColumn Property="th_clientes => th_clientes.Activo" />
+    <PropertyColumn Property="th_clientes => th_clientes.UsuarioCreacion" />
+    <PropertyColumn Property="th_clientes => th_clientes.FechaCreacion" />
+    <PropertyColumn Property="th_clientes => th_clientes.UsuarioModifica" />
+    <PropertyColumn Property="th_clientes => th_clientes.FechaModifica" />
+
+
+</QuickGrid>
+@code {
+    private void Navegar(string url)
+    {
+        NavigationManager.NavigateTo(url, true);
+    }
+}

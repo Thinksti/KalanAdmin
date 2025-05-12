@@ -1,0 +1,197 @@
+﻿@page "/th_clientes/edit"
+@inject KalanDB DB
+@rendermode InteractiveServer
+@inject NavigationManager NavigationManager
+@using Microsoft.EntityFrameworkCore
+@inject SweetAlertService Swal;
+<PageTitle>Edit</PageTitle>
+
+<h1>Editar</h1>
+
+<h4>Clientes</h4>
+<hr />
+@if (th_clientes is null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <div class="row">
+        <div class="col-md-4">
+ 
+                <input type="hidden" name="th_clientes.Id" value="@th_clientes.Id" />
+                <div class="mb-3">
+                    <label for="nombrecorto" class="form-label">NombreCorto:</label>
+                    <InputText readonly id="nombrecorto" @bind-Value="th_clientes.NombreCorto" class="form-control" />
+                </div>
+                <div class="mb-3">
+                    <label for="razonsocial" class="form-label">RazonSocial:</label>
+                    <InputText id="razonsocial" @bind-Value="th_clientes.RazonSocial" class="form-control" />
+                </div>
+                <div class="mb-3">
+                    <label for="rfc" class="form-label">RFC:</label>
+                    <InputText maxlength="13" id="rfc" @bind-Value="th_clientes.RFC" class="form-control" />
+                </div>
+                <div class="mb-3">
+                    <label for="codigopostal" class="form-label">CodigoPostal:</label>
+                    <InputText maxlength="5" id="codigopostal" @bind-Value="th_clientes.CodigoPostal" class="form-control" />
+                </div>
+                <div class="mb-3">
+                    <label for="direccion" class="form-label">Dirección:</label>
+                    <InputText id="direccion" @bind-Value="th_clientes.Direccion" class="form-control" />
+                </div>
+                <div class="mb-3">
+                    <Combo Etiqueta="Residencia Fiscal(país)" TItem="th_paises" TValue="string" TextValue="Pais" ItemValue="Codigo" Items="kalanDB.th_paises.ToList()" @bind-Value="th_clientes.ResidenciaFiscal"></Combo>
+                </div>
+                <div class="mb-3">
+                    <Texto Etiqueta="Municipio" MaxLength="100" @bind-Value="th_clientes.Municipio"></Texto>
+                </div>
+                <div class="mb-3">
+                    <Texto Etiqueta="Estado" MaxLength="100" @bind-Value="th_clientes.Estado"></Texto>
+                </div>
+                <div class="mb-3">
+                    <Texto Etiqueta="Registro Id Tributario(solo extranjeros)" MaxLength="20" @bind-Value="th_clientes.NumRegIdTrib"></Texto>
+                </div>
+                <div class="mb-3">
+                    <label for="regimenfiscal_id" class="form-label">regimenfiscal_Id:</label>
+                    <InputSelect class="form-select" @bind-Value="th_clientes.regimenfiscal_Id">
+                        @foreach (var item in kalanDB.th_regimenfiscal)
+                        {
+                            <option value="@item.Id">@item.Regimen</option>
+                        }
+                    </InputSelect>
+
+                </div>
+                <div class="mb-3">
+                    <div class="form-floating">
+                        <InputSelect class="form-select" @bind-Value="th_clientes.planimpuestos_id">
+                            @if (string.IsNullOrEmpty(th_clientes.planimpuestos_id))
+                            {
+                                <option disabled selected value=" ">Selecciona</option>
+                            }
+                            @foreach (var titem in (new KalanDB(DB.connectionString)).th_plan_impuestos.Where(x => x.Ventas).ToList())
+                            {
+                                if (titem.Id == th_clientes.planimpuestos_id)
+                                {
+                                    <option value="@titem.Id" selected>@titem.NombreCorto</option>
+                                }
+                                else
+                                {
+                                    <option value="@titem.Id">@titem.NombreCorto</option>
+                                }
+                            }
+                        </InputSelect>
+                        <label>Selecciona el Plan de Impuestos</label>
+                    </div>
+                        
+                </div>
+                <div class="mb-3">
+                    <label for="usocfdi_id" class="form-label">usocfdi_Id:</label>
+                    <InputSelect class="form-select" @bind-Value="th_clientes.usocfdi_Id">
+                        @foreach (var item in kalanDB.th_usocfdi)
+                        {
+                            <option value="@item.Id">@item.UsoCFDi</option>
+                        }
+                    </InputSelect>
+                    
+                </div>
+                <div class="mb-3">
+                    <CuentaContable Etiqueta="Cuenta Contable Proveedor" @bind-Value="th_clientes.cuentacontable_id"></CuentaContable>
+                </div>
+                <div class="mb-3">
+                    <label for="activo" class="form-label">Activo:</label>
+                    <InputCheckbox id="activo" @bind-Value="th_clientes.Activo" class="form-check-input" />
+                    
+                </div>
+                <div class="mb-3 Ocultar">
+                    <label for="usuariocreacion" class="form-label">UsuarioCreacion:</label>
+                    <InputText id="usuariocreacion" @bind-Value="th_clientes.UsuarioCreacion" class="form-control" />
+                    
+                </div>
+                <div class="mb-3 Ocultar">
+                    <label for="fechacreacion" class="form-label">FechaCreacion:</label>
+                    <InputDate id="fechacreacion" @bind-Value="th_clientes.FechaCreacion" class="form-control" />
+                    
+                </div>
+                <div class="mb-3 Ocultar">
+                    <label for="usuariomodifica" class="form-label">UsuarioModifica:</label>
+                    <InputText id="usuariomodifica" @bind-Value="th_clientes.UsuarioModifica" class="form-control" />
+                    
+                </div>
+                <div class="mb-3 Ocultar">
+                    <label for="fechamodifica" class="form-label">FechaModifica:</label>
+                    <InputDate id="fechamodifica" @bind-Value="th_clientes.FechaModifica" class="form-control" />
+                    
+                </div>
+            <button @onclick="Updateth_clientes" class="btn btn-primary">Guardar</button>
+ 
+        </div>
+    </div>
+}
+
+<div>
+    <a href="/th_clientes"><i class="fa-solid fa-arrow-left"></i> Regresar al Index</a>
+</div>
+
+@code {
+    [SupplyParameterFromQuery]
+    public string Id { get; set; }
+
+    [SupplyParameterFromForm]
+    public th_clientes? th_clientes { get; set; }
+    [CascadingParameter] private Task<AuthenticationState> authenticationStateTask { get; set; }
+    protected override async Task OnInitializedAsync()
+    {
+        th_clientes ??= await DB.th_clientes.FirstOrDefaultAsync(m => m.Id == Id);
+
+        if (th_clientes is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+        }
+        th_clientes.FechaModifica = DateTime.Now;
+    }
+      private KalanDB kalanDB
+    {
+        get
+        {
+            return new KalanDB(DB.connectionString);
+        }
+    }
+    public async Task Updateth_clientes()
+    {
+        var _authState = await authenticationStateTask;
+        var user = _authState.User;
+        var correo = ((System.Security.Claims.ClaimsIdentity)user.Identity).Name;
+        th_clientes.UsuarioModifica = correo;
+        th_clientes.FechaModifica = DateTime.Now;
+        DB.Attach(th_clientes!).State = EntityState.Modified;
+        var validaciones = kalanDB.ValidateEntity(th_clientes);
+        if (validaciones.Validado == false)
+        {
+            await Swal.FireAsync("Error", validaciones.Errores.Replace(",", "<br />"), icon: SweetAlertIcon.Error);
+            return;
+        }
+        try
+        {
+            await DB.SaveChangesAsync();
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            if (!th_clientesExists(th_clientes!.Id))
+            {
+                NavigationManager.NavigateTo("notfound");
+            }
+            else
+            {
+                throw;
+            }
+        }
+
+        NavigationManager.NavigateTo("/th_clientes");
+    }
+
+    bool th_clientesExists(string id)
+    {
+        return DB.th_clientes.Any(e => e.Id == id);
+    }
+}

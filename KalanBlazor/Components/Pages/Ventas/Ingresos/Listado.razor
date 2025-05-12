@@ -1,0 +1,126 @@
+﻿@page "/ingresos/listado"
+@using KalanBlazor.DTOs.Compras
+@using KalanBlazor.DTOs.Ventas
+@rendermode InteractiveServer
+@inject KalanDB DB
+@inject Excel Excel
+@inject NavigationManager NavigationManager
+<h1>Listado de Pagos de los Clientes</h1>
+
+<div class="row">
+    <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+        <Fecha Etiqueta="Fecha Inicio" Max="@DateTime.Now" @bind-Value="FechaInicio"></Fecha>
+    </div>
+    <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+        <Fecha Etiqueta="Fecha Fin" Max="@DateTime.Now" @bind-Value="FechaFin"></Fecha>
+    </div>
+    <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+        <button @onclick="Reporte" class="btn btn-primary">Buscar</button>
+    </div>
+    <div class="col-12 col-sm-12 col-md-12 col-lg-4 col-xl-4">
+    </div>
+    <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+        <DescargarArchivo Archivo="@ExcelListado" Etiqueta="Exportar"></DescargarArchivo>
+    </div>
+</div>
+
+<QuickGrid Pagination="@pagination" Class="table small" Items="this.listadoRecibos.AsQueryable()">
+    <TemplateColumn Title="Documento" Context="th_ingresos" Sortable="true">
+        <button class="btn btn-sm btn-outline-info" @onclick="@(()=>Navegar($"/ingresos/ver?Id={th_ingresos.Id}"))">@th_ingresos.Documento</button>
+        <button class="btn btn-sm btn-danger" @onclick="@(()=>Navegar($"/ingresos/Cancelar?Id={th_ingresos.Id}"))"><i class="fa-solid fa-trash-can"></i></button>
+    </TemplateColumn>
+    <PropertyColumn Property="@(c => c.Chequera)" Title="Chequera" Sortable="true" />
+    <PropertyColumn Property="@(c => c.Observaciones)" Title="Observaciones" Sortable="true" />
+    <TemplateColumn Title="Cliente" Context="th_ingresos" Sortable="true">
+        <labe>@th_ingresos.Cliente</labe>
+    </TemplateColumn>
+    <TemplateColumn Title="Origen" Context="th_ingresos" Sortable="true">
+        @th_ingresos.Origen
+    </TemplateColumn>
+    <TemplateColumn Title="Origen" Context="th_ingresos" Sortable="true">
+        @th_ingresos.FormaPago
+    </TemplateColumn>
+    <PropertyColumn Property="@(c => c.Fecha)" Title="Fecha" Format="d" Sortable="true" />
+    <PropertyColumn Property="@(c => c.Monto_Original)" Title="Monto Original" Format="c" Align="Align.Center" Sortable="true" />
+    <PropertyColumn Property="@(c => c.Monto_Disponible)" Title="Monto Disponible" Format="c" Align="Align.Center" Sortable="true" />
+    <TemplateColumn Title="Activo" Context="th_ingresos">
+        <Switch disabled Label=" " @bind-Value="th_ingresos.Activo"></Switch>
+    </TemplateColumn>
+    <PropertyColumn Property="@(c => c.Usuario)" Title="Usuario" Sortable="true" />
+</QuickGrid>
+<Paginator State="@pagination" />
+
+
+@code {
+    PaginationState pagination = new PaginationState { ItemsPerPage = 10 }; 
+    private List<ListadoRecibos> listadoRecibos;
+    private List<th_ingresos> th_ingresos;
+    private DateTime FechaInicio { get; set; }
+    private DateTime FechaFin { get; set; }
+    private string Buscar { get; set; }
+    private ArchivoGral ExcelListado
+    {
+        get
+        {
+            var reporteExcel = th_ingresos.Select(x => new ListadoRecibos
+                {
+                    Documento = $"RC-{x.Ingreso.ToString("D7")}",
+                    Activo = x.Activo,
+                    Chequera = x.bancos.Chequera,
+                    Origen = x.ingresos_origen == null ? "" : x.ingresos_origen.Origen,
+                    FormaPago = x.formapago == null ? "" : x.formapago.FormaPago,
+                    Fecha = x.Fecha,
+                    Observaciones = x.Observaciones,
+                    Monto_Disponible = x.Disponible,
+                    Monto_Original = x.Original,
+                    Cliente = $"{x.cliente.NombreCorto}-{x.cliente.RazonSocial}",
+                    Usuario = x.UsuarioCreacion
+                }).ToList();
+            var bytes = Excel.ExportExcel(reporteExcel, "Pagos de Clientes");
+            return new ArchivoGral { Nombre = "PagosClientes.xlsx", Datos = bytes };
+        }
+    }
+    protected override async Task OnInitializedAsync()
+    {
+
+        FechaInicio = DateTime.Now.AddMonths(-1).Date;
+        FechaFin = DateTime.Now.Date;
+        Reporte();
+
+    }
+    private void Reporte()
+    {
+        this.th_ingresos = (from x in DB.th_ingresos
+         where x.Fecha >= FechaInicio && x.Fecha <= FechaFin
+         select x)
+        .Include(x => x.bancos)
+        .Include(x => x.ingresos_origen)
+        .Include(x => x.formapago)
+        .Include(x => x.cliente)
+        .IgnoreAutoIncludes()
+        .AsNoTracking()
+        .ToList();
+        listadoRecibos = (from x in this.th_ingresos                             
+                            select new ListadoRecibos
+                                {
+                                    Documento = $"RC-{x.Ingreso.ToString("D7")}",
+                                    Activo = x.Activo,
+                                    Chequera = x.bancos.Chequera,
+                                    Origen = x.ingresos_origen == null ? "" : x.ingresos_origen.Origen,
+                                    FormaPago = x.formapago == null ? "" : x.formapago.FormaPago,
+                                    Fecha = x.Fecha,
+                                    Monto_Disponible = x.Disponible,
+                                    Monto_Original = x.Original,
+                                    Cliente = $"{x.cliente.NombreCorto}-{x.cliente.RazonSocial}",
+                                    Usuario = x.UsuarioCreacion,
+                                    Id = x.Id
+                                })
+ 
+        .OrderByDescending(x => x.Documento)
+        .ToList(); 
+    }
+    private void Navegar(string url)
+    {
+        NavigationManager.NavigateTo(url, true);
+    }
+}

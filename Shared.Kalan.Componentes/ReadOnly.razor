@@ -1,0 +1,90 @@
+﻿@if (Value == null)
+{
+    @if( Etiqueta != "")
+    {
+        <div class="form-floating">
+            <input disabled @attributes="AdditionalAttributes" tabindex="10000" class="form-control" id="@id">
+            <label for="@id">@Etiqueta</label>
+        </div>
+    }
+    else
+    {
+        <input disabled @attributes="AdditionalAttributes" tabindex="10000" class="form-control" value="@Value" />
+    }
+    
+}
+else
+{
+    @if (Value.Contains("$") || EsDateTime() || IsNumeric())
+    {
+        @if ( Etiqueta != "")
+        {
+            <div class="form-floating">
+                <input id="@id" disabled @attributes="AdditionalAttributes" tabindex="10000" style="text-align:right;" class="form-control" value="@Value.Trim()" />
+                <label for="@id">@Etiqueta</label>
+            </div>
+        }
+        else
+        {
+            <input disabled @attributes="AdditionalAttributes" tabindex="10000" class="form-control" value="@Value" />
+        }
+    }
+    else
+    {
+        
+        @if ( Etiqueta != "")
+        {
+            <div class="form-floating">
+                <input id="@id" disabled tabindex="10000" @attributes="AdditionalAttributes" class="form-control" value="@Value" />
+                <label for="@id">@Etiqueta</label>
+            </div>
+        }
+        else
+        {
+            <input disabled @attributes="AdditionalAttributes" tabindex="10000" class="form-control" value="@Value" />
+        }
+    }
+}
+
+
+@code {
+    [Parameter] public string Value { get; set; } = "";
+    [Parameter] public string Etiqueta { get; set; } = "";
+    [Parameter(CaptureUnmatchedValues = true)] public IDictionary<string,object> AdditionalAttributes { get; set; }
+    private string id { get; set; }
+    private bool IsNumeric()
+    {
+        if (Value == null)
+        {
+            return false;
+        }
+        if (Value == "")
+        {
+            return false;
+        }
+        return Value.All(char.IsNumber);
+    }
+    public bool EsDateTime()
+    {
+        if (Value == null)
+        {
+            return false;
+        }
+        if (Value == "")
+        {
+            return false;
+        }
+        return DateTime.TryParse(Value, out DateTime _);
+    }
+    private string generarId()
+    {
+        int longitud = 7;
+        Guid miGuid = Guid.NewGuid();
+        string token = miGuid.ToString().Replace("-", string.Empty).Substring(0, longitud);
+        return token;
+    }
+    protected override async Task OnInitializedAsync()
+    {
+        id = generarId();
+    }
+}

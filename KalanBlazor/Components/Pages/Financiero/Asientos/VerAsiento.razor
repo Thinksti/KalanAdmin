@@ -1,0 +1,89 @@
+﻿@inject KalanDB DB
+@inject Excel Excel
+@inject NavigationManager NavigationManager
+@inject SweetAlertService Swal
+@inject LoadingService Spinner
+@inject UserService Usuario
+@inject IWebHostEnvironment WebHostEnvironment
+@inject TranslatorService Translator
+@inject IJSRuntime JS
+@inject IConfiguration Configuracion
+
+@if (item != null)
+{
+    <div class="row">
+        <div class="col-12 col-sm-12 col-md-6 col-lg-2 col-xl-2">
+            <ReadOnly Etiqueta="Numero de Asiento" Value="@item.Asiento.ToString()"></ReadOnly>
+        </div>
+        <div class="col-12 col-sm-12 col-md-6 col-lg-2 col-xl-2">
+            <ReadOnly Etiqueta="Origen" Value="@item.Origen"></ReadOnly>
+        </div>
+        <div class="col-12 col-sm-12 col-md-6 col-lg-2 col-xl-2">
+            <ReadOnly Etiqueta="Documento Original" Value="@item.DocumentoOriginal"></ReadOnly>
+        </div>
+        <div class="col-12 col-sm-12 col-md-6 col-lg-2 col-xl-2">
+            <ReadOnly Etiqueta="Fecha" Value="@item.Fecha.ToShortDateString()"></ReadOnly>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-12 col-sm-12 col-md-6 col-lg-2 col-xl-2">
+            <ReadOnly Etiqueta="Tipo de Cambio" Value="@item.tipocambio.Origen"></ReadOnly>
+        </div>
+        <div class="col-12 col-sm-12 col-md-6 col-lg-2 col-xl-2">
+            <ReadOnly Etiqueta="Moneda" Value="@item.moneda.NombreCorto"></ReadOnly>
+        </div>
+        <div class="col-12 col-sm-12 col-md-6 col-lg-2 col-xl-2">
+            <ReadOnly Etiqueta="Total" Value="@item.th_contabilidad_trabajo_detalle.Sum(x=>x.Credito + x.Debito).ToString("C")"></ReadOnly>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-12 col-sm-12 col-md-12 col-lg-12 col-xl-12">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Tipo de Concepto</th>
+                        <th>Cuenta</th>
+                        <th>Descripción</th>
+                        <th>Debe</th>
+                        <th>Haber</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in item.th_contabilidad_trabajo_detalle)
+                    {
+                        <tr>
+                            <td>@item.TipoConcepto</td>
+                            <td>@item.cuenta.CuentaContable</td>
+                            <td>@item.cuenta.Descripcion</td>
+                            <td>@item.Debito.ToString("C")</td>
+                            <td>@item.Credito.ToString("C")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
+
+
+
+@code {
+    [Parameter] public string Id { get; set; }
+    private th_contabilidad_trabajo item { get; set; }
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            if (string.IsNullOrEmpty(Id) == false)
+            {
+                item = await DB.th_contabilidad_trabajo
+                .Include(x => x.th_contabilidad_trabajo_detalle).ThenInclude(x => x.cuenta)
+                .Include(x => x.moneda)
+                .Include(x => x.tipocambio)
+                .IgnoreAutoIncludes()
+                .FirstOrDefaultAsync(m => m.Id == Id);
+                await InvokeAsync(StateHasChanged);
+            }
+        }
+    }
+}

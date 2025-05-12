@@ -1,0 +1,53 @@
+﻿@inject KalanDB DB
+<Buscador TValue="string"
+          Etiqueta="Id Cliente"
+          @bind-Item="Value"
+          @bind-Item:after="ValueEvent"
+          TItem="th_clientes"
+          @bind-Value="Id_Cliente"
+          @bind-Value:after="Id_ClienteEvent"
+          SearchItems="SearchItemsClientes"
+          SearchExacto="SearchExactoClientes"
+          Llave="NombreCorto"></Buscador>
+
+@code {
+    
+    [Parameter] public string Id_Cliente { get; set; }
+    [Parameter] public EventCallback<string> Id_ClienteChanged { get; set; }
+    [Parameter] public th_clientes Value { get; set; }
+    [Parameter] public EventCallback<th_clientes> ValueChanged { get; set; }    
+    private async Task ValueEvent(){
+        await ValueChanged.InvokeAsync(Value);
+    }
+    private async Task Id_ClienteEvent()
+    {
+        await Id_ClienteChanged.InvokeAsync(Id_Cliente);
+    }
+    private async Task<IEnumerable<th_clientes>> SearchItemsClientes(string value)
+    {
+        using (var tdb = new KalanDB(DB.connectionString))
+        {
+            return (await tdb.th_clientes
+                    .Where(c => c.NombreCorto.Contains(value) || c.RazonSocial.Contains(value))
+                    .Include(x => x.planimpuestos).ThenInclude(x => x.th_plan_impuestos_detalle).ThenInclude(x => x.impuestos)
+                    .IgnoreAutoIncludes()
+                    .AsNoTracking()
+                    .ToListAsync())
+                    .AsEnumerable();
+        }
+    }
+    private async Task<IEnumerable<th_clientes>> SearchExactoClientes(string value)
+    {
+        using (var tdb = new KalanDB(DB.connectionString))
+        {
+            return (await tdb.th_clientes
+     .Where(c => c.NombreCorto == value)
+     .Include(x => x.planimpuestos).ThenInclude(x => x.th_plan_impuestos_detalle).ThenInclude(x => x.impuestos)
+     .IgnoreAutoIncludes()
+     .AsNoTracking()
+     .ToListAsync())
+     .AsEnumerable();
+        }
+
+    }
+}

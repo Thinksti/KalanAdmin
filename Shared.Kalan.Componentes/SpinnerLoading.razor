@@ -1,0 +1,50 @@
+﻿ 
+@inject IJSRuntime JS
+@inject LoadingService LoadingService
+
+<div id="div_spinner" class="spinner-backdrop" style="text-align:center; display:none;">
+    @if (string.IsNullOrEmpty(LoadingService.Etiqueta) == false)
+    {
+        <strong style="font-size: 20px;position: absolute;padding-top: 20%;opacity: 60%;" role="status">@LoadingService.Etiqueta</strong>
+    }
+    <div id="div_flex" class="d-flex justify-content-center align-items-center h-100">
+        <div id="div_primary" class="spinner-border text-primary" role="status">
+            <span id="div_cargando" class="visually-hidden">Cargando...</span>
+        </div>
+    </div>
+</div>
+@code {
+    private bool primera;
+    protected override async Task OnInitializedAsync()
+    {
+        LoadingService.OnChangeAsync += UpdateUIAsync;
+    }
+    public void Dispose()
+    {
+        LoadingService.OnChangeAsync -= UpdateUIAsync;
+    }
+    public async Task Loading(bool isLoading)
+    {
+        if (isLoading)
+        {
+            await JS.InvokeVoidAsync("showSpinner");
+        }
+        else
+        {
+            await JS.InvokeVoidAsync("hideSpinner");
+        }
+    }
+    public async Task UpdateUIAsync()
+    {
+        await InvokeAsync(StateHasChanged);
+        if (LoadingService.IsLoading)
+        {
+            await JS.InvokeVoidAsync("showSpinner");
+        }
+        else
+        {
+            await JS.InvokeVoidAsync("hideSpinner");
+        }
+        await InvokeAsync(StateHasChanged);
+    }
+}

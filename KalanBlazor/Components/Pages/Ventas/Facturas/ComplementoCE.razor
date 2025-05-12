@@ -1,0 +1,226 @@
+﻿@inject NavigationManager NavigationManager
+@inject SweetAlertService Swal
+@inject LoadingService Spinner
+@inject UserService Usuario
+@inject TranslatorService Translator
+@inject IConfiguration Configuration
+
+<div class="container-fluid" style="overflow-x:scroll;overflow-y:scroll;">
+    <div class="row">
+        <div class="col-12 col-sm-12 col-md-6 col-lg-3 col-xl-3">
+            <Texto Etiqueta="Clave de Pedimento" MaxLength="2" @bind-Value="ClavePedimento"></Texto>
+        </div>
+        <div class="col-12 col-sm-12 col-md-6 col-lg-3 col-xl-3">
+            <Texto Etiqueta="Certificado de Origen" MaxLength="1" @bind-Value="CertificadoOrigen"></Texto>
+        </div>
+        <div class="col-12 col-sm-12 col-md-6 col-lg-3 col-xl-3">
+            <Texto Etiqueta="Incoterm" MaxLength="3" @bind-Value="Incoterm"></Texto>
+        </div>
+        <div class="col-12 col-sm-12 col-md-6 col-lg-3 col-xl-3">
+            <Numerico Etiqueta="Tipo Cambio USD" Min="0" @bind-Value="TipoCambioUSD"></Numerico>
+        </div>
+    </div>
+    <hr />
+    <div class="row">
+        <div class="col-12">
+            <h4>Datos del Emisor</h4>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-12 col-sm-12 col-md-6 col-lg-3 col-xl-5">
+            <Texto Etiqueta="Calle" MaxLength="150" @bind-Value="Emisor.Calle"></Texto>
+        </div>
+        <div class="col-12 col-sm-12 col-md-6 col-lg-3 col-xl-2">
+            <Texto Etiqueta="Numero Exterior" MaxLength="10" @bind-Value="Emisor.NumeroExterior"></Texto>
+        </div>
+        <div class="col-12 col-sm-12 col-md-6 col-lg-3 col-xl-2">
+            <Texto Etiqueta="Localidad" MaxLength="2" @bind-Value="Emisor.Localidad"></Texto>
+        </div>
+        <div class="col-12 col-sm-12 col-md-6 col-lg-3 col-xl-2">
+            <Texto Etiqueta="Estado" MaxLength="3" @bind-Value="Emisor.Estado"></Texto>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-12 col-sm-12 col-md-6 col-lg-3 col-xl-2">
+            <Texto Etiqueta="País" MaxLength="3" @bind-Value="Emisor.Pais"></Texto>
+        </div>
+        <div class="col-12 col-sm-12 col-md-6 col-lg-3 col-xl-2">
+            <Texto Etiqueta="Código Postal" MaxLength="5" @bind-Value="Emisor.CodigoPostal"></Texto>
+        </div>
+    </div>
+    <hr />
+    <div class="row">
+        <div class="col-12">
+            <h4>Datos del Receptor</h4>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-12 col-sm-12 col-md-6 col-lg-3 col-xl-2">
+            <Texto Etiqueta="Registro Id Tributario" MaxLength="15" @bind-Value="Receptor.NumRegIdTrib"></Texto>
+        </div>
+        <div class="col-12 col-sm-12 col-md-6 col-lg-3 col-xl-5">
+            <Texto Etiqueta="Calle" MaxLength="150" @bind-Value="Receptor.Calle"></Texto>
+        </div>
+        <div class="col-12 col-sm-12 col-md-6 col-lg-3 col-xl-2">
+            <Texto Etiqueta="Municipio" MaxLength="50" @bind-Value="Receptor.Municipio"></Texto>
+        </div>
+        <div class="col-12 col-sm-12 col-md-6 col-lg-3 col-xl-2">
+            <Texto Etiqueta="Estado" MaxLength="50" @bind-Value="Receptor.Estado"></Texto>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-12 col-sm-12 col-md-6 col-lg-3 col-xl-2">
+            <Texto Etiqueta="País" MaxLength="3" @bind-Value="Receptor.Pais"></Texto>
+        </div>
+        <div class="col-12 col-sm-12 col-md-6 col-lg-3 col-xl-2">
+            <Texto Etiqueta="Código Postal" MaxLength="5" @bind-Value="Receptor.CodigoPostal"></Texto>
+        </div>
+    </div>
+    <hr />
+    <div class="row">
+        <div class="col-12">
+            <h4>Mercancías</h4>
+        </div>
+    </div>
+    @if (Mercancias != null)
+    {
+        @foreach (var item in Mercancias)
+        {
+            <div class="row">
+                <div class="col-12 col-sm-12 col-md-6 col-lg-3 col-xl-2">
+                    <Texto Etiqueta="No Identificación" MaxLength="50" disabled @bind-Value="item.NoIdentificacion"></Texto>
+                </div>
+                <div class="col-12 col-sm-12 col-md-6 col-lg-3 col-xl-2">
+                    <Texto Etiqueta="Fracción Arancelaria" MaxLength="10" @bind-Value="item.FraccionArancelaria"></Texto>
+                </div>
+                <div class="col-12 col-sm-12 col-md-6 col-lg-3 col-xl-2">
+                    <Numerico Min="0" Etiqueta="Cantidad Aduana" MaxLength="10" @bind-Value="item.CantidadAduana"></Numerico>
+                </div>
+                <div class="col-12 col-sm-12 col-md-6 col-lg-3 col-xl-2">
+                    <Texto Etiqueta="Unidad Aduana" MaxLength="2" @bind-Value="item.UnidadAduana"></Texto>
+                </div>
+                <div class="col-12 col-sm-12 col-md-6 col-lg-3 col-xl-2">
+                    <Numerico Min="0" Etiqueta="Valor Unitario Aduana" @bind-Value="item.ValorUnitarioAduana"></Numerico>
+                </div>
+                <div class="col-12 col-sm-12 col-md-6 col-lg-3 col-xl-2">
+                    <Numerico Min="0" Etiqueta="Valor Dolares" @bind-Value="item.ValorDolares"></Numerico>
+                </div>
+            </div>
+        }
+    }
+    <hr />
+    <div class="row">
+        <div class="col-12">
+            <button class="btn btn-primary" @onclick="GuardarComplementoCE">Guardar Complemento</button>
+        </div>
+    </div>
+</div>
+
+
+@code {
+    [Parameter]
+    public string Factura_Id
+    {
+        get
+        {
+            return _Factura_Id;
+        }
+        set
+        {
+            if (_Factura_Id != value)
+            {
+                _Factura_Id = value;
+                Limpiar();
+            }
+        }
+    }
+    [Parameter] public List<th_venta_factura_comercio_mercancias> Mercancias { get; set; }
+    [Parameter] public th_venta_factura_comercio_receptor Receptor { get; set; }
+    [Parameter] public EventCallback<DTOs.Ventas.CFDi.Comercio.ComercioResponse> GuardarCE { get; set; }
+    [Parameter] public DTOs.Ventas.CFDi.Comercio.ComercioResponse Value { get; set; }
+    [Parameter] public EventCallback<DTOs.Ventas.CFDi.Comercio.ComercioResponse> ValueChanged { get; set; }
+    private th_venta_factura_comercio_emisor Emisor { get; set; } = new th_venta_factura_comercio_emisor();
+    private string _Factura_Id;
+    private string ClavePedimento { get; set; } = "A1";
+    private string CertificadoOrigen { get; set; } = "0";
+    private string Incoterm { get; set; } = "EXW";
+    private decimal TipoCambioUSD { get; set; } = 0;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            Emisor = new th_venta_factura_comercio_emisor
+                {
+                    Calle = "ING. GERARDO TORRES DIAZ",
+                    CodigoPostal = "64769",
+                    factura_Id = Factura_Id,
+                    NumeroExterior = "3903",
+                    Localidad = "07",
+                    Estado = "NLE",
+                    Pais = "MEX",
+                };
+        }
+    }
+    private async Task GuardarComplementoCE()
+    {
+        using var contexto = new KalanDB(Configuration.GetConnectionString("DefaultConnection"));
+        var validaciones = contexto.ValidateEntity(Receptor);
+        if (validaciones.ListaErrores.Count() > 0)
+        {
+            await Swal.FireAsync("Error", validaciones.Errores, SweetAlertIcon.Error);
+            return;
+        }
+        validaciones = contexto.ValidateEntity(Emisor);
+        if (validaciones.ListaErrores.Count() > 0)
+        {
+            await Swal.FireAsync("Error", validaciones.Errores, SweetAlertIcon.Error);
+            return;
+        }
+        foreach (var item in Mercancias)
+        {
+            validaciones = contexto.ValidateEntity(item);
+            if (validaciones.ListaErrores.Count() > 0)
+            {
+                await Swal.FireAsync("Error", validaciones.Errores, SweetAlertIcon.Error);
+                return;
+            }
+        }
+        th_venta_factura_comercio comercio = new th_venta_factura_comercio
+            {
+                factura_Id = Factura_Id,
+                ClaveDePedimento = ClavePedimento,
+                CertificadoOrigen = Convert.ToInt32(CertificadoOrigen),
+                Incoterm = Incoterm,
+                TipoCambioUSD = TipoCambioUSD,
+                TotalUSD = Mercancias.Sum(x => x.ValorDolares),
+                FechaCreacion = DateTime.Now,
+                UsuarioCreacion = Usuario.Nombre,
+                Activo = true,
+                Version = "2.0"
+            };
+        validaciones = contexto.ValidateEntity(comercio);
+        if (validaciones.ListaErrores.Count() > 0)
+        {
+            await Swal.FireAsync("Error", validaciones.Errores, SweetAlertIcon.Error);
+            return;
+        }
+        Value = new DTOs.Ventas.CFDi.Comercio.ComercioResponse
+            {
+                Emisor = Emisor,
+                Receptor = Receptor,
+                Mercancias = Mercancias,
+                Encabezado = comercio
+            };
+        await ValueChanged.InvokeAsync(Value);
+        await GuardarCE.InvokeAsync(Value);
+    }
+    private async Task Limpiar()
+    {
+        ClavePedimento = "A1";
+        CertificadoOrigen = "0";
+        Incoterm = "EXW";
+        TipoCambioUSD = 0;
+         
+    }
+}

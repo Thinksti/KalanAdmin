@@ -1,0 +1,296 @@
+﻿@page "/Financiero/SAT/ConciliarCompras"
+@using KalanBlazor.DTOs.Financiero
+@inject KalanDB DB
+@inject SweetAlertService Swal
+@inject NavigationManager NavigationManager
+@rendermode InteractiveServer
+@inject LoadingService Spinner
+<SpinnerLoading></SpinnerLoading>
+<h1>Conciliar SAT vs Compras</h1>
+<div class="row">
+    <div class="col-12 col-sm-12 col-md-12 col-lg-6 col-xl-4">
+        <Fecha Etiqueta="Fecha Inicial" @bind-Value="Inicial"></Fecha>
+    </div>
+    <div class="col-12 col-sm-12 col-md-12 col-lg-6 col-xl-4">
+        <Fecha Etiqueta="Fecha Inicial" @bind-Value="Final"></Fecha>
+    </div>
+    <div class="col-12 col-sm-12 col-md-12 col-lg-6 col-xl-4">
+        <button @onclick="Buscar" class="btn btn-primary">Buscar</button>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <Texto Etiqueta="Buscar" MaxLength="100" @bind-Value="BuscarTexto"></Texto>
+    </div>
+</div>
+<div class="row">
+    <div class="col-12 table-responsive">
+        <table class="table small">
+            <thead>
+                <tr>
+                    <th>Existe</th>
+                    <th>UUID</th>
+                    <th>Nombre Emisor</th>
+                    <th>RFC Emisor</th>
+                    <th>Monto</th>
+                    <th>Fecha Emisión</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Filtrado != null)
+                {
+                    foreach (var item in Filtrado)
+                    {
+                        <tr>
+                            <td>
+                                @if(item.Existe){
+                                    <button class="btn btn-success" disabled>Ok</button>
+                                }
+                                else
+                                {
+                                    <button class="btn btn-primary" @onclick="() => Conciliar(item.uuid)">Conciliar</button>
+                                }
+                            </td>
+                            <td>@item.uuid</td>                           
+                            <td>@item.nombreemisor</td>
+                            <td>@item.rfcemisor</td>
+                            <td>@item.monto.ToString("c")</td>
+                            <td>@item.fechaemision</td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+@code {
+    private List<ConciliaDocumentos> Metadata { get; set; }
+    private List<ConciliaDocumentos> Filtrado
+    {
+        get
+        {
+            if (string.IsNullOrEmpty(BuscarTexto))
+            {
+                return Metadata;
+            }
+            else
+            {
+                return Filtrar();
+            }
+        }        
+    }
+    private DateTime Inicial { get; set; }
+    private DateTime Final { get; set; }
+    private string RFC { get; set; }
+    private string BuscarTexto { get; set; }
+    [CascadingParameter] private Task<AuthenticationState> authenticationStateTask { get; set; }
+    protected override async Task OnInitializedAsync()
+    {
+        Inicial = DateTime.Now.AddMonths(-1).Date;
+        Final = DateTime.Now.Date;
+        var conf = DB.th_contabilidad_configuracion.FirstOrDefault();
+        if (conf != null)
+        {
+            this.RFC = conf.RFC;
+        }
+        else
+        {
+            this.RFC = "";
+        }
+    }
+    private async Task Conciliar(string uuid)
+    {
+        SweetAlertOptions options = new SweetAlertOptions
+            {
+                Title = "Alerta",
+                ShowConfirmButton = true,
+                ShowCancelButton = true,
+                ConfirmButtonText = "Si, generar",
+                Text = "Esto creara la cuenta por pagar con la información de los matadata del SAT",
+                Icon = SweetAlertIcon.Warning
+            };
+        var resultado = await Swal.FireAsync(options);
+        if (resultado.IsConfirmed)
+        {
+            var metadata = DB.th_sat_metadata.FirstOrDefault(x => x.uuid == uuid);
+            Spinner.IsLoading = true;
+            if (metadata != null)
+            {
+                var proveedor = DB.th_proveedores.FirstOrDefault(x => x.RFC == metadata.rfcemisor);
+                if (proveedor == null)
+                {
+                    var emisor = DB.cfdi_emisor.Where(x => x.pkUUID.Value == new Guid(uuid)).FirstOrDefault();
+                    if (emisor != null)
+                    {
+                        var regimenfiscal = DB.th_regimenfiscal.FirstOrDefault(x => x.Id == emisor.RegimenFiscal);
+                        var _authState = await authenticationStateTask;
+                        var user = _authState.User;
+                        var correo = ((System.Security.Claims.ClaimsIdentity)user.Identity).Name;
+                        if (regimenfiscal == null)
+                        {
+                            regimenfiscal = new th_regimenfiscal
+                                {
+                                    Activo = true,
+                                    FechaCreacion = DateTime.Now,
+                                    Id = emisor.RegimenFiscal,
+                                    Regimen = emisor.RegimenFiscal,
+                                    UsuarioCreacion = correo
+                                };
+                            DB.th_regimenfiscal.Add(regimenfiscal);
+                            await DB.SaveChangesAsync();
+                        }
+                        var comprobante = DB.cfdi_comprobante.FirstOrDefault(x => x.pkUUID == new Guid(uuid));
+                        var usocfdi = DB.th_usocfdi.FirstOrDefault();
+
+                        proveedor = new th_proveedores
+                            {
+                                Activo = true,
+                                CodigoPostal = comprobante.LugarExpedicion,
+                                Direccion = comprobante.LugarExpedicion,
+                                FechaCreacion = DateTime.Now,
+                                Id = Guid.NewGuid().ToString(),
+                                NombreCorto = emisor.Rfc.Substring(0, 6),
+                                RFC = emisor.Rfc,
+                                RazonSocial = emisor.Nombre,
+                                regimenfiscal_Id = regimenfiscal.Id,
+                                usocfdi_Id = usocfdi.Id,
+                                UsuarioCreacion = "SAT"
+                            };
+                        DB.th_proveedores.Add(proveedor);
+                        await DB.SaveChangesAsync();
+                    }      
+                }
+                if (proveedor != null)
+                {
+                    var cuenta = DB.th_cuentaspagar.FirstOrDefault(x => x.UUID == uuid);
+                    if (cuenta == null)
+                    {
+                        var factura = DB.cfdi_comprobante.FirstOrDefault(x => x.pkUUID == new Guid(uuid));
+                        var _authState = await authenticationStateTask;
+                        var user = _authState.User;
+                        var correo = ((System.Security.Claims.ClaimsIdentity)user.Identity).Name;
+                        cuenta = new th_cuentaspagar();
+                        cuenta.UUID = metadata.uuid;
+                        cuenta.proveedor_Id = proveedor.Id;
+                        if (factura != null)
+                        {
+                            if (string.IsNullOrEmpty(factura.Serie))
+                            {
+                                cuenta.Factura = $"{factura.Folio}";
+                            }
+                            else
+                            {
+                                cuenta.Factura = $"{factura.Serie}-{factura.Folio}";
+                            }                            
+                        }
+                        else
+                        {
+                            cuenta.Factura = metadata.uuid;
+                        }                 
+                        var comprobante = DB.cfdi_comprobante.FirstOrDefault(x => x.pkUUID == new Guid(uuid));
+                        if(comprobante != null)
+                        {
+                            var metodo = DB.th_metodopago.FirstOrDefault(x=>x.Id == comprobante.MetodoPago);
+                            if(metodo == null)
+                            {
+                                cuenta.metodopago_Id = DB.th_metodopago.FirstOrDefault().Id;
+                            }
+                            else
+                            {
+                                cuenta.metodopago_Id = metodo.Id;
+                            }
+                        }
+                        else
+                        {
+                            cuenta.metodopago_Id = DB.th_metodopago.FirstOrDefault().Id;
+                        }
+                        comprobante = DB.cfdi_comprobante.FirstOrDefault(x => x.pkUUID == new Guid(uuid));
+                        var moneda = DB.th_monedas.FirstOrDefault(x => x.NombreCorto == comprobante.Moneda);
+                        var tipoCambio = DB.th_tiposcambio.FirstOrDefault(x => x.Fecha == comprobante.Fecha.Value.Date && x.moneda_Id == moneda.Id);
+                        cuenta.moneda_Id = moneda.Id;
+                        cuenta.tipocambio_Id = tipoCambio.Id;
+                        cuenta.Fecha = metadata.fechaemision;
+                        cuenta.Activo = metadata.estatus;
+                        cuenta.Disponible = metadata.monto;
+                        cuenta.Original = metadata.monto;
+                        cuenta.FechaCreacion = DateTime.Now;
+                        cuenta.Id = Guid.NewGuid().ToString();
+                        cuenta.UsuarioCreacion = correo;                        
+                        cuenta.Observaciones = "Conciliación de Compras";
+                        DB.th_cuentaspagar.Add(cuenta);
+                        await DB.SaveChangesAsync();
+                        Spinner.IsLoading = false;
+                        await Buscar();
+                        await Swal.FireAsync("Guardado", "Se ha guardado la cuenta por pagar", SweetAlertIcon.Success);
+                    }
+                    else
+                    {
+                        Spinner.IsLoading = false;
+                        await Swal.FireAsync("Error", "Ya existe una cuenta por pagar con el mismo UUID", SweetAlertIcon.Error);
+                    }
+                }
+                else
+                {
+                    Spinner.IsLoading = false;
+                    await Swal.FireAsync("Error", "No se encontró el proveedor", SweetAlertIcon.Error);
+                }
+            }
+        }
+    
+        Spinner.IsLoading = false;
+    }
+    private List<ConciliaDocumentos> Filtrar()
+    {
+        using (var tKalanDB = new KalanDB(DB.connectionString))
+        {
+            var t = Metadata
+        .Where(item => typeof(ConciliaDocumentos).GetProperties()
+        .Any(prop => prop.GetValue(item)?.ToString()?
+        .Contains(BuscarTexto, StringComparison.InvariantCultureIgnoreCase) == true));
+            return t.ToList();
+        }
+    }
+    private async Task Buscar()
+    {
+        try
+        {
+            var hora = DateTime.Now; 
+            Spinner.IsLoading = true;
+            Metadata = (from x in DB.th_sat_metadata 
+                        join rc in DB.cfdi_receptor on x.uuid.ToUpper() equals rc.pkUUID.Value.ToString().ToUpper()
+                        join c  in DB.th_cuentaspagar on x.uuid equals c.UUID into cpg 
+                        from cpp in cpg.DefaultIfEmpty()
+                        where x.fechaemision >= Inicial && 
+                       x.fechaemision <= Final.AddHours(23).AddMinutes(59).AddSeconds(59) &&
+                       x.rfcemisor != RFC &&
+                       x.efectocomprobante == "I" &&
+                       x.estatus == true
+                       select new ConciliaDocumentos
+                           {
+                               efectocomprobante = x.efectocomprobante,
+                               estatus = x.estatus,
+                               Existe = cpp==null?false:true,
+                               fechacancelacion = x.fechacancelacion,
+                               fechacertificacionsat = x.fechacertificacionsat,
+                               fechaemision = x.fechaemision,
+                               monto = x.monto,
+                               nombreemisor = x.nombreemisor,
+                               nombrereceptor = x.nombrereceptor,
+                               rfcemisor = x.rfcemisor,
+                               rfcpac = x.rfcpac,
+                               rfcreceptor = x.rfcreceptor,
+                               uuid = x.uuid
+                           }).ToList();
+
+            ;
+            Spinner.IsLoading = false;
+        }
+        catch (Exception ex)
+        {
+            Spinner.IsLoading = false;
+            await Swal.FireAsync("Error", ex.Message, SweetAlertIcon.Error);
+        }
+    }
+
+}

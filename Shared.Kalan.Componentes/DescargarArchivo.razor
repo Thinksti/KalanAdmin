@@ -1,0 +1,55 @@
+﻿@inject IJSRuntime JS
+
+
+@if (string.IsNullOrEmpty(Etiqueta))
+{
+    <button class="btn btn-link" @attributes="AdditionalAttributes" @onclick="Descargar"><i class="fa-solid fa-download"></i> @Nombre</button>
+}
+else
+{
+    <button class="btn btn-link" @attributes="AdditionalAttributes" @onclick="Descargar"><i class="fa-solid fa-download"></i> @Etiqueta</button>
+
+}
+
+@code {
+    [Parameter(CaptureUnmatchedValues = true)] public IDictionary<string, object> AdditionalAttributes { get; set; }
+    [Parameter] public string Ruta { get; set; }
+    [Parameter] public string Etiqueta { get; set; }
+    [Parameter] public ArchivoGral Archivo { get; set; }
+    public string Nombre { get; set; }
+    protected override void OnInitialized()
+    {
+        if (Archivo != null)
+        {
+            this.Nombre = Archivo.Nombre;
+        }
+        else
+        {
+            this.Nombre = Ruta.Split('\\').Last();
+        }
+    }
+    private async Task Descargar()
+    {
+        if (Archivo == null)
+        {
+            if (File.Exists(Ruta))
+            {
+                var bytes = File.ReadAllBytes(Ruta);
+                await DownloadFileFromStream(new MemoryStream(bytes), Nombre);
+            }
+        }
+        else
+        {
+            await DownloadFileFromStream(new MemoryStream(Archivo.Datos), Archivo.Nombre);
+        }
+        await InvokeAsync(() =>
+        {
+            StateHasChanged();
+        });
+    }
+    private async Task DownloadFileFromStream(Stream fileStream, string fileName)
+    {
+        using var streamRef = new DotNetStreamReference(stream: fileStream);
+        await JS.InvokeVoidAsync("downloadFileFromStream", fileName, streamRef);
+    }
+}

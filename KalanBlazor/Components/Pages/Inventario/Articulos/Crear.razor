@@ -1,0 +1,325 @@
+﻿@page "/inventario/articulos/crear"
+
+@rendermode InteractiveServer
+@inject KalanDB DB
+@inject Excel Excel
+@inject NavigationManager NavigationManager
+@inject SweetAlertService Swal
+@inject LoadingService Spinner
+<SpinnerLoading></SpinnerLoading>
+
+<Contenido Titulo="Creación de Articulo">
+ 
+        <div class="row">
+            <div class="col-12 col-sm-12 col-md-12 col-lg-6 col-xl-4">
+                @if (Tipos != null)
+                {
+                    <div class="form-floating">
+                        <select class="form-select" @bind="item.tipo_id">
+                            @foreach (var titem in Tipos)
+                            {
+                                @if (string.IsNullOrEmpty(item.tipo_id))
+                                {
+                                    if (titem.Id == Tipos.First().Id)
+                                    {
+                                        <option value="@titem.Id" selected>@titem.NombreCorto</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="@titem.Id">@titem.NombreCorto</option>
+                                    }
+                                }
+                                else
+                                {
+                                    if (titem.Id == item.tipo_id)
+                                    {
+                                        <option value="@titem.Id" selected>@titem.NombreCorto</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="@titem.Id">@titem.NombreCorto</option>
+                                    }
+                                }
+                            }
+                        </select>
+                        <label>Selecciona el Tipo de Articulo</label>
+                    </div>
+                }
+                
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-12 col-sm-12 col-md-12 col-lg-6 col-xl-4">
+                <Texto MaxLength="15" Etiqueta="Nombre del Tipo del Articulo" @bind-Value="item.NombreCorto"></Texto>
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-12 col-sm-12 col-md-12 col-lg-6 col-xl-6">
+                <Texto MaxLength="100" Etiqueta="Descripción del Articulo" @bind-Value="item.Descripcion"></Texto>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-12 col-sm-12 col-md-6 col-lg-3 col-xl-2">
+                <Combo ItemValue="Id" TextValue="NombreCorto" Etiqueta="Unidad de Medida" TItem="th_articulos_unidad" TValue="string" Items="@Unidades" @bind-Value="item.unidad_Id"></Combo>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-12 col-sm-12 col-md-12 col-lg-3 col-xl-3">
+                <CuentaContable Etiqueta="Cuenta Contable del Articulo" @bind-Value="item.cuentacontable_id"></CuentaContable>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+                <Switch Etiqueta="Articulo Activo" @bind-Value="item.Activo"></Switch>
+            </div>
+        </div> 
+        <div class="row">
+            <div class="col-12 col-sm-12 col-md-12 col-lg-6 col-xl-6">
+                <div class="card">
+                    <div class="card-body">
+                        <h4 class="card-header">Configuración para Compras</h4>
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="form-check">
+                                    <input class="form-check-input" @onchange="@(()=>item.OpImpCompra=1)" type="radio" name="tipoImpuestoCompra" id="txt_sinimpuestoscompra" checked>
+                                    <label class="form-check-label" for="txt_sinimpuestoscompra">
+                                        Sin Impuestos
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" @onchange="@(()=>item.OpImpCompra=2)" type="radio" name="tipoImpuestoCompra" id="txt_proveedor">
+                                    <label class="form-check-label" for="txt_proveedor">
+                                        Impuestos del Proveedor
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" @onchange="@(()=>item.OpImpCompra=3)" type="radio" name="tipoImpuestoCompra" id="txt_articulocompra">
+                                    <label class="form-check-label" for="txt_articulocompra">
+                                        Impuestos del Articulo
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-12">
+                                @if(item.OpImpCompra == 3)
+                                {
+                                    @if (PlanImpuestos != null)
+                                    {
+                                        <div class="form-floating">
+                                            <select class="form-select" @bind="item.ImpPlanCompra_id">
+                                                @if (string.IsNullOrEmpty(item.ImpPlanCompra_id))
+                                                {
+                                                    <option disabled selected value=" ">Selecciona</option>
+                                                }
+                                                @foreach (var titem in PlanImpuestos.Where(x=>x.Compras))
+                                                {
+                                                    if (titem.Id == item.ImpPlanCompra_id)
+                                                    {
+                                                        <option value="@titem.Id" selected>@titem.NombreCorto</option>
+                                                    }
+                                                    else
+                                                    {
+                                                        <option value="@titem.Id">@titem.NombreCorto</option>
+                                                    }
+                                                }
+                                            </select>
+                                            <label>Selecciona el Plan de Impuestos</label>
+                                        </div>
+                                    }                             
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-12 col-sm-12 col-md-12 col-lg-6 col-xl-6">
+                <div class="card">
+                    <div class="card-body">
+                        <h4 class="card-header">Configuración para Ventas</h4>
+                        <div class="row">
+                            <div class="col-12">
+                                <Buscador Etiqueta="Código de Venta del SAT"
+                                          Llave="Id"
+                                          TItem="th_catproductosat"
+                                          @bind-Item="Catalogoproductosat"
+                                          @bind-Value="item.catalogoproductosat_Id"
+                                          Columnas="@Columnas"
+                                          TValue="string"
+                                          SearchExacto="SearchExacto"
+                                          SearchItems="SearchItems">
+                                </Buscador>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-12">
+                              @if (Catalogoproductosat != null)
+                                {
+                                    <ReadOnly Etiqueta="Descripción del concepto SAT" Value="@Catalogoproductosat.Descripcion"></ReadOnly>
+                                }
+                                else
+                                {
+                                    <ReadOnly Etiqueta="Descripción del concepto SAT" Value=" "></ReadOnly>
+                                } 
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="form-check">
+                                    <input class="form-check-input" @onchange="@(()=>item.OpImpVenta=1)" type="radio" name="tipoImpuestoVenta" id="txt_sinimpuestosventa" checked>
+                                    <label class="form-check-label" for="txt_sinimpuestosventa">
+                                        Sin Impuestos
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" @onchange="@(()=>item.OpImpVenta=2)" type="radio" name="tipoImpuestoVenta" id="txt_cliente">
+                                    <label class="form-check-label" for="txt_cliente">
+                                        Impuestos del Cliente
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" @onchange="@(()=>item.OpImpVenta=3)" type="radio" name="tipoImpuestoVenta" id="txt_articuloventa">
+                                    <label class="form-check-label" for="txt_articuloventa">
+                                        Impuestos del Articulo
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-12">
+                                @if (item.OpImpVenta == 3)
+                                {
+                                    <div class="form-floating">
+                                        <select class="form-select" @bind="item.ImpPlanVenta_id">
+                                            @if (string.IsNullOrEmpty(item.ImpPlanVenta_id))
+                                            {
+                                                <option disabled selected value=" ">Selecciona</option>
+                                            }
+                                            @foreach (var titem in PlanImpuestos.Where(x => x.Ventas))
+                                            {
+                                                if (titem.Id == item.ImpPlanVenta_id)
+                                                {
+                                                    <option value="@titem.Id" selected>@titem.NombreCorto</option>
+                                                }
+                                                else
+                                                {
+                                                    <option value="@titem.Id">@titem.NombreCorto</option>
+                                                }
+                                            }
+                                        </select>
+                                        <label>Selecciona el Plan de Impuestos</label>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+                <button @onclick="Guardar" class="btn btn-primary">Guardar Articulo</button>
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+                <a href="/inventario/articulos/listado"><i class="fa-solid fa-arrow-left"></i> Regresar al Index</a>
+            </div>
+        </div>
+  
+</Contenido>
+
+@code {
+    [CascadingParameter] private Task<AuthenticationState> authenticationStateTask { get; set; }
+    private th_articulos item { get; set; } = new();
+    private List<th_plan_impuestos> PlanImpuestos { get; set; } 
+    private List<th_articulos_tipos> Tipos { get; set; } 
+    private List<th_articulos_unidad> Unidades { get; set; }
+    private List<string> Columnas { get; set; } = new List<string> { "Id", "Descripcion" };
+    private th_catproductosat Catalogoproductosat { get; set; }
+    protected override async Task OnInitializedAsync()
+    {
+        PlanImpuestos = await DB.th_plan_impuestos
+        .Where(x => x.Activo)
+        .IgnoreAutoIncludes()
+        .ToListAsync();
+        Tipos = await DB.th_articulos_tipos
+    .Where(x => x.Activo)
+    .IgnoreAutoIncludes()
+    .ToListAsync();
+        item.tipo_id = Tipos.First().Id;
+        Unidades = DB.th_articulos_unidad.ToList();
+    }
+    private string Usuario
+    {
+        get
+        {
+            var _authState = authenticationStateTask.Result;
+            var user = _authState.User;
+            return ((System.Security.Claims.ClaimsIdentity)user.Identity).Name;
+        }
+    }
+    private async Task<IEnumerable<th_catproductosat>> SearchItems(string value)
+    {
+        if (string.IsNullOrEmpty(value))
+        {
+            return DB.th_catproductosat.Take(10).IgnoreAutoIncludes().AsEnumerable();
+        }
+        else
+        {
+            return DB.th_catproductosat.Where(x => x.Id.ToUpper().Contains(value.ToUpper()) || x.Descripcion.ToUpper().Contains(value.ToUpper())).IgnoreAutoIncludes().Take(10).AsEnumerable();
+        }
+
+    }
+    private async Task<IEnumerable<th_catproductosat>> SearchExacto(string value)
+    {
+        return DB.th_catproductosat.Where(c => c.Id.ToUpper() == value.ToUpper()).IgnoreAutoIncludes().ToList().AsEnumerable();
+    }
+    private async Task Guardar()
+    {
+        if (string.IsNullOrEmpty(item.NombreCorto))
+        {
+            await Swal.FireAsync("Error", "El nombre del articulo es requerido", SweetAlertIcon.Error);
+            return;
+        }
+        if (string.IsNullOrEmpty(item.Descripcion))
+        {
+            await Swal.FireAsync("Error", "La descripción del articulo es requerida", SweetAlertIcon.Error);
+            return;
+        }
+        if (string.IsNullOrEmpty(item.ImpPlanCompra_id) && item.OpImpCompra == 3)
+        {
+            await Swal.FireAsync("Error", "Seleccione un plan de impuestos para compras", SweetAlertIcon.Error);
+            return;
+        }
+        if (string.IsNullOrEmpty(item.ImpPlanVenta_id) && item.OpImpVenta == 3)
+        {
+            await Swal.FireAsync("Error", "Seleccione un plan de impuestos para Ventas", SweetAlertIcon.Error);
+            return;
+        }
+        try
+        {
+ 
+            item.Id = Guid.NewGuid().ToString();
+            item.FechaCreacion = DateTime.Now;
+            item.UsuarioCreacion = Usuario;
+            await DB.th_articulos.AddAsync(item);
+            await DB.SaveChangesAsync();
+            NavigationManager.NavigateTo("/inventario/articulos/listado");
+        }
+        catch (Exception ex)
+        {
+            await Swal.FireAsync("Error", ex.Message, SweetAlertIcon.Error);
+            throw;
+        }
+    }
+
+}

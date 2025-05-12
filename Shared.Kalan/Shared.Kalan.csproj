@@ -1,0 +1,16 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFramework>net8.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+		<AssemblyVersion>$([System.DateTime]::Now.ToString(yyyy.MM.dd.HHmm))</AssemblyVersion>
+		<Version>$(AssemblyVersion)</Version>
+	</PropertyGroup>
+  
+	<ItemGroup> 
+		<PackageReference Include="Shared.MySQL.Extension" Version="2025.3.3.1454" />
+	</ItemGroup>
+ 
+</Project>

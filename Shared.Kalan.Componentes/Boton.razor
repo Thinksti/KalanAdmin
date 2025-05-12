@@ -1,0 +1,48 @@
+﻿@inject LoadingService Spinner
+ <style>
+    button {
+        height:100%;
+    }
+ </style>
+@if (IsLoading)
+{
+    <button @onclick="OnClickAsync" disabled @attributes="AdditionalAttributes">@ChildContent</button>
+}
+else
+{
+    <button @onclick="OnClickAsync" @attributes="AdditionalAttributes">@ChildContent</button>
+}
+
+@code {
+    [Parameter] public RenderFragment ChildContent { get; set; }
+    [Parameter] public Func<Task> OnClick { get; set; }
+    [Parameter] public EventCallback OnFinally { get; set; }
+    [Parameter] public EventCallback<Exception> OnException { get; set; }
+    [Parameter(CaptureUnmatchedValues = true)] public IDictionary<string, object> AdditionalAttributes { get; set; }
+    private bool IsLoading { get; set; }
+    private async Task OnClickAsync()
+    {
+        try
+        {
+            Spinner.IsLoading = true;
+            IsLoading = true;
+            await InvokeAsync(StateHasChanged);
+            if(OnClick!=null){
+                await OnClick();
+            }            
+            IsLoading = false;
+            await InvokeAsync(StateHasChanged);
+        }
+        catch (Exception ex)
+        {
+            await OnException.InvokeAsync(ex);
+        }         
+        finally
+        {
+            IsLoading = false;
+            Spinner.IsLoading = false;
+            await InvokeAsync(StateHasChanged);
+            await OnFinally.InvokeAsync();
+        }
+    }
+}

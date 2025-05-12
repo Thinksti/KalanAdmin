@@ -1,0 +1,57 @@
+﻿@using Microsoft.JSInterop
+@using Shared.Kalan.Components.Pages.Componentes.Modal
+@inject IJSRuntime JS
+ 
+
+<div class="modal fade" id="@Id" tabindex="-1" aria-labelledby="title_@Id" aria-hidden="true">
+    <div class="modal-dialog @Size.ToString().ToLower().Replace("_","-")">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1 class="modal-title fs-5" id="title_@Id">@Title</h1>
+                <button @onclick="HideModal" type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                @ChildContent
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    public string Id { get; set; }
+
+    public string IdLabel
+    {
+        get
+        {
+            return $"{Id}-label";
+        }    
+    } 
+    [Parameter]
+    public EventCallback OnShow { get; set; }
+    [Parameter]
+    public EventCallback OnHide { get; set; }    
+    [Parameter]
+    public string Title { get; set; }
+    [Parameter]
+    public RenderFragment ChildContent { get; set; }
+    [Parameter]
+    public Size Size { get; set; }
+    protected override async Task OnInitializedAsync()
+    {
+        Id = Guid.NewGuid().ToString().Replace("-","");
+    
+    }
+ 
+    public async Task ShowModal()
+    {
+        await JS.InvokeVoidAsync("ShowModal", @Id);
+        await OnShow.InvokeAsync(null); 
+    }
+ 
+    public async Task HideModal()
+    {
+        await JS.InvokeVoidAsync("HideModal", @Id);
+        await OnHide.InvokeAsync(null);
+    }
+}

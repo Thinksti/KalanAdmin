@@ -1,0 +1,49 @@
+﻿@inject NavigationManager NavigationManager
+<div class="navLateral">
+    <div class="row">
+        <div class="col-12 logo-menu">
+            <img src="@URLLogo" style="max-height: 70px; margin-top:8px;"> <span style="font-weight: 600 !important;vertical-align:bottom;">@NombreCorto</span>
+        </div>
+    </div>
+    <hr class="hr-menu" />
+    <br />
+    <nav class="navbar navbar-expand-lg bg-body-tertiary nav-menu">
+        <ul class="nav flex-column">
+            @if (ItemsMenu != null)
+            {
+                @foreach (var item in ItemsMenu)
+                {
+                    <MenuIzquierdoItem item="@item" Activar="@ClicItem"></MenuIzquierdoItem>
+                }
+            }
+        </ul>
+    </nav>
+</div>
+
+@code {
+    [Parameter] public string URLLogo { get; set; }
+    [Parameter] public string NombreCorto { get; set; }
+    [Parameter] public List<ItemMenu> ItemsMenu { get; set; }
+    private async Task ClicItem(Guid Id)
+    {
+        foreach (var item in ItemsMenu)
+        {
+            if (item.Activo)
+            {
+                item.Activo = false;
+            }            
+            if(item.Id == Id)
+            {
+                item.Activo = true;
+            }
+        }
+        foreach (var item in ItemsMenu)
+        {
+            if (item.Id == Id)
+            {
+                item.Activo = true;
+                NavigationManager.NavigateTo(item.URLItem);
+            }
+        }
+    }
+}

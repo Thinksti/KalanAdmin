@@ -1,0 +1,45 @@
+﻿@page "/ventas/menu"
+@inject NavigationManager NavigationManager
+@rendermode InteractiveServer
+<h1>Modulo de Ventas</h1>
+
+
+<div class="row">
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Clientes</h5>
+                <p class="card-text">Mantenimiento de Clientes</p>
+                <a href="/th_clientes" class="btn btn-primary">Ir a Clientes</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Tesorería</h5>
+                <p class="card-text">Ingreso</p>
+                <button @onclick="@(()=>Navegar("/ingresos/crear"))" class="btn btn-primary">Nuevo Ingreso</button>
+                <button @onclick="@(()=>Navegar("/ingresos/listado"))" class="btn btn-primary">Listado de Ingresos</button>
+                <button @onclick="@(()=>Navegar("/ventas/Facturas/crear"))" class="btn btn-primary">Registrar Cuenta por Cobrar</button>
+                <button @onclick="@(()=>Navegar("/ventas/Facturas/listado"))" class="btn btn-primary">Listado de Factura</button>
+                <button @onclick="@(()=>Navegar("/ventas/Facturas/pagar"))" class="btn btn-primary">Aplicar pago a factura</button>
+                @* <button @onclick="@(()=>Navegar("/ingresos/complemento/crear"))" class="btn btn-primary">Crear Complemento de Pago</button> *@
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Venta</h5>
+                <button @onclick="@(()=>Navegar("/ventas/facturas/ventafactura"))" class="btn btn-primary">Registrar Factura</button>
+            </div>
+        </div>
+    </div>
+</div>
+@code {
+    private void Navegar(string url)
+    {
+        NavigationManager.NavigateTo(url, true);
+    }
+}

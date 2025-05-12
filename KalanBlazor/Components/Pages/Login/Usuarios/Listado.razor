@@ -1,0 +1,43 @@
+﻿@page "/login/usuarios/listado"
+@rendermode InteractiveServer
+@inject KalanDB DB
+@inject Excel Excel
+@inject NavigationManager NavigationManager
+
+<h1>Listado de Usuarios</h1>
+
+<button @onclick="@(()=>Navegar("/login/usuarios/crear"))" class="btn btn-primary"><i class="fa-solid fa-plus"></i> Nuevo</button>
+<div class="row">
+    <div class="col-12 col-sm-12 col-md-12 col-lg-12 col-xl-8">
+        <QuickGrid Pagination="@pagination" Class="table small" Items="_listado.AsQueryable()">
+            <TemplateColumn Title="Usuarios" Context="item" Sortable="true">
+                <button class="btn btn-outline-warning" @onclick="@(()=>Navegar($"/login/usuarios/editar?id={item.Id}"))"><i class="fa-solid fa-pen-to-square"></i></button>
+                <button class="btn btn-outline-info" @onclick="@(()=>Navegar($"/login/usuarios/ver?id={item.Id}"))"><i class="fas fa-info"></i></button>
+                <button class="btn btn-outline-danger" @onclick="@(()=>Navegar($"/login/usuarios/eliminar?id={item.Id}"))"><i class="fas fa-trash"></i></button>
+            </TemplateColumn>
+            <PropertyColumn Property="@(item => item.UserName)" Title="Usuario" Sortable="true" /> 
+        </QuickGrid>
+        <Paginator State="@pagination" />
+    </div>
+</div>
+
+@code {
+    PaginationState pagination = new PaginationState { ItemsPerPage = 10 };
+    private List<aspnetusers> _listado = new List<aspnetusers>();
+    protected override async Task OnInitializedAsync()
+    {
+        Reporte();
+    }
+    private void Reporte()
+    {
+        this._listado = (from x in DB.aspnetusers
+                         select x)
+        .IgnoreAutoIncludes()
+        .AsNoTracking()
+        .ToList();
+    }
+    private void Navegar(string url)
+    {
+        NavigationManager.NavigateTo(url, true);
+    }
+}

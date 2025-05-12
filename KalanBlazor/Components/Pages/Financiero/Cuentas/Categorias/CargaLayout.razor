@@ -1,0 +1,123 @@
+﻿@page "/financiero/cuentas/categorias/cargalayout"
+@using System.Data
+@using KalanBlazor.DTOs.Financiero 
+@rendermode InteractiveServer
+@inject KalanDB DB
+@inject Excel Excel
+@inject NavigationManager NavigationManager
+@inject SweetAlertService Swal
+@inject LoadingService Spinner
+@inject UserService Usuario
+@inject TranslatorService Translator
+<SpinnerLoading></SpinnerLoading>
+<Contenido Titulo="Carga de Layout de Categorías Contables">
+   
+        <div class="row">
+            <div class="col-12">
+                <SubirArchivo Etiqueta="Archivo de Excel con Layout" @bind-Value:after="Cargado" @bind-Value="Archivo" TiposPermitidos=".xlsx" Simple="false" Multiple="false"></SubirArchivo>
+            </div>
+        </div>
+        @if (Errores.Count() > 0)
+        {
+            <div class="row">
+                <div class="col-12">
+                    <h3>Errores de la carga</h3>
+                    <ul>
+                        @foreach (var item in Errores)
+                        {
+                            <li>@((MarkupString)item)</li>
+                        }
+                    </ul>
+                </div>
+            </div>
+        }
+        @if (Categorias.Count() > 0)
+        {
+            <div class="row">
+                <div class="col-12">
+                    <Tabla TItem="LayoutCategorias" Items="Categorias" Nombre="Datos del Excel" Descargar="false"></Tabla>
+                </div>
+            </div>
+        }
+   
+</Contenido>
+@code {
+    private List<ArchivoGral> Archivo { get; set; }
+    private List<string> Errores { get; set; } = new();
+    private List<LayoutCategorias> Categorias { get; set; } = new();
+    private async Task Cargado()
+    {
+        Errores = new List<string>();
+        foreach (var item in Archivo)
+        {
+            var ds = Excel.ImportExcelDs(item.Datos);
+            foreach (DataTable tabla in ds.Tables)
+            {
+                if (tabla.TableName == "Categorias")
+                {
+                    
+                    Categorias = DB.ConvertToList<LayoutCategorias>(tabla);
+                    foreach (var tcategoria in Categorias)
+                    {
+                        using var context = new KalanDB(DB.connectionString);
+                        try
+                        {
+                            var categoria = new th_contabilidad_cuenta_categoria
+                                {
+                                    Activo = true,
+                                    AgrupadorSAT = Convert.ToInt32(tcategoria.AgrupadorSAT),
+                                    Categoria = tcategoria.NombredelaCategoria,
+                                    Descripcion = tcategoria.Descripcion,
+                                    Segmento = tcategoria.CuentaMayor,
+                                    FechaCreacion = DateTime.Now,
+                                    UsuarioCreacion = Usuario.Login,
+                                    Id = Guid.NewGuid().ToString()
+                                };
+                            var validacion = context.ValidateEntity(categoria);
+                            if (validacion.Validado)
+                            {
+                                context.th_contabilidad_cuenta_categoria.Add(categoria);
+                                try
+                                {
+                                    await context.SaveChangesAsync();
+                                }
+                                catch (Exception ex)
+                                {
+                                    if (ex.InnerException != null)
+                                    {
+                                        Errores.Add($"<strong>{categoria.Categoria}</strong>: {Translator.TraducirInglesAEspanol(ex.InnerException.Message)}");
+                                    }
+                                    else
+                                    {
+                                        Errores.Add($"<strong>{categoria.Categoria}</strong>: {Translator.TraducirInglesAEspanol(ex.Message)}");
+                                    }
+                                }
+
+                            }
+                            else
+                            {
+                                foreach (var error in validacion.ListaErrores)
+                                {
+                                    Errores.Add($"<strong>{categoria.Categoria}</strong>: {error}");
+                                }
+
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            if (ex.InnerException != null)
+                            {
+                                Errores.Add($"<strong>{tcategoria.NombredelaCategoria}</strong>: {Translator.TraducirInglesAEspanol(ex.InnerException.Message)}");
+                            }
+                            else
+                            {
+                                Errores.Add($"<strong>{tcategoria.NombredelaCategoria}</strong>: {Translator.TraducirInglesAEspanol(ex.Message)}");
+                            }
+                        }
+                        
+                    }
+                }
+            }
+        }
+    }
+}

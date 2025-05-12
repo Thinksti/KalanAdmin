@@ -1,0 +1,176 @@
+﻿@page "/ingresos/crear"
+@rendermode InteractiveServer
+@inject KalanDB DB
+@inject NavigationManager NavigationManager
+@inject SweetAlertService Swal
+
+<h1>Crear Ingreso de Cliente</h1>
+<div class="row">
+    <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+        <Buscador TValue="string" Etiqueta="Id Cliente" ItemChanged="@((item)=>th_Cliente = item)" TItem="th_clientes" @bind-Value="th_ingreso.cliente_Id" SearchItems="SearchItemsProveedores" SearchExacto="SearchExactoProveedores" Llave="NombreCorto"></Buscador>
+    </div>
+    <div class="col-12 col-sm-12 col-md-12 col-lg-5 col-xl-5">
+        @if (th_Cliente != null)
+        {
+            <ReadOnly Etiqueta="Razón Social" Value="@th_Cliente.RazonSocial"></ReadOnly>
+        }
+        else
+        {
+            <ReadOnly Etiqueta="Razón Social" Value=" "></ReadOnly>
+        }
+    </div>
+
+</div>
+<div class="row">
+    <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+        <Buscador TValue="string" Etiqueta="Chequera" ItemChanged="@((item)=>{th_banco = item; th_ingreso.moneda_Id=item.moneda_Id;})" TItem="th_bancos" @bind-Value="th_ingreso.bancos_id" SearchItems="SearchItemsBancos" SearchExacto="SearchExactoBancos" Llave="Chequera"></Buscador>
+    </div>
+    <div class="col-12 col-sm-12 col-md-12 col-lg-5 col-xl-5">
+        @if (th_banco != null)
+        {
+            <ReadOnly Etiqueta="Chequera" Value="@th_banco.Banco"></ReadOnly>
+        }
+        else
+        {
+            <ReadOnly Etiqueta="Chequera" Value=" "></ReadOnly>
+        }
+    </div>
+    <div class="col-12 col-sm-12 col-md-12 col-lg-5 col-xl-5">
+        @if (th_banco != null)
+        {
+            <Monedas @bind-ValueFecha="Fecha"
+                     MonedaFija="true"
+                     @bind-ValueTipoCambio="th_ingreso.tipocambio_Id"
+                     @bind-ValueMoneda="th_banco.moneda_Id">
+            </Monedas>
+        }
+        else
+        {
+            <ReadOnly Etiqueta="Moneda" Value=" "></ReadOnly>
+        }
+    </div>
+    <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+        <div class="form-floating">
+            <select class="form-select" @bind="Ingresos_Origen">
+                <option selected disabled>Elige Origen del Ingreso</option>
+                @foreach (var item in DB.th_ingresos_origen)
+                {                    
+                    <option value="@item.Id">@item.Origen</option>
+                }
+            </select>
+            <label>Origen</label>
+        </div>
+    </div>
+    <div class="col-12 col-sm-12 col-md-12 col-lg-3 col-xl-3">
+        <div class="form-floating">
+            <select class="form-select" @bind="FormaPago">
+                <option selected disabled>Elige Forma de pago</option>
+                @foreach (var item in DB.th_formapago)
+                {
+                    <option value="@item.Id">@item.FormaPago</option>
+                }
+            </select>
+            <label>Forma de Pago</label>
+        </div>
+    </div>
+ 
+    <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+        <Fecha Etiqueta="Fecha" @bind-Value="Fecha"></Fecha>
+    </div>
+    <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+        <Numerico Etiqueta="Monto del Pago" Min="0" @bind-Value="Monto"></Numerico>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12 col-sm-12 col-md-12 col-lg-12 col-xl-12">
+        <TextoLargo MaxLength="400" rows="3" Etiqueta="Comentarios" @bind-Value="Comentario"></TextoLargo>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+        <button @onclick="Guardar" class="btn btn-primary">Guardar</button>
+    </div>
+</div>
+
+@code {
+    [CascadingParameter] private Task<AuthenticationState> authenticationStateTask { get; set; }
+    private th_ingresos th_ingreso { get; set; } = new();
+    private th_clientes th_Cliente { get; set; }
+    private th_bancos th_banco { get; set; }
+    private string Ingresos_Origen { get; set; }
+    private string FormaPago { get; set; }
+    private DateTime Fecha { get; set; }
+    private decimal Monto { get; set; }
+    private string Comentario { get; set; }
+    protected override async Task OnInitializedAsync()
+    {
+        Fecha = DateTime.Now.Date;
+        Comentario = "";
+ 
+    }
+    private async Task<IEnumerable<th_clientes>> SearchItemsProveedores(string value)
+    {
+        return DB.th_clientes.Where(c => c.NombreCorto.Contains(value) || c.RazonSocial.Contains(value)).ToList().AsEnumerable();
+    }
+    private async Task<IEnumerable<th_clientes>> SearchExactoProveedores(string value)
+    {
+        return DB.th_clientes.Where(c => c.NombreCorto == value).ToList().AsEnumerable();
+    }
+    private async Task<IEnumerable<th_bancos>> SearchItemsBancos(string value)
+    {
+        return DB.th_bancos.Where(c => c.Banco.Contains(value)).ToList().AsEnumerable();
+    }
+    private async Task<IEnumerable<th_bancos>> SearchExactoBancos(string value)
+    {
+        return DB.th_bancos.Where(c => c.Banco == value).ToList().AsEnumerable();
+    }
+    private async Task Guardar()
+    {
+        if (th_Cliente == null)
+        {
+            await Swal.FireAsync("Error", "Debe seleccionar un cliente", SweetAlertIcon.Error);
+            return;
+        }
+        if (th_banco == null)
+        {
+            await Swal.FireAsync("Error", "Debe seleccionar un banco", SweetAlertIcon.Error);
+            return;
+        }
+        if (Monto <= 0)
+        {
+            await Swal.FireAsync("Error", "El monto debe ser mayor a 0", SweetAlertIcon.Error);
+            return;
+        }
+        if (string.IsNullOrEmpty(Ingresos_Origen))
+        {
+            await Swal.FireAsync("Error", "Debe seleccionar un origen", SweetAlertIcon.Error);
+            return;
+        }
+        var _authState = await authenticationStateTask;
+        var user = _authState.User;
+        var correo = ((System.Security.Claims.ClaimsIdentity)user.Identity).Name;
+        th_ingreso.Fecha = Fecha;
+        th_ingreso.Id = Guid.NewGuid().ToString();
+        th_ingreso.Original = Monto;
+        th_ingreso.Observaciones = Comentario;
+        th_ingreso.cliente_Id = th_Cliente.Id;
+        th_ingreso.bancos_id = th_banco.Id;
+        th_ingreso.UsuarioCreacion = correo;
+        th_ingreso.FechaCreacion = DateTime.Now;
+        th_ingreso.Activo = true;
+        th_ingreso.formapago_id = FormaPago;
+        th_ingreso.Disponible = Monto;
+        th_ingreso.Conciliado = false;
+        th_ingreso.ingresos_origen_id = Ingresos_Origen;
+        DB.th_ingresos.Add(th_ingreso);
+        DB.SaveChanges();
+        var banco = DB.th_bancos.Find(th_banco.Id);
+        banco.Saldo += Monto;
+        DB.Entry(banco).State = EntityState.Modified;
+        DB.SaveChanges();
+        await Swal.FireAsync("Guardado", $"El ingreso RC-{th_ingreso.Ingreso.ToString("D7")} ha sido guardado", SweetAlertIcon.Success);
+        NavigationManager.NavigateTo("/ingresos/listado");
+    }
+}

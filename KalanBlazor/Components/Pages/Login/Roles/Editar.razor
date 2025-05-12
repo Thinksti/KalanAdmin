@@ -1,0 +1,84 @@
+﻿@page "/login/roles/Editar"
+@using Shared.Kalan.Entidades
+@rendermode InteractiveServer
+@inject KalanDB DB
+@inject NavigationManager NavigationManager
+@inject SweetAlertService Swal
+
+<h1>Editar Rol</h1>
+<hr />
+@if (_item is null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <div class="row">
+        <div class="col-md-4">
+            <EditForm method="post" Model="_item" OnValidSubmit="Guardar" FormName="edit" Enhance>
+                <DataAnnotationsValidator />
+                <ValidationSummary class="text-danger" />
+                <div class="mb-3">
+                    <label for="name" class="form-label">Rol:</label>
+                    <InputText maxlength="15" id="name" @bind-Value="_item.Name" class="form-control" />
+                    <ValidationMessage For="() => _item.Name" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <Switch Etiqueta="Activo" @bind-Value="_item.Activo"></Switch>
+                    <ValidationMessage For="() => _item.Activo" class="text-danger" />
+                </div>
+                
+                <button type="submit" class="btn btn-primary">Editar</button>
+            </EditForm>
+        </div>
+        <div>
+            <a href="/login/roles/listado"><i class="fa-solid fa-arrow-left"></i> Regresar al Index</a>
+        </div>
+    </div>
+}
+
+@code {
+    [SupplyParameterFromQuery]
+    public string Id { get; set; }
+    [CascadingParameter] private Task<AuthenticationState> authenticationStateTask { get; set; }
+    [SupplyParameterFromForm]
+    private aspnetroles? _item { get; set; } 
+    protected override async Task OnInitializedAsync()
+    {
+        _item ??= await DB.aspnetroles.FirstOrDefaultAsync(m => m.Id == Id);
+    }
+    private async Task Guardar()
+    {
+        using (var db = new KalanDB(DB.connectionString))
+        {
+            var _authState = await authenticationStateTask;
+            var user = _authState.User;
+            var correo = ((System.Security.Claims.ClaimsIdentity)user.Identity).Name;
+            _item.FechaModifica = DateTime.Now;
+            _item.UsuarioModifica = correo;
+            db.Attach(_item!).State = EntityState.Modified;
+
+            try
+            {
+                await db.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!ItemExists(_item!.Id))
+                {
+                    NavigationManager.NavigateTo("notfound");
+                }
+                else
+                {
+                    throw;
+                }
+            }
+            await Swal.FireAsync("Rol Editado", "El rol ha sido editado correctamente", SweetAlertIcon.Success);
+            NavigationManager.NavigateTo("/login/roles/listado");
+        }
+    }
+    bool ItemExists(string id)
+    {
+        return DB.aspnetroles.Any(e => e.Id == id);
+    }
+}

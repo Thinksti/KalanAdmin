@@ -1,0 +1,47 @@
+﻿@inject IJSRuntime JS
+@typeparam TItem
+@typeparam TValue
+@if (Items != null)
+{
+    @if (string.IsNullOrEmpty(Etiqueta))
+    {
+        <select @attributes="AdditionalAttributes" class="form-select" @bind="Value" @bind:after="@(()=>{ValueChanged.InvokeAsync(Value); ItemChanged.InvokeAsync(itemSeleccionado());})">
+            <option disabled selected>Selecciona</option>
+            @foreach (var item in Items)
+            {
+                <option value="@item.GetType().GetProperty(ItemValue).GetValue(item).ToString()">@item.GetType().GetProperty(TextValue).GetValue(item).ToString()</option>
+            }
+        </select>
+    }
+    else
+    {
+        <div class="form-floating">
+            <select @attributes="AdditionalAttributes" class="form-select" @bind="Value" @bind:after="@(()=>{ValueChanged.InvokeAsync(Value); ItemChanged.InvokeAsync(itemSeleccionado());})">
+                <option disabled selected>Selecciona</option>
+                @foreach (var item in Items)
+                {
+                    <option value="@item.GetType().GetProperty(ItemValue).GetValue(item).ToString()">@item.GetType().GetProperty(TextValue).GetValue(item).ToString()</option>
+                }
+            </select>
+            <label>@Etiqueta</label>
+        </div>
+    }
+}
+
+@code {
+    [Parameter] public EventCallback<TValue> ValueChanged { get; set; }
+    [Parameter] public TItem Item { get; set; }
+    [Parameter] public EventCallback<TItem> ItemChanged { get; set; }
+    [Parameter] public string Etiqueta { get; set; }
+    [Parameter] public string TextValue { get; set; }
+    [Parameter] public string ItemValue { get; set; }
+    [Parameter] public TValue Value { get; set; }
+    [Parameter] public List<TItem> Items { get; set; }
+    [Parameter(CaptureUnmatchedValues = true)] public IDictionary<string, object> AdditionalAttributes { get; set; }
+
+    private TItem itemSeleccionado()
+    {
+        return Items.FirstOrDefault(m=>m.GetType().GetProperty(ItemValue).GetValue(m).ToString() == Value.ToString());
+    }
+     
+}

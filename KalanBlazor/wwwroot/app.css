@@ -1,0 +1,23 @@
+﻿.Ocultar {
+    visibility: hidden;
+    position: absolute;
+}
+
+body .svg-inline--fa {
+    display: var(--fa-display, inline-block);
+    height: 1em;
+    overflow: visible;
+    vertical-align: -.125em;
+}
+
+.form-control {
+    background-color: white !important;
+}
+
+.centrarVertical {
+    align-self: center !important;
+}
+
+.btn {
+    height: 100%;
+}

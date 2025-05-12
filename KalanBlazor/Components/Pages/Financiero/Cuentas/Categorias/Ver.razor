@@ -1,0 +1,60 @@
+﻿@page "/financiero/cuentas/categorias/ver"
+
+@rendermode InteractiveServer
+@inject KalanDB DB
+@inject Excel Excel
+@inject NavigationManager NavigationManager
+@inject SweetAlertService Swal
+@inject LoadingService Spinner
+<SpinnerLoading></SpinnerLoading>
+
+<Contenido Titulo="Ver la Categoría">
+ 
+        <div class="row">
+            <div class="col-12 col-sm-12 col-md-12 col-lg-6 col-xl-4">
+                <Texto disbled MaxLength="50" Etiqueta="Nombre del la Categoría" @bind-Value="item.Categoria"></Texto>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-12 col-sm-12 col-md-12 col-lg-6 col-xl-6">
+                <Texto disbled MaxLength="255" Etiqueta="Descripción del la Categoría" @bind-Value="item.Descripcion"></Texto>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-12 col-sm-12 col-md-12 col-lg-6 col-xl-6">
+                <Texto disbled MaxLength="50" Etiqueta="Segmento" @bind-Value="item.Segmento"></Texto>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-12 col-sm-12 col-md-12 col-lg-6 col-xl-6">
+                <Entero disbled Max="1000" Min="0" Etiqueta="Agrupador SAT" @bind-Value="item.AgrupadorSAT"></Entero>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+                <Switch disbled Etiqueta="Categoría Activa" @bind-Value="item.Activo"></Switch>
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+                <a href="/financiero/cuentas/categorias/listado"><i class="fa-solid fa-arrow-left"></i> Regresar al Index</a>
+            </div>
+        </div>
+  
+</Contenido>
+
+@code {
+    [Parameter][SupplyParameterFromQuery] public string id { get; set; }
+    [CascadingParameter] private Task<AuthenticationState> authenticationStateTask { get; set; }
+    private th_contabilidad_cuenta_categoria item { get; set; } = new();
+    protected override async Task OnInitializedAsync()
+    {
+        item = await DB.th_contabilidad_cuenta_categoria.FirstOrDefaultAsync(m => m.Id == id);
+        if (item is null)
+        {
+            NavigationManager.NavigateTo("/financiero/cuentas/categorias/listado");
+        }
+    }
+ 
+}

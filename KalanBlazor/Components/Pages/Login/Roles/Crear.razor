@@ -1,0 +1,53 @@
+﻿@page "/login/roles/crear"
+@using Shared.Kalan.Entidades
+@rendermode InteractiveServer
+@inject KalanDB DB
+@inject NavigationManager NavigationManager
+@inject SweetAlertService Swal
+
+<h1>Crear Rol</h1>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <EditForm method="post" Model="_item" OnValidSubmit="Guardar" FormName="create" Enhance>
+            <DataAnnotationsValidator />
+            <ValidationSummary class="text-danger" />
+            <div class="mb-3">
+                <label for="name" class="form-label">Rol:</label>
+                <InputText maxlength="15" id="name" @bind-Value="_item.Name" class="form-control" />
+                <ValidationMessage For="() => _item.Name" class="text-danger" />
+            </div>
+            <div class="mb-3">
+                <Switch Etiqueta="Activo" @bind-Value="_item.Activo"></Switch>
+                <ValidationMessage For="() => _item.Activo" class="text-danger" />
+            </div>
+            
+            <button type="submit" class="btn btn-primary">Crear</button>
+        </EditForm>
+    </div>
+    <div>
+        <a href="/login/roles/listado"><i class="fa-solid fa-arrow-left"></i> Regresar al Index</a>
+    </div>
+</div>
+@code {
+
+    [CascadingParameter] private Task<AuthenticationState> authenticationStateTask { get; set; }
+    [SupplyParameterFromForm]
+    private aspnetroles _item { get; set; } = new();
+    private async Task Guardar()
+    {
+        using(var db = new KalanDB(DB.connectionString))
+        {
+            var _authState = await authenticationStateTask;
+            var user = _authState.User;
+            var correo = ((System.Security.Claims.ClaimsIdentity)user.Identity).Name;
+            _item.Id = Guid.NewGuid().ToString();
+            _item.UsuarioCreacion = correo;
+            _item.FechaCreacion = DateTime.Now;
+            db.aspnetroles.Add(_item);
+            await db.SaveChangesAsync();
+            await Swal.FireAsync("Rol creado", "El rol ha sido creado correctamente", SweetAlertIcon.Success);
+            NavigationManager.NavigateTo("/login/roles/listado");
+        }
+    }
+}

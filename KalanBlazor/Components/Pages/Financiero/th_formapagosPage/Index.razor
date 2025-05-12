@@ -1,0 +1,34 @@
+﻿@page "/th_formapagos"
+
+@inject KalanDB DB
+@inject NavigationManager NavigationManager
+@rendermode InteractiveServer
+
+<PageTitle>Index</PageTitle>
+
+<h1>Fromas de Pago</h1>
+
+<p>
+    <a href="th_formapagos/create"><i class="fas fa-plus"></i> Crear nuevo Registro</a>
+</p>
+
+<QuickGrid Class="table" Items="DB.th_formapago">
+    <TemplateColumn Context="entidad">
+        <button class="btn btn-outline-warning" @onclick="@(()=>Navegar($"th_formapagos/edit?id={entidad.Id}"))"><i class="fa-solid fa-pen-to-square"></i></button>
+        <button class="btn btn-outline-info" @onclick="@(()=>Navegar($"th_formapagos/details?id={entidad.Id}"))"><i class="fas fa-info"></i></button>
+        <button class="btn btn-outline-danger" @onclick="@(()=>Navegar($"th_formapagos/delete?id={entidad.Id}"))"><i class="fas fa-trash"></i></button>
+    </TemplateColumn>
+    <PropertyColumn Property="entidad => entidad.Id" />
+    <PropertyColumn Property="entidad => entidad.FormaPago" />
+    <PropertyColumn Property="entidad => entidad.Activo" />
+    <PropertyColumn Property="entidad => entidad.UsuarioCreacion" />
+    <PropertyColumn Property="entidad => entidad.FechaCreacion" />
+    <PropertyColumn Property="entidad => entidad.UsuarioModifica" />
+    <PropertyColumn Property="entidad => entidad.FechaModifica" />
+</QuickGrid>
+@code {
+    private void Navegar(string url)
+    {
+        NavigationManager.NavigateTo(url, true);
+    }
+}

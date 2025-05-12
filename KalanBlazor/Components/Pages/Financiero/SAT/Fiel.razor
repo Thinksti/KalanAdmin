@@ -1,0 +1,138 @@
+﻿@page "/financiero/sat/fiel"
+@using System.Security.Cryptography.X509Certificates 
+@using System.Security.Cryptography
+
+@inject KalanDB DB
+@inject NavigationManager NavigationManager
+@inject SweetAlertService Swal
+@inject LoadingService Spinner
+
+@rendermode InteractiveServer
+
+<SpinnerLoading></SpinnerLoading>
+
+<h1>Subir los Archivos</h1>
+
+<h4>Cargar los archivos de la FIEL</h4>
+
+<div class="row">
+    <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+        <Texto MaxLength="13" Etiqueta="RFC" @bind-Value="RFC"></Texto>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12 col-sm-12 col-md-12 col-lg-4 col-xl-4">
+        <SubirArchivo Etiqueta="Subir Archivo .Cer" Multiple="false" TiposPermitidos=".cer" @bind-Value="ArchivoCer"></SubirArchivo>
+    </div>
+    
+</div>
+
+<div class="row">
+    <div class="col-12 col-sm-12 col-md-12 col-lg-4 col-xl-4">
+        <SubirArchivo Etiqueta="Subir Archivo .Key" Multiple="false" TiposPermitidos=".key" @bind-Value="ArchivoKey"></SubirArchivo>
+    </div>
+    
+</div>
+
+<div class="row">
+    <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+        <Texto MaxLength="200" Etiqueta="Contraseña de la FIEL"  @bind-Value="Password"></Texto>
+    </div> 
+</div>
+
+<div class="row">
+
+    <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+        <button @onclick="Guardar" class="btn btn-primary">Guardar</button>
+    </div>
+</div>
+
+
+@code {
+    [CascadingParameter] private Task<AuthenticationState> authenticationStateTask { get; set; }
+    private List<ArchivoGral> ArchivoCer { get; set; } 
+    private List<ArchivoGral> ArchivoKey { get; set; }
+    private string Password { get; set; }
+    private string RFC { get; set; }
+    private th_contabilidad_configuracion registro { get; set; }
+    protected override async Task OnInitializedAsync()
+    {
+        registro = DB.th_contabilidad_configuracion.FirstOrDefault();
+        if (registro == null)
+        {
+            registro = new th_contabilidad_configuracion();
+        }
+        else
+        {
+            ArchivoCer = new List<ArchivoGral>(){
+                new ArchivoGral(){
+                    Nombre = "Certificado.cer",
+                    Datos = registro.Fiel_Cer
+                }
+            };
+            ArchivoKey = new List<ArchivoGral>(){
+                new ArchivoGral(){
+                    Nombre = "Private.key",
+                    Datos = registro.Fiel_Key
+                }
+            };
+            Password= registro.Fiel_Password;
+        }
+    }
+
+    private async Task Guardar()
+    {
+        if(ArchivoCer == null || ArchivoCer.Count == 0){
+            await Swal.FireAsync("Error", "Debe subir el archivo .cer", SweetAlertIcon.Error);
+            return;
+        }
+        if(ArchivoKey == null || ArchivoKey.Count == 0){
+            await Swal.FireAsync("Error", "Debe subir el archivo .key", SweetAlertIcon.Error);
+            return;
+        }
+        if(string.IsNullOrEmpty(Password)){
+            await Swal.FireAsync("Error", "Debe ingresar la contraseña de la FIEL", SweetAlertIcon.Error);
+            return;
+        }
+        if (string.IsNullOrEmpty(RFC)){
+            await Swal.FireAsync("Error", "Debe ingresar el RFC", SweetAlertIcon.Error);
+            return;
+        }
+        try
+        {
+            Spinner.IsLoading = true;
+            var cer = ArchivoCer.FirstOrDefault();
+            var key = ArchivoKey.FirstOrDefault();
+            var _authState = await authenticationStateTask;
+            var user = _authState.User;
+            var correo = ((System.Security.Claims.ClaimsIdentity)user.Identity).Name;
+            registro.Fiel_Cer = cer.Datos;
+            registro.Fiel_Key = key.Datos;
+            registro.RFC = RFC;
+            registro.Fiel_Password = Password;
+            if (string.IsNullOrEmpty(registro.Id))
+            {
+                registro.UsuarioCreacion = correo;
+                registro.FechaCreacion = DateTime.Now;
+                registro.Id = Guid.NewGuid().ToString();
+                DB.th_contabilidad_configuracion.Add(registro);
+            }
+            else
+            {
+                registro.UsuarioModifica = correo;
+                registro.FechaModifica = DateTime.Now;
+                DB.th_contabilidad_configuracion.Update(registro);
+            }
+            await DB.SaveChangesAsync();
+            Spinner.IsLoading = false;
+            await Swal.FireAsync("Éxito", "Se ha guardado la FIEL", SweetAlertIcon.Error);
+        }
+        catch (Exception ex)
+        {
+            Spinner.IsLoading = false;
+            await Swal.FireAsync("Error", ex.Message, SweetAlertIcon.Error);           
+        }
+
+    }
+}

@@ -1,0 +1,186 @@
+﻿@page "/financiero/cuentas/cargalayout"
+@using System.Data
+@using KalanBlazor.DTOs.Financiero
+
+
+@rendermode InteractiveServer
+@inject KalanDB DB
+@inject Excel Excel
+@inject NavigationManager NavigationManager
+@inject SweetAlertService Swal
+@inject LoadingService Spinner
+@inject UserService Usuario
+@inject TranslatorService Translator
+<SpinnerLoading></SpinnerLoading>
+<Contenido Titulo="Carga de Layout de Cuentas Contables">
+ 
+        <div class="row">
+            <div class="col-12">
+                <SubirArchivo Etiqueta="Archivo de Excel con Layout" @bind-Value:after="Cargado" @bind-Value="Archivo" TiposPermitidos=".xlsx" Simple="false" Multiple="false"></SubirArchivo>
+            </div>
+        </div>
+        @if (Errores.Count() > 0)
+        {
+            <div class="row">
+                <div class="col-12">
+                    <h3>Errores de la carga</h3>
+                    <ul>
+                        @foreach (var item in Errores)
+                        {
+                            <li>@((MarkupString)item)</li>
+                        }
+                    </ul>
+                </div>
+            </div>
+        }
+        @if (ItemListado.Count() > 0)
+        {
+            <div class="row">
+                <div class="col-12">
+                    <Tabla TItem="LayoutCuenta" Items="ItemListado" Nombre="Datos del Excel" Descargar="false"></Tabla>
+                </div>
+            </div>
+        }
+    
+</Contenido>
+@code {
+    private List<ArchivoGral> Archivo { get; set; }
+    private List<string> Errores { get; set; } = new();
+    private List<LayoutCuenta> ItemListado { get; set; } = new();
+    private async Task Cargado()
+    {
+        Errores = new List<string>();
+        foreach (var item in Archivo)
+        {
+            var ds = Excel.ImportExcelDs(item.Datos);
+            foreach (DataTable tabla in ds.Tables)
+            {
+                if (tabla.TableName == "Cuentas Contables")
+                {
+
+                    ItemListado = DB.ConvertToList<LayoutCuenta>(tabla);
+                    foreach (var tItem in ItemListado)
+                    {
+                        using var context = new KalanDB(DB.connectionString);
+                        try
+                        {
+                            var categoria = context.th_contabilidad_cuenta_categoria.FirstOrDefault(x => x.Categoria == tItem.Categoria);
+                            if (categoria == null)
+                            {
+                                Errores.Add($"<strong>{tItem.Cuenta}</strong>: No se encontró la categoría {tItem.Categoria}");
+                                continue;
+                            }
+                            var contConfiguracion = context.th_contabilidad_cuenta_configuracion.FirstOrDefault();
+                            var formato = "";
+                            if (contConfiguracion.Segmento1)
+                            {
+                                formato += $"{contConfiguracion.Segmento1Largo}-";
+                            }
+                            if (contConfiguracion.Segmento2)
+                            {
+                                formato += $"{contConfiguracion.Segmento2Largo}-";
+                            }
+                            if (contConfiguracion.Segmento3)
+                            {
+                                formato += $"{contConfiguracion.Segmento3Largo}-";
+                            }
+                            if (contConfiguracion.Segmento4)
+                            {
+                                formato += $"{contConfiguracion.Segmento4Largo}-";
+                            }
+                            if (contConfiguracion.Segmento5)
+                            {
+                                formato += $"{contConfiguracion.Segmento5Largo}-";
+                            }
+                            if (contConfiguracion.Segmento6)
+                            {
+                                formato += $"{contConfiguracion.Segmento6Largo}-";
+                            }
+                            formato = formato.Substring(0, formato.Length - 1);
+                            var segmentos = tItem.Cuenta.Split('-');
+                            if (segmentos.Length != formato.Split('-').Length)
+                            {
+                                Errores.Add($"<strong>{tItem.Cuenta}</strong>: El formato de la cuenta no coincide con la configuración");
+                                continue;
+                            }
+                            var segmentosString = new List<string>();
+                            for (int i = 0; i < segmentos.Length; i++)
+                            {
+                                if (segmentos[i].Length != int.Parse(formato.Split('-')[i]))
+                                {
+                                    segmentos[i] = segmentos[i].PadLeft(int.Parse(formato.Split('-')[i]), '0');
+                                }
+                                segmentosString.Add(segmentos[i]);
+                            }
+                            if (segmentosString.Count() < 5)
+                            {
+                                for (int i = segmentosString.Count(); i < 6; i++)
+                                {
+                                    segmentosString.Add("");
+                                }
+                            }
+                            tItem.Cuenta = string.Join("-", segmentosString.Where(x=>x!=""));
+                            var itemNuevo = new th_contabilidad_cuenta
+                                {
+                                    Activo = true,
+                                    categoria_id = categoria.Id,
+                                    CuentaContable = tItem.Cuenta,
+                                    Segmento1 = segmentosString[0],
+                                    Segmento2 = segmentosString[1],
+                                    Segmento3 = segmentosString[2],
+                                    Segmento4 = segmentosString[3],
+                                    Segmento5 = segmentosString[4],
+                                    Segmento6 = segmentosString[5],
+                                    Descripcion = tItem.Descripcion,
+                                    FechaCreacion = DateTime.Now,
+                                    UsuarioCreacion = Usuario.Login,
+                                    Id = Guid.NewGuid().ToString()
+                                };
+                            var validacion = context.ValidateEntity(itemNuevo);
+                            if (validacion.Validado)
+                            {
+                                context.th_contabilidad_cuenta.Add(itemNuevo);
+                                try
+                                {
+                                    await context.SaveChangesAsync();
+                                }
+                                catch (Exception ex)
+                                {
+                                    if (ex.InnerException != null)
+                                    {
+                                        Errores.Add($"<strong>{itemNuevo.CuentaContable}</strong>: { Translator.TraducirInglesAEspanol(ex.InnerException.Message)}");
+                                    }
+                                    else
+                                    {
+                                        Errores.Add($"<strong>{itemNuevo.CuentaContable}</strong>: { Translator.TraducirInglesAEspanol(ex.Message)}");
+                                    }
+                                }
+
+                            }
+                            else
+                            {
+                                foreach (var error in validacion.ListaErrores)
+                                {
+                                    Errores.Add($"<strong>{itemNuevo.CuentaContable}</strong>: {error}");
+                                }
+
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            if (ex.InnerException != null)
+                            {
+                                Errores.Add($"<strong>{tItem.Cuenta}</strong>: { Translator.TraducirInglesAEspanol(ex.InnerException.Message)}");
+                            }
+                            else
+                            {
+                                Errores.Add($"<strong>{tItem.Cuenta}</strong>: { Translator.TraducirInglesAEspanol(ex.Message)}");
+                            }
+                        }
+                        
+                    }
+                }
+            }
+        }
+    }
+}

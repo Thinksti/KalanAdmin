@@ -1,0 +1,113 @@
+﻿@inject LoadingService Spinner
+@inject IJSRuntime JSRuntime
+<SpinnerLoading></SpinnerLoading>
+@inject IFileReaderService fileReaderService;
+
+@if (Simple)
+{
+    <div class="input-group">
+        <span class="input-group-text">@Etiqueta</span>
+        @if (Multiple)
+        {
+            <input @ref=inputFileElement @onchange="ReadFile" class="form-control" @attributes="AdditionalAttributes" accept="@TiposPermitidos" id="@ids" @key="@ids" type="file" multiple>
+        }
+        else
+        {
+            <input @ref=inputFileElement @onchange="ReadFile" class="form-control" @attributes="AdditionalAttributes" accept="@TiposPermitidos" id="@ids" @key="@ids" type="file">
+        }
+    </div>
+
+}
+else
+{
+    <div class="file-upload-wrapper">
+        <div class="file-upload">
+            <input type="file" class="file-input" @ref=inputFileElement @onchange="ReadFile" @attributes="AdditionalAttributes" accept="@TiposPermitidos" id="@ids" @key="@ids" multiple="@Multiple">
+            <div class="file-upload-content">
+                <div class="file-upload-drag">
+                    <i class="bi bi-cloud-arrow-up-fill"></i>
+                    <p>Arrastra y suelta tus archivos aquí o</p>
+                    <button type="button" @onclick="TriggerFileInput" class="btn btn-primary">@Etiqueta</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+}
+
+
+
+@code {
+    [Parameter(CaptureUnmatchedValues = true)] public IDictionary<string, object> AdditionalAttributes { get; set; }
+    private ElementReference inputFileElement;
+    [Parameter] public string TiposPermitidos { get; set; }
+    [Parameter] public string Etiqueta { get; set; }
+    [Parameter] public bool Multiple { get; set; }
+    [Parameter] public bool Simple { get; set; } = true;
+    [Parameter]
+    public List<ArchivoGral> Value
+    {
+        get
+        {
+            return _Value;
+        }
+        set
+        {
+            _Value = value;
+            if (value == null)
+            {
+                ids = Guid.NewGuid().ToString().Replace("-", "");
+            }
+        }
+    }
+    private List<ArchivoGral> _Value;
+    [Parameter] public EventCallback<List<ArchivoGral>> ValueChanged { get; set; }
+    private async Task OnInputFileChange(InputFileChangeEventArgs e)
+    {
+        Spinner.IsLoading = true;
+        var file = e.File;
+        if (file != null)
+        {
+            using var stream = file.OpenReadStream();
+            using var ms = new MemoryStream();
+            await stream.CopyToAsync(ms);
+            var bytes = ms.ToArray();
+        }
+        Spinner.IsLoading = false;
+    }
+    public async Task ReadFile()
+    {
+        Value = new List<ArchivoGral>();
+        Spinner.IsLoading = true;
+        var tarchivos = await fileReaderService.CreateReference(inputFileElement).EnumerateFilesAsync();
+        foreach (var file in tarchivos)
+        {
+            var archivoInfo = await file.ReadFileInfoAsync();
+            await using (MemoryStream stream = await file.CreateMemoryStreamAsync())
+            {
+                Value.Add(new ArchivoGral
+                    {
+                        Nombre = archivoInfo.Name,
+                        Datos = stream.GetBuffer()
+                    });
+            }
+        }
+        Spinner.IsLoading = false;
+        await ValueChanged.InvokeAsync(Value);
+    }
+    private string ids { get; set; }
+    protected override async Task OnInitializedAsync()
+    {
+        ids = Guid.NewGuid().ToString().Replace("-", "");
+        if (string.IsNullOrEmpty(TiposPermitidos))
+        {
+            TiposPermitidos = "*";
+        }
+    }
+
+    private async void TriggerFileInput()
+    {
+        await JSRuntime.InvokeVoidAsync("triggerFileInputClick", inputFileElement);
+    }
+
+}

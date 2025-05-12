@@ -1,0 +1,63 @@
+﻿@page "/login/roles/eliminar"
+@rendermode InteractiveServer
+@inject KalanDB DB
+@inject NavigationManager NavigationManager
+@inject SweetAlertService Swal
+
+<h1>Eliminar Rol de usuario</h1>
+
+
+<div class="row">
+    <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+        <ReadOnly Etiqueta="Rol" Value="@_item.Name"></ReadOnly>
+    </div>
+</div>
+
+
+<div class="row">
+    <div class="col-12 col-sm-12 col-md-12 col-lg-12 col-xl-12">
+        <Switch disabled Etiqueta="Activo" @bind-Value="_item.Activo"></Switch>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+        <ReadOnly Etiqueta="Usuario" Value="@_item.UsuarioCreacion"></ReadOnly>
+    </div>
+    <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+        <ReadOnly Etiqueta="Fecha y Hora de Creación" Value="@_item.FechaCreacion.ToString("yyyy-MM-dd HH:mm:ss")"></ReadOnly>
+    </div>
+</div>
+
+<button @onclick="Borrar" class="btn btn-danger">Borrar</button>
+<div>
+    <a href="/login/roles/listado"><i class="fa-solid fa-arrow-left"></i> Regresar al Index</a>
+</div>
+@code {
+    private aspnetroles _item { get; set; }
+    [SupplyParameterFromQuery]
+    public string Id { get; set; }
+    protected override async Task OnInitializedAsync()
+    {
+        _item = DB.aspnetroles.First(m => m.Id == Id);
+
+        if (_item is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+        }
+    }
+    public async Task Borrar()
+    {
+        try
+        {
+            DB.aspnetroles.Remove(_item!);
+            await DB.SaveChangesAsync();
+            NavigationManager.NavigateTo("/login/roles/listado");
+        }
+        catch (Exception ex)
+        {
+            await Swal.FireAsync("Error", "Imposible borrar el rol", SweetAlertIcon.Error);
+        }
+
+    }
+}

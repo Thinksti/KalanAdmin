@@ -1,0 +1,68 @@
+﻿@page "/finaciero/menu"
+@inject NavigationManager NavigationManager
+@rendermode InteractiveServer
+<h1>Modulo Financiero</h1>
+
+
+<div class="row">
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Bancos</h5>
+                <p class="card-text">Mantenimiento de Chequeras</p>
+                <button @onclick="@(()=>Navegar("/th_bancos"))" class="btn btn-primary">Ir a Chequeras</button>
+                <button @onclick="@(()=>Navegar("/conciliacion/crear"))" class="btn btn-primary">Conciliar Chequera</button>
+                <button @onclick="@(()=>Navegar("/conciliacion/listado"))" class="btn btn-primary">Listado de Conciliaciones</button>
+                <button @onclick="@(()=>Navegar("/conciliacion/reporteflujo"))" class="btn btn-primary">Flujo de Efectivo</button>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Catálogos</h5>
+                <p class="card-text">SAT</p>
+                <button @onclick="@(()=>Navegar("/th_regimenfiscals"))" class="btn btn-primary">Regímenes Fiscales</button>
+                <button @onclick="@(()=>Navegar("/th_usocfdis"))" class="btn btn-primary">Usos del CFDi</button>
+                <button @onclick="@(()=>Navegar("/th_formapagos"))" class="btn btn-primary">Formas de Pago</button>
+                <p class="card-text">Kalan</p>
+                <button @onclick="@(()=>Navegar("/th_terminos"))" class="btn btn-primary">Condiciones de Crédito</button>
+                <button @onclick="@(()=>Navegar("/th_origenes"))" class="btn btn-primary">Orígenes de Ingreso</button>            
+                <button @onclick="@(()=>Navegar("/financiero/impuestos/listado"))" class="btn btn-primary">Listado de Impuestos</button>
+                <button @onclick="@(()=>Navegar("/financiero/planimpuestos/listado"))" class="btn btn-primary">Listado de Planes de Impuestos</button>
+                
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Configuraciones</h5>
+                <p class="card-text">Empresa</p>
+                <button @onclick="@(()=>Navegar("/financiero/sat/fiel"))" class="btn btn-primary">Fiel</button>
+                <button @onclick="@(()=>Navegar("/Ventas/Facturas/Sellos/Configurar"))" class="btn btn-primary">Sellos de Facturación</button>
+                <button @onclick="@(()=>Navegar("/financiero/monedas/listado"))" class="btn btn-primary">Monedas</button>
+                <button @onclick="@(()=>Navegar("/financiero/monedas/tiposcambio"))" class="btn btn-primary">Tipos de Cambio</button>
+                <button @onclick="@(()=>Navegar("/financiero/cuentas/configuracion"))" class="btn btn-primary">Configuración de Cuentas</button>
+                <button @onclick="@(()=>Navegar("/financiero/cuentas/categorias/listado"))" class="btn btn-primary">Categorías Contables</button>
+                <button @onclick="@(()=>Navegar("/financiero/cuentas/listado"))" class="btn btn-primary">Cuentas Contables</button>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Reportes del SAT</h5> 
+                <button @onclick="@(()=>Navegar("/Financiero/SAT/reportemetadata"))" class="btn btn-primary">Reporte de Metadatos</button>
+                <button @onclick="@(()=>Navegar("/Financiero/SAT/ConciliarCompras"))" class="btn btn-primary">Conciliar SAT vs Compras</button>
+                <button @onclick="@(()=>Navegar("/Financiero/SAT/ConciliarVentas"))" class="btn btn-primary">Conciliar SAT vs Ventas</button>
+            </div>
+        </div>
+    </div>
+</div>
+@code {
+    private void Navegar(string url)
+    {
+        NavigationManager.NavigateTo(url, true);
+    }
+}

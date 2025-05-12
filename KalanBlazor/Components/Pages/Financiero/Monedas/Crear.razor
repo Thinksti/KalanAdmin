@@ -1,0 +1,84 @@
+﻿@page "/financiero/monedas/crear"
+
+@rendermode InteractiveServer
+@inject KalanDB DB
+@inject Excel Excel
+@inject NavigationManager NavigationManager
+@inject SweetAlertService Swal
+@inject LoadingService Spinner
+<SpinnerLoading></SpinnerLoading>
+
+<Contenido Titulo="Crear una nueva Moneda">
+    
+        <div class="row">
+            <div class="col-12 col-sm-12 col-md-12 col-lg-6 col-xl-4">
+                <Texto MaxLength="15" Etiqueta="Nombre del la Moneda" @bind-Value="item.NombreCorto"></Texto>
+            </div>
+        </div>
+     
+        <div class="row">
+            <div class="col-12 col-sm-12 col-md-12 col-lg-6 col-xl-6">
+                <Texto MaxLength="100" Etiqueta="Descripción de la Moneda" @bind-Value="item.Descripcion"></Texto>
+            </div>
+        </div>     
+ 
+        <div class="row">
+            <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+                <Switch Etiqueta="Moneda Activa" @bind-Value="item.Activo"></Switch>
+            </div>
+        </div>
+  
+        <div class="row">
+            <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+                <button @onclick="Guardar" class="btn btn-primary">Guardar Moneda</button>
+            </div>
+        </div>
+     
+        <div class="row">
+            <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+                <a href="/financiero/monedas/listado"><i class="fa-solid fa-arrow-left"></i> Regresar al Index</a>
+            </div>
+        </div>
+ 
+</Contenido>
+
+@code {
+    [CascadingParameter] private Task<AuthenticationState> authenticationStateTask { get; set; }
+    private th_monedas item { get; set; } = new();
+    private string Usuario
+    {
+        get
+        {
+            var _authState = authenticationStateTask.Result;
+            var user = _authState.User;
+            return ((System.Security.Claims.ClaimsIdentity)user.Identity).Name;
+        }
+    }
+    private async Task Guardar()
+    {
+        if (string.IsNullOrEmpty(item.NombreCorto))
+        {
+            await Swal.FireAsync("Error", "El nombre de la moneda es requerido", SweetAlertIcon.Error);
+            return;
+        }
+        if (string.IsNullOrEmpty(item.Descripcion))
+        {
+            await Swal.FireAsync("Error", "La descripción de la moneda es requerida", SweetAlertIcon.Error);
+            return;
+        }
+        try
+        {
+            item.Id = Guid.NewGuid().ToString();
+            item.FechaCreacion = DateTime.Now;
+            item.UsuarioCreacion = Usuario;
+            await DB.th_monedas.AddAsync(item);
+            await DB.SaveChangesAsync();
+            NavigationManager.NavigateTo("/financiero/monedas/listado");
+        }
+        catch (Exception ex)
+        {
+            await Swal.FireAsync("Error", ex.Message, SweetAlertIcon.Error);
+            throw;
+        }        
+    }
+}

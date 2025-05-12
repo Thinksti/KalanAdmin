@@ -1,0 +1,193 @@
+﻿@page "/Ventas/Facturas/Sellos/Configurar"
+@using System.Security.Cryptography.X509Certificates
+@using System.Security.Cryptography
+@using System.Text
+@using Org.BouncyCastle.Pkcs
+@rendermode InteractiveServer
+@inject KalanDB DB
+@inject NavigationManager NavigationManager
+@inject SweetAlertService Swal
+@inject UserService Usuario
+<Contenido Titulo="Configuración para Facturar">
+  
+        <Rows>
+            <Cols Col="6">
+                <SubirArchivo Etiqueta="Archivo de Certificado .Cer" Simple="false" @bind-Value="ArchivoCer" @bind-Value:after="ActualizarDatos" TiposPermitidos=".cer"></SubirArchivo>
+            </Cols> 
+            <Cols Col="6">
+                <SubirArchivo Etiqueta="Archivo Key .Key" Simple="false" @bind-Value="ArchivoKey" @bind-Value:after="ActualizarDatos" TiposPermitidos=".key"></SubirArchivo>
+            </Cols>
+        </Rows>
+        <Rows>
+            <Cols Col="4">
+                <Texto Etiqueta="Contraseña del Certificado" MaxLength="50" @bind-Value="Password" @bind-Value:after="ActualizarDatos"></Texto>
+            </Cols>
+            <Cols Col="4">
+                @if(FechaVencimiento == null)
+                {
+                    <ReadOnly Etiqueta="Fecha de vencimiento de Certificado" Value=" "></ReadOnly>
+                }
+                else
+                {
+                    <ReadOnly Etiqueta="Fecha de vencimiento de Certificado" Value="@FechaVencimiento.Value.ToShortDateString()"></ReadOnly>
+                }
+            </Cols>
+            <Cols Col="4">
+                <Boton OnClick="Guardar" class="btn btn-primary">Guardar</Boton>
+            </Cols>
+        </Rows>
+  
+
+</Contenido>
+@code { 
+    private List<ArchivoGral> ArchivoCer { get; set; }
+    private List<ArchivoGral> ArchivoKey { get; set; }
+    private string Password { get; set; }
+    private DateTime? FechaVencimiento { get; set; }
+    private th_facturacion_sellos Sellos { get; set; }
+    protected override async Task OnInitializedAsync()
+    {
+        Sellos = await DB.th_facturacion_sellos.FirstOrDefaultAsync();
+        if (Sellos == null)
+        {
+            Sellos = new th_facturacion_sellos
+                {
+                    FechaCreacion = DateTime.Now,
+                    Id = Guid.NewGuid(),
+                    UsuarioCreacion = Usuario.Login
+                };
+
+        }
+        else
+        {
+            Password = Sellos.Sello_Password;
+            FechaVencimiento = Sellos.Sello_Vencimiento;
+            ArchivoCer = new List<ArchivoGral>
+            {
+                new ArchivoGral
+                {
+                    Datos = Sellos.Sello_Cer,
+                    Nombre = "Certificado.cer"
+                }
+            };
+            ArchivoKey = new List<ArchivoGral>
+            {
+                new ArchivoGral
+                {
+                    Datos = Sellos.Sello_Key,
+                    Nombre = "Key.key"
+                }
+            };
+        }
+    }
+    private async Task ActualizarDatos()
+    {
+        if (ArchivoCer != null) 
+        {
+            if (ArchivoCer.Any())
+            {
+                if (ArchivoKey != null)
+                {
+                    if (ArchivoKey.Any())
+                    {
+                        if(string.IsNullOrEmpty(Password) == false)
+                        {
+                            var passwordValidar = DTOs.SAT.Timbrado.DigitalSignature.ContraseñaValida( ArchivoKey.First().Datos, Password);
+                            if (passwordValidar)
+                            {
+                                var fechaVencimiento = ObtenerFechaVencimiento(ArchivoCer.First().Datos, ArchivoKey.First().Datos, Password);
+                                if (fechaVencimiento.HasValue)
+                                {
+                                    FechaVencimiento = fechaVencimiento.Value;
+                                }
+                            }
+                            else
+                            {
+                                await Swal.FireAsync("Contraseña incorrecta", "La contraseña es incorrecta", SweetAlertIcon.Error);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private async Task Guardar()
+    {
+        if (ArchivoCer != null)
+        {
+            if (ArchivoCer.Any())
+            {
+                if (ArchivoKey != null)
+                {
+                    if (ArchivoKey.Any())
+                    {
+                        if (string.IsNullOrEmpty(Password) == false)
+                        {
+                            var passwordValidar = DTOs.SAT.Timbrado.DigitalSignature.ContraseñaValida(ArchivoKey.First().Datos, Password);
+                            if (passwordValidar)
+                            { 
+                                Sellos.Sello_Cer = ArchivoCer.First().Datos;
+                                Sellos.Sello_Key = ArchivoKey.First().Datos;
+                                Sellos.Sello_Vencimiento = FechaVencimiento;
+                                Sellos.Sello_Password = Password;
+                                Sellos.FechaModifica = DateTime.Now;
+                                Sellos.UsuarioModifica = Usuario.Login;
+                                var existe = await DB.th_facturacion_sellos.FirstOrDefaultAsync();
+                                if(existe==null)
+                                {
+                                    DB.th_facturacion_sellos.Add(Sellos);
+                                    DB.SaveChanges();
+                                }
+                                else
+                                {
+                                    DB.th_facturacion_sellos.Update(Sellos);
+                                    DB.SaveChanges();
+                                }
+                                
+                            }
+                            else
+                            {
+                                await Swal.FireAsync("Error", "La contraseña es incorrecta", SweetAlertIcon.Error);
+                            }
+                        }
+                        else
+                        {
+                            await Swal.FireAsync("Error", "Necesitas capturar la contraseña", SweetAlertIcon.Error);
+                        }
+                    }
+                    else
+                    {
+                        await Swal.FireAsync("Error", "Necesitas subir el archivo KEY", SweetAlertIcon.Error);
+                    }
+                }
+                else
+                {
+                    await Swal.FireAsync("Error", "Necesitas subir el archivo KEY", SweetAlertIcon.Error);
+                }
+            }
+            else
+            {
+                await Swal.FireAsync("Error", "Necesitas subir el archivo Cer", SweetAlertIcon.Error);
+            }
+        }
+        else
+        {
+            await Swal.FireAsync("Error", "Necesitas subir el archivo Cer", SweetAlertIcon.Error);
+        }
+    }
+    private DateTime? ObtenerFechaVencimiento(byte[] archivoCer, byte[] archivoKey, string password)
+    {
+        try
+        {
+            X509Certificate2 cert = new X509Certificate2(archivoCer);
+            return cert.NotAfter;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al verificar la contraseña: {ex.Message}");
+        }
+
+        return null;
+    }
+} 

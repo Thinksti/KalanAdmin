@@ -1,0 +1,316 @@
+﻿@page "/ventas/Facturas/pagar"
+@using KalanBlazor.BL.Ventas
+@rendermode InteractiveServer
+@inject KalanDB DB
+@inject NavigationManager NavigationManager
+@inject SweetAlertService Swal
+@inject LoadingService Spinner
+<SpinnerLoading></SpinnerLoading>
+
+<h1>Pagar Factura a Cliente</h1>
+<div class="row">
+    <div class="col-12 col-sm-12 col-md-12 col-lg-4 col-xl-2">
+        <Buscador TValue="string" Etiqueta="Id Cliente" @bind-Value="NombreCorto" ItemChanged="@((item)=>th_Cliente = item)" TItem="th_clientes" SearchItems="SearchItemsClientes" SearchExacto="SearchExactoClientes" Llave="NombreCorto"></Buscador>
+    </div>
+    <div class="col-12 col-sm-12 col-md-12 col-lg-8 col-xl-5">
+        @if (th_Cliente != null)
+        {
+            <ReadOnly Etiqueta="Razón Social" Value="@th_Cliente.RazonSocial"></ReadOnly>
+        }
+        else
+        {
+            <ReadOnly Etiqueta="Razón Social" Value=" "></ReadOnly>
+        }
+    </div>
+    <div class="col-12 col-sm-12 col-md-12 col-lg-4 col-xl-2">
+        <Fecha @bind-Value="Fecha" Etiqueta="Fecha de Pago"></Fecha>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12 col-sm-12 col-md-12 col-lg-4 col-xl-2">
+        <Buscador TValue="string" Etiqueta="Ingreso" @bind-Value="Ingreso" ItemChanged="AsignarEgreso" TItem="ListadoRecibos" SearchItems="SearchItemsEgreso" SearchExacto="SearchExactoEgreso" Llave="Documento"></Buscador>
+    </div>
+    <div class="col-12 col-sm-12 col-md-12 col-lg-4 col-xl-2">
+        @if (th_ingreso != null)
+        {
+            <ReadOnly Etiqueta="Monto Original" Value="@th_ingreso.Monto_Original.ToString("c")"></ReadOnly>
+        }
+        else
+        {
+            <ReadOnly Etiqueta="Monto Original" Value=" "></ReadOnly>
+        }
+    </div>
+    <div class="col-12 col-sm-12 col-md-12 col-lg-4 col-xl-2">
+        @if (th_ingreso != null)
+        {
+            <ReadOnly Etiqueta="Disponible" Value="@th_ingreso.Monto_Disponible.ToString("c")"></ReadOnly>
+        }
+        else
+        {
+            <ReadOnly Etiqueta="Disponible" Value=" "></ReadOnly>
+        }
+    </div>
+    <div class="col-12 col-sm-12 col-md-12 col-lg-4 col-xl-2">
+        @if (th_ingreso != null)
+        {
+            <ReadOnly Etiqueta="Fecha" Value="@th_ingreso.Fecha.ToString("d")"></ReadOnly>
+        }
+        else
+        {
+            <ReadOnly Etiqueta="Fecha" Value=" "></ReadOnly>
+        }
+    </div>
+    <div class="col-12 col-sm-12 col-md-12 col-lg-4 col-xl-2">
+        <ReadOnly Etiqueta="Aplicado" Value="@TotalAplicado.ToString("c")"></ReadOnly>
+    </div>
+
+    <div class="col-12 col-sm-12 col-md-12 col-lg-4 col-xl-2">
+        <button @onclick="Guardar" class="btn btn-primary">Aplicar Pago</button>
+    </div>
+</div>
+<QuickGrid Class="table small" Items="Listado.AsQueryable()">
+
+    <PropertyColumn Property="@(c => c.Factura)" Title="Factura" Sortable="true" />
+    <PropertyColumn Property="@(c => c.UUID)" Title="UUID" Sortable="true" />
+    <PropertyColumn Property="@(c => c.Fecha)" Title="Fecha" Format="d" Sortable="true" />
+    <PropertyColumn Property="@(c => c.MontoOriginal)" Title="Monto Original" Format="c" Class="centarVertical" Align="Align.Center" Sortable="true" />
+    <PropertyColumn Property="@(c => c.MontoPendiente)" Title="Monto Pendiente" Format="c" Align="Align.Center" Sortable="true" />
+    <TemplateColumn Title="Monto a Aplicar" Context="factura">
+        @if (factura.Aplicar)
+        {
+            @if (factura.MontoPendiente > TotalDisponible)
+            {
+                <Numerico Etiqueta="Monto a Aplicar" Max="@TotalDisponible" Min="0" @bind-Value="factura.MontoPagar"></Numerico>
+            }
+            else
+            {
+                <Numerico Etiqueta="Monto a Aplicar" Max="@factura.MontoPendiente" Min="0" @bind-Value="factura.MontoPagar"></Numerico>
+            }
+        }
+        else
+        {
+            <Numerico disabled Etiqueta="Monto a Aplicar" Max="@factura.MontoPendiente" Min="0" @bind-Value="factura.MontoPagar"></Numerico>
+        }
+    </TemplateColumn>
+    <TemplateColumn Title="Pagar" Context="factura">
+        <Switch Label=" " @bind-Value="factura.Aplicar"></Switch>
+    </TemplateColumn>
+</QuickGrid>
+@code {
+    [CascadingParameter] private Task<AuthenticationState> authenticationStateTask { get; set; }
+    private th_clientes th_Cliente { get; set; }
+    private ListadoRecibos th_ingreso { get; set; }
+    private string Ingreso { get; set; } = "";
+    private string NombreCorto { get; set; }
+    private DateTime Fecha { get; set; } = DateTime.Now.Date;
+    private List<FacturasCobrar> Listado { get; set; } = new();
+    private decimal TotalAplicado
+    {
+        get
+        {
+            return Listado.Where(c => c.Aplicar).Sum(c => c.MontoPagar);
+        }
+    }
+    private decimal TotalDisponible
+    {
+        get
+        {
+            if (th_ingreso == null)
+            {
+                return 0;
+            }
+            else
+            {
+                return th_ingreso.Monto_Disponible - Listado.Where(c => c.Aplicar).Sum(c => c.MontoPagar);
+            }
+
+        }
+    }
+    private async Task<IEnumerable<th_clientes>> SearchItemsClientes(string value)
+    {
+        return DB.th_clientes.Where(c => c.NombreCorto.Contains(value) || c.RazonSocial.Contains(value)).ToList().AsEnumerable();
+    }
+    private async Task<IEnumerable<th_clientes>> SearchExactoClientes(string value)
+    {
+        return DB.th_clientes.Where(c => c.NombreCorto == value).ToList().AsEnumerable();
+    }
+    private async Task<IEnumerable<ListadoRecibos>> SearchItemsEgreso(string value)
+    {
+        if (th_Cliente == null)
+        {
+            if (value == ".")
+            {
+                var t = (from x in DB.th_ingresos
+                         where x.Activo == true
+                              && x.Disponible > 0
+                         select new ListadoRecibos
+
+                             {
+                                 Activo = x.Activo,
+                                 Chequera = x.bancos.Chequera,
+                                 Documento = $"RC-{x.Ingreso.ToString("D7")}",
+                                 Fecha = x.Fecha,
+                                 Id = x.Id,
+                                 Monto_Disponible = x.Disponible,
+                                 Monto_Original = x.Original,
+                                 Cliente = x.cliente.NombreCorto,
+                                 Usuario = x.UsuarioCreacion
+                             }).ToList().AsEnumerable();
+                return t;
+            }
+            else{
+                var t = (from x in DB.th_ingresos
+                         where x.Ingreso.ToString().Contains(value)
+                         && x.Activo == true
+                              && x.Disponible > 0
+                         select new ListadoRecibos
+
+                             {
+                                 Activo = x.Activo,
+                                 Chequera = x.bancos.Chequera,
+                                 Documento = $"RC-{x.Ingreso.ToString("D7")}",
+                                 Fecha = x.Fecha,
+                                 Id = x.Id,
+                                 Monto_Disponible = x.Disponible,
+                                 Monto_Original = x.Original,
+                                 Cliente = x.cliente.NombreCorto,
+                                 Usuario = x.UsuarioCreacion
+                             }).ToList().AsEnumerable();
+                return t;
+            }
+
+        }
+        else
+        {
+            if (value == ".")
+            {
+                var t = (from x in DB.th_ingresos
+                         where x.cliente_Id == th_Cliente.Id
+                         && x.Activo == true
+                              && x.Disponible > 0
+                         select new ListadoRecibos
+
+                             {
+                                 Activo = x.Activo,
+                                 Chequera = x.bancos.Chequera,
+                                 Documento = $"RC-{x.Ingreso.ToString("D7")}",
+                                 Fecha = x.Fecha,
+                                 Id = x.Id,
+                                 Monto_Disponible = x.Disponible,
+                                 Monto_Original = x.Original,
+                                 Cliente = x.cliente.NombreCorto,
+                                 Usuario = x.UsuarioCreacion
+                             }).ToList().AsEnumerable();
+                return t;
+            }
+            else
+            {
+                var t = (from x in DB.th_ingresos
+                         where x.cliente_Id == th_Cliente.Id
+                         && x.Ingreso.ToString().Contains(value)
+                         && x.Activo == true
+                              && x.Disponible > 0
+                         select new ListadoRecibos
+
+                             {
+                                 Activo = x.Activo,
+                                 Chequera = x.bancos.Chequera,
+                                 Documento = $"RC-{x.Ingreso.ToString("D7")}",
+                                 Fecha = x.Fecha,
+                                 Id = x.Id,
+                                 Monto_Disponible = x.Disponible,
+                                 Monto_Original = x.Original,
+                                 Cliente = x.cliente.NombreCorto,
+                                 Usuario = x.UsuarioCreacion
+                             }).ToList().AsEnumerable();
+                return t;
+            }
+
+        }
+    }
+    private async Task<IEnumerable<ListadoRecibos>> SearchExactoEgreso(string value)
+    {
+        if (th_Cliente == null)
+        {
+            return DB.th_ingresos.Where(c => c.Ingreso.ToString() == value && c.Activo == true && c.Disponible > 0).Select(x => new ListadoRecibos
+                {
+                    Activo = x.Activo,
+                    Chequera = x.bancos.Chequera,
+                    Documento = $"RC-{x.Ingreso.ToString("D7")}",
+                    Fecha = x.Fecha,
+                    Id = x.Id,
+                    Monto_Disponible = x.Disponible,
+                    Monto_Original = x.Original,
+                    Cliente = x.cliente.NombreCorto,
+                    Usuario = x.UsuarioCreacion
+                }).ToList().AsEnumerable();
+        }
+        else
+        {
+            return DB.th_ingresos.Where(c => c.cliente_Id == th_Cliente.Id && c.Ingreso.ToString() == value && c.Activo == true && c.Disponible > 0).Select(x => new ListadoRecibos
+                {
+                    Activo = x.Activo,
+                    Chequera = x.bancos.Chequera,
+                    Documento = $"RC-{x.Ingreso.ToString("D7")}",
+                    Fecha = x.Fecha,
+                    Id = x.Id,
+                    Monto_Disponible = x.Disponible,
+                    Monto_Original = x.Original,
+                    Cliente = x.cliente.NombreCorto,
+                    Usuario = x.UsuarioCreacion
+                }).ToList().AsEnumerable();
+        }
+    }
+    private async Task AsignarEgreso(ListadoRecibos ingreso)
+    {
+        if (ingreso != null)
+        {
+            th_ingreso = ingreso;
+            th_Cliente = DB.th_clientes.Where(c => c.NombreCorto == th_ingreso.Cliente && c.Activo == true).FirstOrDefault();
+            if (th_Cliente != null)
+            {
+                NombreCorto = th_Cliente.NombreCorto;
+                Listado = (from i in DB.th_cuentascobrar
+                           where i.cliente_Id == th_Cliente.Id
+                            && i.Disponible > 0
+                           select new FacturasCobrar
+                               {
+                                   Factura = i.Factura,
+                                   Fecha = i.Fecha,
+                                   MontoOriginal = i.Original,
+                                   MontoPendiente = i.Disponible,
+                                   FacturaId = i.Id,
+                                   MontoPagar = 0,
+                                   Aplicar = false
+                               }).ToList();
+            }
+        }        
+    }
+    private async Task Guardar()
+    {
+        var _authState = await authenticationStateTask;
+        var user = _authState.User;
+        var correo = ((System.Security.Claims.ClaimsIdentity)user.Identity).Name;
+        if (TotalAplicado > 0)
+        {
+            Aplicar aplicar = new Aplicar(DB);
+            Spinner.IsLoading = true;
+            foreach (var item in Listado.Where(x => x.Aplicar && x.MontoPagar > 0))
+            {
+                try
+                {
+                    aplicar.AplicarPago(item.FacturaId, th_ingreso.Id, item.MontoPendiente, Fecha, correo);
+                }
+                catch (Exception ex)
+                {
+                    await Swal.FireAsync("Error", ex.Message, SweetAlertIcon.Error);
+                    Spinner.IsLoading = false;
+                    return;
+                }
+            }
+            Spinner.IsLoading = false;
+        }
+        NavigationManager.NavigateTo("/ventas/Facturas/listado", true);
+    }
+}

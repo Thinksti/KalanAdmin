@@ -1,0 +1,70 @@
+﻿@page "/th_origenes/create"
+@inject KalanDB DB
+@inject NavigationManager NavigationManager 
+<h1>Crear Registro</h1>
+
+<h4>Origen de Ingreso</h4>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <EditForm method="post" Model="entidad" OnSubmit="Addth_condiciones" FormName="create" Enhance>
+            <DataAnnotationsValidator />
+            <ValidationSummary class="text-danger" />
+            <div class="mb-3">
+                <label for="Origen" class="form-label">Origen:</label>
+                <InputText id="Origen" @bind-Value="entidad.Origen" class="form-control" />
+                <ValidationMessage For="() => entidad.Origen" class="text-danger" />
+            </div>
+            <div class="mb-3">
+                <label for="Observaciones" class="form-label">Observaciones:</label>
+                <InputText id="Observaciones" @bind-Value="entidad.Observaciones" class="form-control" />
+                <ValidationMessage For="() => entidad.Observaciones" class="text-danger" />
+            </div>
+            <div class="mb-3">
+                <label for="activo" class="form-label">Activo:</label>
+                <InputCheckbox id="activo" @bind-Value="entidad.Activo" class="form-check-input" />
+                <ValidationMessage For="() => entidad.Activo" class="text-danger" />
+            </div>
+            <div class="mb-3 Ocultar">
+                <label for="usuariocreacion" class="form-label">UsuarioCreacion:</label>
+                <InputText id="usuariocreacion" @bind-Value="entidad.UsuarioCreacion" class="form-control" />
+                <ValidationMessage For="() => entidad.UsuarioCreacion" class="text-danger" />
+            </div>
+            <div class="mb-3 Ocultar">
+                <label for="fechacreacion" class="form-label">FechaCreacion:</label>
+                <InputDate id="fechacreacion" @bind-Value="entidad.FechaCreacion" class="form-control" />
+                <ValidationMessage For="() => entidad.FechaCreacion" class="text-danger" />
+            </div>
+
+            <button type="submit" class="btn btn-primary">Create</button>
+        </EditForm>
+    </div>
+</div>
+
+<div>
+    <a href="/th_origenes"><i class="fa-solid fa-arrow-left"></i> Regresar al Index</a>
+</div>
+@code {
+    [SupplyParameterFromForm]
+    public th_ingresos_origen entidad { get; set; } = new();
+    [CascadingParameter] private Task<AuthenticationState> authenticationStateTask { get; set; }
+    private KalanDB kalanDB
+    {
+        get
+        {
+            return new KalanDB(DB.connectionString);
+        }
+    }
+    public async Task Addth_condiciones()
+    {
+        entidad.Id = Guid.NewGuid().ToString();
+        var _authState = await authenticationStateTask;
+        var user = _authState.User;
+        var correo = ((System.Security.Claims.ClaimsIdentity)user.Identity).Name;
+        entidad.FechaCreacion = DateTime.Now;
+        entidad.UsuarioCreacion = correo;
+        DB.th_ingresos_origen.Add(entidad);
+        await DB.SaveChangesAsync();
+        NavigationManager.NavigateTo("/th_origenes");
+    }
+}

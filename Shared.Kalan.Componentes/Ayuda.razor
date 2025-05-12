@@ -1,0 +1,21 @@
+﻿<button style="margin-left: 95%;position: absolute;z-index: 1;" class="btn btn-link" type="button" data-bs-toggle="offcanvas" data-bs-target="#div_Ayuda_@id" aria-controls="div_Ayuda_@id">
+    <i class="fa-regular fa-circle-question fa-2x"></i>
+</button>
+<div class="offcanvas offcanvas-end" tabindex="-1" id="div_Ayuda_@id" aria-labelledby="offcanvasRightLabel">
+    <div class="offcanvas-header">
+        <h5 class="offcanvas-title" id="offcanvasRightLabel">Ayuda</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    </div>
+    <div class="offcanvas-body">
+        @Body
+    </div>
+</div>
+@code {
+    private string id { get; set; }
+    [Parameter]
+    public RenderFragment Body { get; set; }
+    protected override async Task OnInitializedAsync()
+    {
+        id = Guid.NewGuid().ToString().Replace("-", "");
+    }
+}

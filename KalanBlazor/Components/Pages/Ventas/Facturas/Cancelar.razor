@@ -1,0 +1,220 @@
+﻿@page "/ventas/Facturas/Cancelar"
+@rendermode InteractiveServer
+@inject KalanDB DB
+@inject NavigationManager NavigationManager
+@inject SweetAlertService Swal
+@inject LoadingService Spinner
+@inject Excel Excel
+@inject IWebHostEnvironment WebHostEnvironment
+<SpinnerLoading></SpinnerLoading>
+<h1>Cancelar registro</h1>
+
+<h3>¿Estas seguro de cancelar el registro?</h3>
+
+<h1>Factura de Cliente</h1>
+
+@if (entidad != null)
+{
+    <div class="row">
+        <div class="col-12 col-sm-12 col-md-12 col-lg-4 col-xl-2">
+            <ReadOnly Etiqueta="Id Cliente" @bind-Value="entidad.cliente.NombreCorto"></ReadOnly>
+        </div>
+        <div class="col-12 col-sm-12 col-md-12 col-lg-8 col-xl-5">
+            @if (entidad.cliente != null)
+            {
+                <ReadOnly Etiqueta="Razón Social" Value="@entidad.cliente.RazonSocial"></ReadOnly>
+            }
+            else
+            {
+                <ReadOnly Etiqueta="Razón Social" Value=" "></ReadOnly>
+            }
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-12 col-sm-12 col-md-6 col-lg-4 col-xl-2">
+            <Texto disabled MaxLength="36" Etiqueta="Factura" @bind-Value="entidad.Factura"></Texto>
+        </div>
+        <div class="col-12 col-sm-12 col-md-6 col-lg-4 col-xl-2">
+            <Fecha disabled Etiqueta="Fecha" @bind-Value="entidad.Fecha"></Fecha>
+        </div>
+        <div class="col-12 col-sm-12 col-md-6 col-lg-4 col-xl-2">
+            <Numerico disabled Etiqueta="Monto de la Factura" Min="0" @bind-Value="entidad.Original"></Numerico>
+        </div>
+        <div class="col-12 col-sm-12 col-md-6 col-lg-4 col-xl-2">
+            <Numerico disabled Etiqueta="Saldo de la Factura" Min="0" @bind-Value="entidad.Disponible"></Numerico>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12 col-sm-12 col-md-12 col-lg-6 col-xl-3">
+            <Texto disabled Etiqueta="UUID" MaxLength="36" @bind-Value="entidad.UUID"></Texto>
+        </div>
+        <div class="col-12 col-sm-12 col-md-6 col-lg-3 col-xl-2">
+            <div class="form-floating">
+                <select disabled @bind="entidad.metodopago_Id" class="form-select">
+                    <option value="" selected disabled>Método de Pago</option>
+                    @foreach (var item in kalanDB.th_metodopago)
+                    {
+                        <option value="@item.Id">@item.Id</option>
+                    }
+                </select>
+                <label>Método de Pago</label>
+            </div>
+        </div>
+        <div class="col-12 col-sm-12 col-md-6 col-lg-3 col-xl-2" style="align-self:center;">
+            <Switch disabled Etiqueta="Activo" @bind-Value="entidad.Activo"></Switch>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12 col-sm-12 col-md-12 col-lg-12 col-xl-12">
+            <TextoLargo disabled MaxLength="400" rows="3" Etiqueta="Comentarios" @bind-Value="entidad.Observaciones"></TextoLargo>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+            <ReadOnly Etiqueta="Usuario" Value="@entidad.UsuarioCreacion"></ReadOnly>
+        </div>
+        <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+            <ReadOnly Etiqueta="Fecha y Hora de Creación" Value="@entidad.FechaCreacion.ToString("yyyy-MM-dd HH:mm:ss")"></ReadOnly>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-12">
+            @if (entidad.th_venta_factura != null)
+            {
+                <h2>Detalle de la Factura</h2>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Producto</th>
+                            <th>Cantidad</th>
+                            <th>Precio</th>
+                            <th>Subtotal</th>
+                            <th>Impuesto</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in entidad.th_venta_factura.th_venta_factura_detalle)
+                        {
+                            <tr>
+                                <td>@item.articulo.NombreCorto - @item.articulo.Descripcion</td>
+                                <td>@item.Cantidad</td>
+                                <td style="text-align:right;">@item.Unitario.ToString("c")</td>
+                                <td style="text-align:right;">@item.SubTotal.ToString("c")</td>
+                                <td style="text-align:right;">@item.Impuesto.ToString("c")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+        </div>
+    </div>
+    <div>
+        <button class="btn btn-danger" @onclick="CancelarActivo">Cancelar</button>
+        <a href="@($"/ventas/Facturas/listado")"><i class="fa-solid fa-arrow-left"></i> Regresar al Index</a>
+    </div>
+}
+
+@code {
+    [CascadingParameter] private Task<AuthenticationState> authenticationStateTask { get; set; }
+    [SupplyParameterFromQuery]
+    public string Id { get; set; }
+    private DateTime Fecha { get; set; }
+    private decimal Monto { get; set; }
+    private string Comentario { get; set; }
+    private string Factura { get; set; }
+    private string UUID { get; set; }
+    private string MetodoPago { get; set; }
+    private th_cuentascobrar entidad { get; set; }
+    private KalanDB kalanDB
+    {
+        get
+        {
+            return new KalanDB(DB.connectionString);
+        }
+    }
+    private async Task CancelarActivo()
+    {
+
+        using var transaction = DB.Database.BeginTransaction();
+        try
+        {
+            var _authState = await authenticationStateTask;
+            var user = _authState.User;
+            var correo = ((System.Security.Claims.ClaimsIdentity)user.Identity).Name;
+            Spinner.IsLoading = true;
+            if (entidad.Disponible == entidad.Original)
+            {
+                entidad.Activo = false;
+                entidad.UsuarioModifica = correo;
+                entidad.Disponible = 0;
+                entidad.FechaModifica = DateTime.Now;
+                DB.th_cuentascobrar.Update(entidad);
+                await DB.SaveChangesAsync();
+                var contabilidad = new BL.Financiero.Contabilidad(DB);
+           
+                var factura = DB.th_venta_factura.IgnoreAutoIncludes().FirstOrDefault(m => m.Id == entidad.Id);
+                if(factura!=null)
+                {
+                    factura.Activo = false;
+                    factura.UsuarioModifica = correo;
+                    factura.FechaModifica = DateTime.Now;
+
+                    var existingEntity = DB.Set<th_venta_factura>().Find(factura.Id);
+                    if (existingEntity != null)
+                    {
+                        DB.Entry(existingEntity).CurrentValues.SetValues(factura);
+                    }
+                    else
+                    {
+                        DB.Attach(factura);
+                    }
+                    DB.SaveChanges();
+                    transaction.Commit();
+                    await contabilidad.CancelarVentasFactura(entidad.Id, correo);
+                    var configuracion = DB.th_facturacion_sellos.First();
+                    try
+                    {
+                        var ruta = System.IO.Path.Combine(WebHostEnvironment.WebRootPath, "Recursos", "cadenaoriginal_4_0.xslt");
+                        var cfdi = new BL.Ventas.CFDi(ruta, configuracion.Sello_Cer, configuracion.Sello_Key, configuracion.Sello_Password, DB.connectionString, Excel);
+                        var respuesta = await cfdi.CancelarSAT(factura.UUID, "02");
+                    }
+                    catch (Exception ex)
+                    {
+                        
+                    }
+                    
+                    
+                }
+                else{
+                    transaction.Commit();
+                    await contabilidad.CancelarVentasDirecto(entidad.Id, correo);
+                } 
+                Spinner.IsLoading = false;
+                NavigationManager.NavigateTo("/ventas/Facturas/listado");
+            }
+            else
+            {
+                Spinner.IsLoading = false;
+                await Swal.FireAsync("Error", "No se puede cancelar la factura, ya que tiene pagos asociados", SweetAlertIcon.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            transaction.Rollback();
+            Spinner.IsLoading = false;
+            await Swal.FireAsync("Error", ex.Message, SweetAlertIcon.Error);
+        }
+    }
+    protected override async Task OnInitializedAsync()
+    {
+        entidad = await DB.th_cuentascobrar.FirstOrDefaultAsync(m => m.Id == Id);
+
+        if (entidad is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+        }
+    }
+}

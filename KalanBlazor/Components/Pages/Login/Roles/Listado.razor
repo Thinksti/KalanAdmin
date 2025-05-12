@@ -1,0 +1,66 @@
+﻿@page "/login/roles/listado" 
+@rendermode InteractiveServer
+@inject KalanDB DB
+@inject Excel Excel
+@inject NavigationManager NavigationManager
+
+<h1>Listado de Roles</h1>
+
+<button @onclick="@(()=>Navegar("/login/roles/crear"))" class="btn btn-primary"><i class="fa-solid fa-plus"></i> Nuevo</button>
+<div class="row">
+    <div class="col-12 col-sm-12 col-md-12 col-lg-12 col-xl-8">
+        <QuickGrid Pagination="@pagination" Class="table small" Items="_listado.AsQueryable()">
+            <TemplateColumn Title="Rol" Context="item" Sortable="true">
+                <button class="btn btn-outline-warning" @onclick="@(()=>Navegar($"/login/roles/editar?id={item.Id}"))"><i class="fa-solid fa-pen-to-square"></i></button>
+                <button class="btn btn-outline-info" @onclick="@(()=>Navegar($"/login/roles/ver?id={item.Id}"))"><i class="fas fa-info"></i></button>
+                <button class="btn btn-outline-danger" @onclick="@(()=>Navegar($"/login/roles/eliminar?id={item.Id}"))"><i class="fas fa-trash"></i></button>
+            </TemplateColumn>
+            <PropertyColumn Property="@(item => item.Name)" Title="Nombre" Sortable="true" />
+            <TemplateColumn Title="Activo" Context="item">
+                <Switch disabled Label=" " @bind-Value="item.Activo"></Switch>
+            </TemplateColumn>
+            <TemplateColumn Title="Usuario" Context="item">
+                @if(item.FechaModifica == null)
+                {
+                    <label>@item.UsuarioCreacion</label>
+                }
+                else
+                {
+                    <label>@item.UsuarioModifica</label>
+                }
+            </TemplateColumn>
+            <TemplateColumn Title="Fecha" Context="item">
+                @if (item.FechaModifica == null)
+                {
+                    <label>@item.FechaCreacion</label>
+                }
+                else
+                {
+                    <label>@item.FechaModifica.Value</label>
+                }
+            </TemplateColumn>
+        </QuickGrid>
+        <Paginator State="@pagination" />
+    </div>
+</div>
+
+@code {
+    PaginationState pagination = new PaginationState { ItemsPerPage = 10 };
+    private List<aspnetroles> _listado = new List<aspnetroles>();
+    protected override async Task OnInitializedAsync()
+    { 
+        Reporte();
+    }
+    private void Reporte()
+    {
+        this._listado = (from x in DB.aspnetroles
+        select x) 
+        .IgnoreAutoIncludes()
+        .AsNoTracking() 
+        .ToList();
+    }
+    private void Navegar(string url)
+    {
+        NavigationManager.NavigateTo(url, true);
+    }
+}

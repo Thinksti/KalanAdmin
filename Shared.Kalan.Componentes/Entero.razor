@@ -1,0 +1,42 @@
+﻿@if (string.IsNullOrEmpty(Etiqueta))
+{
+    <input id="txt_@id" class="form-control" @attributes="AdditionalAttributes" type="number" style="text-align:right" @bind="Value" @bind:after="ValidarValor" />
+}
+else
+{
+    <div class="form-floating">
+        <input id="txt_@id" class="form-control" @attributes="AdditionalAttributes" type="number" style="text-align:right" @bind="Value" @bind:after="ValidarValor" placeholder="@Etiqueta" />
+        <label for="txt_@id">@Etiqueta</label>
+    </div>
+}
+@code {
+    [Parameter] public int Value { get; set; }
+    [Parameter] public EventCallback<int> ValueChanged { get; set; }
+    [Parameter] public int Min { get; set; }
+    [Parameter] public int Max { get; set; }
+    [Parameter(CaptureUnmatchedValues = true)] public IDictionary<string, object> AdditionalAttributes { get; set; }
+    [Parameter] public string Etiqueta { get; set; }
+    private string id { get; set; }
+    protected override async Task OnInitializedAsync()
+    {
+        this.id = Guid.NewGuid().ToString().Replace("-", "");
+        if(Max == 0)
+        {
+            Max = int.MaxValue;
+        }
+        await ValidarValor();
+    }
+    private async Task ValidarValor()
+    {
+        if (Value < Min)
+        {
+            Value = Min;
+        }
+        if (Value > Max && Max > 0)
+        {
+            Value = Max;
+        }
+        await ValueChanged.InvokeAsync(Value);
+        await InvokeAsync(() => StateHasChanged());
+    }
+}

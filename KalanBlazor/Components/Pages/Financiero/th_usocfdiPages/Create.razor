@@ -1,0 +1,63 @@
+﻿@page "/th_usocfdis/create"
+@inject KalanDB DB
+
+@inject NavigationManager NavigationManager
+
+<PageTitle>Create</PageTitle>
+
+<h1>Crear</h1>
+
+<h4>Usos de CFDi</h4>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <EditForm method="post" Model="th_usocfdi" OnValidSubmit="Addth_usocfdi" FormName="create" Enhance>
+            <DataAnnotationsValidator />
+            <ValidationSummary class="text-danger" />
+            <div class="mb-3">
+                <label for="usocfdi" class="form-label">Id UsoCFDi:</label>
+                <InputText id="usocfdi" @bind-Value="th_usocfdi.Id" class="form-control" />
+                <ValidationMessage For="() => th_usocfdi.Id" class="text-danger" />
+            </div>
+            <div class="mb-3">
+                <label for="usocfdi" class="form-label">UsoCFDi:</label> 
+                <InputText id="usocfdi" @bind-Value="th_usocfdi.UsoCFDi" class="form-control" /> 
+                <ValidationMessage For="() => th_usocfdi.UsoCFDi" class="text-danger" /> 
+            </div>
+            <div class="mb-3">
+                <label for="activo" class="form-label">Activo:</label> 
+                <InputCheckbox id="activo" @bind-Value="th_usocfdi.Activo" class="form-check-input" /> 
+                <ValidationMessage For="() => th_usocfdi.Activo" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <label for="usuariocreacion" class="form-label">UsuarioCreacion:</label> 
+                <InputText id="usuariocreacion" @bind-Value="th_usocfdi.UsuarioCreacion" class="form-control" /> 
+                <ValidationMessage For="() => th_usocfdi.UsuarioCreacion" class="text-danger" /> 
+            </div>        
+            <button type="submit" class="btn btn-primary">Create</button>
+        </EditForm>
+    </div>
+</div>
+
+<div>
+    <a href="/th_usocfdis"><i class="fa-solid fa-arrow-left"></i> Regresar al Index</a>
+</div>
+
+@code {
+
+    [SupplyParameterFromForm]
+    public th_usocfdi th_usocfdi { get; set; } = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        th_usocfdi.FechaCreacion = DateTime.Now;
+    }
+
+    // To protect from overposting attacks, see https://aka.ms/RazorPagesCRUD
+    public async Task Addth_usocfdi()
+    {
+        DB.th_usocfdi.Add(th_usocfdi);
+        await DB.SaveChangesAsync();
+        NavigationManager.NavigateTo("/th_usocfdis");
+    }
+}

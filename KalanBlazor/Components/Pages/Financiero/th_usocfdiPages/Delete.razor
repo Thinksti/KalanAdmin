@@ -1,0 +1,81 @@
+﻿@page "/th_usocfdis/delete"
+@inject KalanDB DB
+@inject SweetAlertService Swal
+@inject NavigationManager NavigationManager 
+@rendermode InteractiveServer 
+
+<PageTitle>Delete</PageTitle>
+
+<h1>Borrar registro</h1>
+
+<h3>¿Estas seguro de borrar el registro?</h3>
+<div>
+    <h4>th_usocfdi</h4>
+    <hr />
+    @if (th_usocfdi is null)
+    {
+        <p><em>Loading...</em></p>
+    }
+    else {
+        <dl class="row">
+            <dt class="col-sm-2">UsoCFDi</dt>
+            <dd class="col-sm-10">@th_usocfdi.UsoCFDi</dd>
+        </dl>
+        <dl class="row">
+            <dt class="col-sm-2">Activo</dt>
+            <dd class="col-sm-10">@th_usocfdi.Activo</dd>
+        </dl>
+        <dl class="row">
+            <dt class="col-sm-2">UsuarioCreacion</dt>
+            <dd class="col-sm-10">@th_usocfdi.UsuarioCreacion</dd>
+        </dl>
+        <dl class="row">
+            <dt class="col-sm-2">FechaCreacion</dt>
+            <dd class="col-sm-10">@th_usocfdi.FechaCreacion</dd>
+        </dl>
+        <dl class="row">
+            <dt class="col-sm-2">UsuarioModifica</dt>
+            <dd class="col-sm-10">@th_usocfdi.UsuarioModifica</dd>
+        </dl>
+        <dl class="row">
+            <dt class="col-sm-2">FechaModifica</dt>
+            <dd class="col-sm-10">@th_usocfdi.FechaModifica</dd>
+        </dl>
+        <EditForm method="post" Model="th_usocfdi" OnValidSubmit="Deleteth_usocfdi" FormName="delete" Enhance>
+            <button type="submit" class="btn btn-danger" disabled="@(th_usocfdi is null)">Borrar</button> |
+            <a href="/th_usocfdis"><i class="fa-solid fa-arrow-left"></i> Regresar al Index</a>
+        </EditForm>
+    }
+</div>
+
+@code {
+    th_usocfdi? th_usocfdi;
+
+    [SupplyParameterFromQuery]
+    public string Id { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        th_usocfdi = await DB.th_usocfdi.FirstOrDefaultAsync(m => m.Id == Id);
+
+        if (th_usocfdi is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+        }
+    }
+
+    public async Task Deleteth_usocfdi()
+    {
+        try
+        {
+            DB.th_usocfdi.Remove(th_usocfdi!);
+            await DB.SaveChangesAsync();
+            NavigationManager.NavigateTo("/th_usocfdis");
+        }
+        catch (Exception ex)
+        {
+            await Swal.FireAsync("Error", "Imposible borrar el uso de CFDi", SweetAlertIcon.Error);
+        }
+      
+    }
+}

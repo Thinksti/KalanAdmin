@@ -1,0 +1,67 @@
+﻿@page "/financiero/impuestos/ver"
+
+@rendermode InteractiveServer
+@inject KalanDB DB
+@inject Excel Excel
+@inject NavigationManager NavigationManager
+@inject SweetAlertService Swal
+@inject LoadingService Spinner
+<SpinnerLoading></SpinnerLoading>
+
+<Contenido Titulo="Ver el Impuesto">
+ 
+        <div class="row">
+            <div class="col-12 col-sm-12 col-md-12 col-lg-6 col-xl-4">
+                <Texto MaxLength="15" disabled Etiqueta="Nombre del Impuesto" @bind-Value="item.NombreCorto"></Texto>
+            </div>
+        </div>
+ 
+        <div class="row">
+            <div class="col-12 col-sm-12 col-md-12 col-lg-6 col-xl-6">
+                <Texto MaxLength="100" disabled Etiqueta="Descripción del Impuesto" @bind-Value="item.Descripcion"></Texto>
+            </div>
+        </div>
+  
+        <div class="row">
+            <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+                <Numerico disabled Etiqueta="Porcentaje del Impuesto" Max="100" Min="-100" @bind-Value="item.Porcentaje"></Numerico>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-12 col-sm-12 col-md-12 col-lg-3 col-xl-3">
+                <CuentaContable Disabled="true" Etiqueta="Cuenta Contable del Impuesto" @bind-Value="item.cuentacontable_id"></CuentaContable>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-12 col-sm-12 col-md-12 col-lg-3 col-xl-3">
+                <Texto disabled Etiqueta="Id de Impuesto del SAT" @bind-Value="item.IdSAT"></Texto>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+                <Switch disabled Etiqueta="Impuesto Activo" @bind-Value="item.Activo"></Switch>
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+                <a href="/financiero/impuestos/listado"><i class="fa-solid fa-arrow-left"></i> Regresar al Index</a>
+            </div>
+        </div>
+   
+</Contenido>
+
+@code {
+    [Parameter][SupplyParameterFromQuery] public string id { get; set; }
+    [CascadingParameter] private Task<AuthenticationState> authenticationStateTask { get; set; }
+    private th_impuestos item { get; set; } = new();
+    protected override async Task OnInitializedAsync()
+    {
+        item = await DB.th_impuestos.FirstOrDefaultAsync(m => m.Id == id);
+        if (item is null)
+        {
+            NavigationManager.NavigateTo("/financiero/impuestos/listado");
+        }
+    }
+ 
+}

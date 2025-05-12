@@ -1,0 +1,187 @@
+﻿@page "/inventario/articulosproveedor/crear"
+
+@rendermode InteractiveServer
+@inject KalanDB DB
+@inject Excel Excel
+@inject NavigationManager NavigationManager
+@inject SweetAlertService Swal
+@inject LoadingService Spinner
+<SpinnerLoading></SpinnerLoading>
+
+<Contenido Titulo="Creación de Relación Articulo-Proveedor">
+   
+        <div class="row">
+            <div class="col-12 col-sm-12 col-md-12 col-lg-3 col-xl-3">
+                <Buscador Etiqueta="Articulo"
+                          TItem="th_articulos"
+                          TValue="string"
+                          Llave="NombreCorto"
+                          @bind-Item="itemArticulo"
+                          @bind-Item:after="ArticuloAsignado"
+                          SearchExacto="SearchExactoArticulos"
+                          SearchItems="SearchItemsArticulos">
+                </Buscador>
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-12">
+                @if (itemArticulo != null)
+                {
+                    <KalanBlazor.Components.Pages.Inventario.Componente.Articulo item="@itemArticulo"></KalanBlazor.Components.Pages.Inventario.Componente.Articulo>
+                }
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-12">
+                <Texto EsBuscador="true" Etiqueta="Buscar Proveedor" @bind-Value="buscar"></Texto>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-12">
+                <QuickGrid Class="table small" Items="ProveedoresFiltrado.AsQueryable()">
+                    <PropertyColumn Property="@(item => item.NombreCorto)" Title="Nombre Corto" Sortable="true" />
+                    <PropertyColumn Property="@(item => item.RFC)" Title="RFC" Sortable="true" />
+                    <PropertyColumn Property="@(item => item.RazonSocial)" Title="Razón Social" Sortable="true" />
+                    <TemplateColumn Title="Activo" Context="item" Sortable="true" SortBy="@(GridSort<th_proveedores>.ByAscending(p => p.Activo))">
+                        <Switch Etiqueta=" " ValueChanged="@((value)=>OnValueChanged(item.Id))" Value="@( EsSeleccionado(item.Id))"></Switch>
+                    </TemplateColumn>
+                </QuickGrid>
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-12">
+                <button @onclick="Guardar" class="btn btn-primary">
+                    <i class="fa-regular fa-floppy-disk"></i> Guardar
+                </button>
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+                <a href="/inventario/articulosproveedor/listado"><i class="fa-solid fa-arrow-left"></i> Regresar al Index</a>
+            </div>
+        </div>
+ 
+</Contenido>
+
+@code {
+    [CascadingParameter] private Task<AuthenticationState> authenticationStateTask { get; set; }
+    private th_articulos_proveedor item { get; set; } = new();
+    private List<th_proveedores> Proveedores { get; set; }
+    private List<th_proveedores> ProveedoresFiltrado
+    {
+        get
+        {
+            if (string.IsNullOrEmpty(buscar))
+            {
+                return Proveedores;
+            }
+            else
+            {
+                return Proveedores.Where(x => x.NombreCorto.ToUpper().Contains(buscar.ToUpper()) || x.RazonSocial.ToUpper().Contains(buscar.ToUpper())).ToList();
+            }
+        }
+    }
+    private List<string> ProveedoresSeleccionados { get; set; } = new();
+    private th_articulos itemArticulo { get; set; }
+    private string buscar { get; set; }
+    private bool EsSeleccionado(string Id)
+    {
+        return ProveedoresSeleccionados.Contains(Id);
+    }
+    private async Task OnValueChanged(string Id)
+    {
+        if (ProveedoresSeleccionados.Contains(Id))
+        {
+            ProveedoresSeleccionados.Remove(Id);
+        }
+        else
+        {
+            ProveedoresSeleccionados.Add(Id);
+        }
+    }
+    private async Task ArticuloAsignado()
+    {
+        ProveedoresSeleccionados = new();
+        if (itemArticulo != null)
+        {
+            ProveedoresSeleccionados = DB.th_articulos_proveedor.Where(x => x.articulo_Id == itemArticulo.Id).Select(x => x.proveedor_Id).ToList();
+        }
+    }
+    protected override async Task OnInitializedAsync()
+    {
+        Proveedores = DB.th_proveedores.Where(x => x.Activo).ToList();
+    }
+    private string Usuario
+    {
+        get
+        {
+            var _authState = authenticationStateTask.Result;
+            var user = _authState.User;
+            return ((System.Security.Claims.ClaimsIdentity)user.Identity).Name;
+        }
+    }
+    private async Task<IEnumerable<th_articulos>> SearchItemsArticulos(string value)
+    {
+        return DB.th_articulos.Where(c => c.NombreCorto.Contains(value) || c.Descripcion.Contains(value)).IgnoreAutoIncludes().ToList().AsEnumerable();
+    }
+    private async Task<IEnumerable<th_articulos>> SearchExactoArticulos(string value)
+    {
+        return DB.th_articulos.Where(c => c.NombreCorto == value).IgnoreAutoIncludes().ToList().AsEnumerable();
+    }
+    private async Task<IEnumerable<th_proveedores>> SearchItemsProveedores(string value)
+    {
+        return DB.th_proveedores.Where(c => c.NombreCorto.Contains(value) || c.RazonSocial.Contains(value)).IgnoreAutoIncludes().ToList().AsEnumerable();
+    }
+    private async Task<IEnumerable<th_proveedores>> SearchExactoProveedores(string value)
+    {
+        return DB.th_proveedores.Where(c => c.NombreCorto == value).IgnoreAutoIncludes().ToList().AsEnumerable();
+    }
+    private async Task Guardar()
+    {
+        if (itemArticulo == null)
+        {
+            await Swal.FireAsync("Error", "Selecciona un Articulo", SweetAlertIcon.Error);
+        }
+        if (ProveedoresSeleccionados.Count() == 0)
+        {
+            await Swal.FireAsync("Error", "Selecciona un Proveedor", SweetAlertIcon.Error);
+        }
+        try
+        {
+            foreach (var provID in ProveedoresSeleccionados)
+            {
+                var existe = DB.th_articulos_proveedor.Where(x => x.articulo_Id == itemArticulo.Id && x.proveedor_Id == provID).FirstOrDefault();
+                if (existe==null)
+                {
+                    item.proveedor_Id = provID;
+                    item.Activo = true;
+                    item.articulo_Id = itemArticulo.Id;
+                    item.Id = Guid.NewGuid().ToString();
+                    item.FechaCreacion = DateTime.Now;
+                    item.UsuarioCreacion = Usuario;
+                    await DB.th_articulos_proveedor.AddAsync(item);
+                    await DB.SaveChangesAsync();
+                }
+                else
+                {
+                    existe.FechaModifica = DateTime.Now;
+                    existe.UsuarioModifica = Usuario;
+                    existe.Activo = true;
+                    DB.th_articulos_proveedor.Update(existe);
+                    await DB.SaveChangesAsync();
+                }
+            }
+            
+            NavigationManager.NavigateTo("/inventario/articulosproveedor/listado");
+        }
+        catch (Exception ex)
+        {
+            await Swal.FireAsync("Error", ex.Message, SweetAlertIcon.Error);
+            throw;
+        }
+    }
+}

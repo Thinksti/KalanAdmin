@@ -1,0 +1,85 @@
+﻿@page "/inventario/tipos/cancelar"
+
+@rendermode InteractiveServer
+@inject KalanDB DB
+@inject Excel Excel
+@inject NavigationManager NavigationManager
+@inject SweetAlertService Swal
+@inject LoadingService Spinner
+<SpinnerLoading></SpinnerLoading>
+
+<Contenido Titulo="Eliminar el Tipo del Articulo">
+  
+        <div class="row">
+            <div class="col-12 col-sm-12 col-md-12 col-lg-6 col-xl-4">
+                <Texto MaxLength="15" disabled Etiqueta="Nombre del Tipo del Articulo" @bind-Value="item.NombreCorto"></Texto>
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-12 col-sm-12 col-md-12 col-lg-6 col-xl-6">
+                <Texto MaxLength="100" disabled Etiqueta="Descripción del Articulo" @bind-Value="item.Descripcion"></Texto>
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+                <Switch disabled Etiqueta="Articulo Inventariable" @bind-Value="item.Inventariable"></Switch>
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+                <Switch disabled Etiqueta="Articulo Activo" @bind-Value="item.Activo"></Switch>
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+                <button @onclick="Guardar" class="btn btn-danger">Eliminar Tipo de Articulo</button>
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+                <a href="/inventario/tipos/listado"><i class="fa-solid fa-arrow-left"></i> Regresar al Index</a>
+            </div>
+        </div>
+ 
+</Contenido>
+
+@code {
+    [Parameter][SupplyParameterFromQuery] public string id { get; set; }
+    [CascadingParameter] private Task<AuthenticationState> authenticationStateTask { get; set; }
+    private th_articulos_tipos item { get; set; } = new();
+    protected override async Task OnInitializedAsync()
+    {
+        item = await DB.th_articulos_tipos.FirstOrDefaultAsync(m => m.Id == id);
+        if (item is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+        }
+    }
+    private string Usuario
+    {
+        get
+        {
+            var _authState = authenticationStateTask.Result;
+            var user = _authState.User;
+            return ((System.Security.Claims.ClaimsIdentity)user.Identity).Name;
+        }
+    }
+    private async Task Guardar()
+    {
+        try
+        {
+            DB.th_articulos_tipos.Remove(item);
+            await DB.SaveChangesAsync();
+            NavigationManager.NavigateTo("/inventario/tipos/listado");
+        }
+        catch (Exception ex)
+        {
+            await Swal.FireAsync("Error", ex.Message, SweetAlertIcon.Error);
+        }
+    }
+}

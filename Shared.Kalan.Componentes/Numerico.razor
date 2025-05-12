@@ -1,0 +1,50 @@
+﻿@if (string.IsNullOrEmpty(Etiqueta))
+{
+    <input id="txt_@id" class="form-control" @attributes="AdditionalAttributes" type="number" style="text-align:right" @bind="Value" @bind:after="ValidarValor" />
+}
+else
+{
+    <div class="form-floating">
+        <input id="txt_@id" class="form-control" @attributes="AdditionalAttributes" type="number" style="text-align:right" @bind="Value" @bind:after="ValidarValor" placeholder="@Etiqueta" />
+        <label for="txt_@id">@Etiqueta</label>
+    </div>
+}
+@code {
+    [Parameter] public decimal Value { get; set; }
+    [Parameter] public EventCallback<decimal> ValueChanged { get; set; }
+    [Parameter] public decimal? Min { get; set; } 
+    [Parameter] public decimal? Max { get; set; } 
+    [Parameter(CaptureUnmatchedValues = true)] public IDictionary<string, object> AdditionalAttributes { get; set; }
+    [Parameter] public string Etiqueta { get; set; }
+    private string id { get; set; }
+    protected override async Task OnInitializedAsync()
+    {
+        this.id = Guid.NewGuid().ToString().Replace("-", "");
+        if(Max == null)
+        {
+            Max = decimal.MaxValue;
+        }
+        if (Min == null)
+        {
+            Min = decimal.MinValue;
+        }
+        await ValidarValor();
+    }
+    private async Task ValidarValor()
+    {
+        if (Value < Min.Value)
+        {
+            Value = Min.Value;
+        }
+        if (Value > Max.Value && Max.Value > 0)
+        {
+            Value = Max.Value;
+        }
+        if (Max.Value < 0)
+        {
+            Value = 0;
+        }
+        await ValueChanged.InvokeAsync(Value);
+        await InvokeAsync(() => StateHasChanged());
+    }
+}

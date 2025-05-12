@@ -1,0 +1,73 @@
+﻿@page "/financiero/impuestos/listado"
+
+@rendermode InteractiveServer
+@inject KalanDB DB
+@inject Excel Excel
+@inject NavigationManager NavigationManager
+
+<Contenido Titulo="Listado de Impuestos">
+   
+        <div class="row">
+            <div class="col-12 col-sm-12 col-md-12 col-lg-4 col-xl-4">
+                <a href="/financiero/impuestos/crear"><i class="fas fa-plus"></i> Crear un nuevo Impuesto</a>
+            </div>
+            <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+                <a href="/financiero/impuestos/cargalayout"><i class="fa-solid fa-table-list"></i> Cargar por Layout</a>
+            </div>
+            <div class="col-12 col-sm-12 col-md-12 col-lg-4 col-xl-4">
+                <button class="btn btn-link" @onclick="@(()=>NavigationManager.NavigateTo("/recursos/layout.xlsx"))"><i class="fa-regular fa-file-excel"></i> Descargar Layout</button>
+            </div>
+            <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+                <DescargarArchivo Archivo="@ExcelListado" Etiqueta="Exportar"></DescargarArchivo>
+            </div>
+        </div>
+        <QuickGrid Pagination="@pagination" Class="table small" Items="listado.AsQueryable()">
+            <TemplateColumn Title="Impuestos" Context="item" Sortable="true">
+                <button class="btn btn-outline-warning" @onclick="@(()=>Navegar($"/financiero/impuestos/editar?id={item.Id}"))"><i class="fa-solid fa-pen-to-square"></i></button>
+                <button class="btn btn-outline-info" @onclick="@(()=>Navegar($"/financiero/impuestos/ver?id={item.Id}"))"><i class="fas fa-info"></i></button>
+                <button class="btn btn-outline-danger" @onclick="@(()=>Navegar($"/financiero/impuestos/cancelar?id={item.Id}"))"><i class="fas fa-trash"></i></button>
+            </TemplateColumn>
+            <PropertyColumn Property="@(item => item.NombreCorto)" Title="Nombre Corto" Sortable="true" />
+            <PropertyColumn Property="@(item => item.Descripcion)" Title="Descripción" Sortable="true" />
+            <TemplateColumn Title="Activo" Context="item">
+                <Switch disabled Label=" " @bind-Value="item.Activo"></Switch>
+            </TemplateColumn>
+            <PropertyColumn Property="@(item => item.UsuarioCreacion)" Title="Usuario Creo" Sortable="true" />
+            <PropertyColumn Property="@(item => item.FechaCreacion)" Title="Fecha Creación" Sortable="true" />
+            <PropertyColumn Property="@(item => item.UsuarioModifica)" Title="Usuario Modificación" Sortable="true" />
+            <PropertyColumn Property="@(item => item.FechaModifica)" Title="Fecha Modificación" Sortable="true" />
+        </QuickGrid>
+        <Paginator State="@pagination" />
+  
+</Contenido>
+
+@code {
+    PaginationState pagination = new PaginationState { ItemsPerPage = 10 };
+    private List<th_impuestos> listado = new List<th_impuestos>();
+
+    private ArchivoGral ExcelListado
+    {
+        get
+        {
+            var bytes = Excel.ExportExcel(listado, "Impuestos");
+            return new ArchivoGral { Nombre = "Impuestos.xlsx", Datos = bytes };
+        }
+    }
+    protected override async Task OnInitializedAsync()
+    {
+
+        Reporte();
+    }
+    private void Reporte()
+    {
+        this.listado = (from x in DB.th_impuestos
+                        select x)
+         .IgnoreAutoIncludes()
+         .AsNoTracking()
+        .ToList();
+    }
+    private void Navegar(string url)
+    {
+        NavigationManager.NavigateTo(url, true);
+    }
+}

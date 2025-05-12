@@ -1,0 +1,9 @@
+﻿<div class="row @AdditionalClasses" style="padding-top: 5px;" @attributes="AdditionalAttributes">
+    @ChildContent
+</div>
+
+@code {
+    [Parameter] public RenderFragment ChildContent { get; set; } // Contenido del componente
+    [Parameter] public string AdditionalClasses { get; set; } // Clases adicionales
+    [Parameter(CaptureUnmatchedValues = true)] public IDictionary<string, object> AdditionalAttributes { get; set; } // Atributos adicionales
+}

@@ -1,0 +1,64 @@
+﻿@page "/th_proveedores"
+@using Microsoft.AspNetCore.Components.QuickGrid
+@inject KalanDB DB
+@inject NavigationManager NavigationManager
+@rendermode InteractiveServer
+
+<PageTitle>Index</PageTitle>
+<Contenido Titulo="Catalogo de Proveedores">
+    
+        <p>
+            <a href="th_proveedores/create"><i class="fas fa-plus"></i> Crear nuevo Registro</a>
+        </p>
+        <div class="row">
+            <div class="col-12">
+                <Texto EsBuscador="true" Etiqueta="Buscar" @bind-Value="buscar"></Texto>
+            </div>
+        </div>
+        <QuickGrid Class="table" Items="ListadoFiltrado.AsQueryable()">
+            <TemplateColumn Context="th_proveedores" Sortable="true">
+                <button class="btn btn-outline-warning" @onclick="@(()=>Navegar($"th_proveedores/edit?id={th_proveedores.Id}"))"><i class="fa-solid fa-pen-to-square"></i></button>
+                <button class="btn btn-outline-info" @onclick="@(()=>Navegar($"th_proveedores/details?id={th_proveedores.Id}"))"><i class="fas fa-info"></i></button>
+                <button class="btn btn-outline-danger" @onclick="@(()=>Navegar($"th_proveedores/delete?id={th_proveedores.Id}"))"><i class="fas fa-trash"></i></button>
+            </TemplateColumn>
+            <PropertyColumn Property="th_proveedores => th_proveedores.NombreCorto" Sortable="true" />
+            <PropertyColumn Property="th_proveedores => th_proveedores.RazonSocial" Sortable="true" />
+            <PropertyColumn Property="th_proveedores => th_proveedores.RFC" Sortable="true" />
+            <PropertyColumn Property="th_proveedores => th_proveedores.CodigoPostal" Sortable="true" />
+            <PropertyColumn Property="th_proveedores => th_proveedores.Direccion" Sortable="true" />
+            <PropertyColumn Property="th_proveedores => th_proveedores.regimenfiscal_Id" Sortable="true" />
+            <PropertyColumn Property="th_proveedores => th_proveedores.usocfdi_Id" Sortable="true" />
+            <PropertyColumn Property="th_proveedores => th_proveedores.Activo" Sortable="true" />
+            <PropertyColumn Property="th_proveedores => th_proveedores.UsuarioCreacion" Sortable="true" />
+            <PropertyColumn Property="th_proveedores => th_proveedores.FechaCreacion" Sortable="true" />
+            <PropertyColumn Property="th_proveedores => th_proveedores.UsuarioModifica" Sortable="true" />
+            <PropertyColumn Property="th_proveedores => th_proveedores.FechaModifica" Sortable="true" />
+        </QuickGrid>
+ 
+</Contenido>
+@code {
+    private string buscar { get; set; }
+    private List<th_proveedores> Listado { get; set; } = new();
+    protected override async Task OnInitializedAsync()
+    {
+        Listado = await DB.th_proveedores.ToListAsync();
+    }
+    private List<th_proveedores> ListadoFiltrado
+    {
+        get
+        {
+            if (string.IsNullOrEmpty(buscar))
+            {
+                return Listado;
+            }
+            else
+            {
+                return Listado.Where(x => x.NombreCorto.ToUpper().Contains(buscar.ToUpper()) || x.RazonSocial.ToUpper().Contains(buscar.ToUpper()) || x.RFC.ToUpper().Contains(buscar.ToUpper()) || x.CodigoPostal.ToUpper().Contains(buscar.ToUpper()) || x.Direccion.ToUpper().Contains(buscar.ToUpper()) || x.UsuarioCreacion.ToUpper().Contains(buscar.ToUpper()) ).ToList();
+            }
+        }
+    }
+    private void Navegar(string url)
+    {
+        NavigationManager.NavigateTo(url, true);
+    }
+}

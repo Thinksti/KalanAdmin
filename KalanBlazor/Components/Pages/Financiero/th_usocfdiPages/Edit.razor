@@ -1,0 +1,111 @@
+﻿@page "/th_usocfdis/edit"
+@inject KalanDB DB
+
+@inject NavigationManager NavigationManager
+@using Microsoft.EntityFrameworkCore
+
+<PageTitle>Edit</PageTitle>
+
+<h1>Editar</h1>
+
+<h4>th_usocfdi</h4>
+<hr />
+@if (th_usocfdi is null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <div class="row">
+        <div class="col-md-4">
+            <EditForm method="post" Model="th_usocfdi" OnValidSubmit="Updateth_usocfdi" FormName="edit" Enhance>
+                <DataAnnotationsValidator />
+                <ValidationSummary />
+                <input type="hidden" name="th_usocfdi.Id" value="@th_usocfdi.Id" />
+                <div class="mb-3">
+                    <label for="usocfdi" class="form-label">UsoCFDi:</label>
+                    <InputText id="usocfdi" @bind-Value="th_usocfdi.UsoCFDi" class="form-control" />
+                    <ValidationMessage For="() => th_usocfdi.UsoCFDi" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="activo" class="form-label">Activo:</label>
+                    <InputCheckbox id="activo" @bind-Value="th_usocfdi.Activo" class="form-check-input" />
+                    <ValidationMessage For="() => th_usocfdi.Activo" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="usuariocreacion" class="form-label">UsuarioCreacion:</label>
+                    <InputText id="usuariocreacion" @bind-Value="th_usocfdi.UsuarioCreacion" class="form-control" />
+                    <ValidationMessage For="() => th_usocfdi.UsuarioCreacion" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="fechacreacion" class="form-label">FechaCreacion:</label>
+                    <InputDate id="fechacreacion" @bind-Value="th_usocfdi.FechaCreacion" class="form-control" />
+                    <ValidationMessage For="() => th_usocfdi.FechaCreacion" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="usuariomodifica" class="form-label">UsuarioModifica:</label>
+                    <InputText id="usuariomodifica" @bind-Value="th_usocfdi.UsuarioModifica" class="form-control" />
+                    <ValidationMessage For="() => th_usocfdi.UsuarioModifica" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="fechamodifica" class="form-label">FechaModifica:</label>
+                    <InputDate id="fechamodifica" @bind-Value="th_usocfdi.FechaModifica" class="form-control" />
+                    <ValidationMessage For="() => th_usocfdi.FechaModifica" class="text-danger" />
+                </div>
+                <button type="submit" class="btn btn-primary">Guardar</button>
+            </EditForm>
+        </div>
+    </div>
+}
+
+<div>
+    <a href="/th_usocfdis"><i class="fa-solid fa-arrow-left"></i> Regresar al Index</a>
+</div>
+
+@code {
+    [SupplyParameterFromQuery]
+    public string Id { get; set; }
+
+    [SupplyParameterFromForm]
+    public th_usocfdi? th_usocfdi { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        th_usocfdi ??= await DB.th_usocfdi.FirstOrDefaultAsync(m => m.Id == Id);
+
+        if (th_usocfdi is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+        }
+    }
+
+    // To protect from overposting attacks, enable the specific properties you want to bind to.
+    // For more details, see https://aka.ms/RazorPagesCRUD.
+    public async Task Updateth_usocfdi()
+    {
+        DB.Attach(th_usocfdi!).State = EntityState.Modified;
+
+        try
+        {
+            await DB.SaveChangesAsync();
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            if (!th_usocfdiExists(th_usocfdi!.Id))
+            {
+                NavigationManager.NavigateTo("notfound");
+            }
+            else
+            {
+                throw;
+            }
+        }
+
+        NavigationManager.NavigateTo("/th_usocfdis");
+    }
+
+    bool th_usocfdiExists(string id)
+    {
+        return DB.th_usocfdi.Any(e => e.Id == id);
+    }
+}

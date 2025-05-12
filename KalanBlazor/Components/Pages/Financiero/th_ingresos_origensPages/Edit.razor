@@ -1,0 +1,110 @@
+﻿@page "/th_origenes/edit"
+@inject KalanDB DB;
+@inject NavigationManager NavigationManager ;
+<PageTitle>Edit</PageTitle>
+<h1>Editar</h1>
+<h4>Origen de Ingreso</h4>
+<hr />
+@if (th_ingresos_origen is null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <div class="row">
+        <div class="col-md-4">
+            <EditForm method="post" Model="th_ingresos_origen" OnSubmit="Updateth_ingresos_origen" FormName="edit" Enhance>
+                <DataAnnotationsValidator />
+                <ValidationSummary class="text-danger" />
+                <div class="mb-3">
+                    <label for="Origen" class="form-label">Origen:</label>
+                    <InputText id="Origen" @bind-Value="th_ingresos_origen.Origen" class="form-control" />
+                    <ValidationMessage For="() => th_ingresos_origen.Origen" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="Observaciones" class="form-label">Observaciones:</label>
+                    <InputText id="Observaciones" @bind-Value="th_ingresos_origen.Observaciones" class="form-control" />
+                    <ValidationMessage For="() => th_ingresos_origen.Observaciones" class="text-danger" />
+                </div>
+                     <div class="mb-3">
+                    <label for="activo" class="form-label">Activo:</label>
+                    <InputCheckbox id="activo" @bind-Value="th_ingresos_origen.Activo" class="form-check-input" />
+                    <ValidationMessage For="() => th_ingresos_origen.Activo" class="text-danger" />
+                </div>
+                <div class="mb-3 Ocultar">
+                    <label for="usuariocreacion" class="form-label">UsuarioCreacion:</label>
+                    <InputText id="usuariocreacion" @bind-Value="th_ingresos_origen.UsuarioCreacion" class="form-control" />
+                    <ValidationMessage For="() => th_ingresos_origen.UsuarioCreacion" class="text-danger" />
+                </div>
+                <div class="mb-3 Ocultar">
+                    <label for="fechacreacion" class="form-label">FechaCreacion:</label>
+                    <InputDate id="fechacreacion" @bind-Value="th_ingresos_origen.FechaCreacion" class="form-control" />
+                    <ValidationMessage For="() => th_ingresos_origen.FechaCreacion" class="text-danger" />
+                </div>
+
+                <button type="submit" class="btn btn-primary">Create</button>
+            </EditForm>
+        </div>
+    </div>
+}
+
+
+<div>
+    <a href="/th_origenes"><i class="fa-solid fa-arrow-left"></i> Regresar al Index</a>
+</div>
+@code {
+    [SupplyParameterFromQuery]
+    public string Id { get; set; }
+    [SupplyParameterFromForm]
+    public th_ingresos_origen? th_ingresos_origen { get; set; } = new();
+    [CascadingParameter] private Task<AuthenticationState> authenticationStateTask { get; set; }
+    protected override async Task OnInitializedAsync()
+    {
+        th_ingresos_origen = await DB.th_ingresos_origen.FirstOrDefaultAsync(m => m.Id == Id);
+
+        if (th_ingresos_origen is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+        }
+        th_ingresos_origen.FechaModifica = DateTime.Now;
+    }
+    private KalanDB kalanDB
+    {
+        get
+        {
+            return new KalanDB(DB.connectionString);
+        }
+    }
+    public async Task Updateth_ingresos_origen()
+    {
+        th_ingresos_origen.Id = Guid.NewGuid().ToString();
+        var _authState = await authenticationStateTask;
+        var user = _authState.User;
+        var correo = ((System.Security.Claims.ClaimsIdentity)user.Identity).Name;
+        th_ingresos_origen.FechaModifica = DateTime.Now;
+        th_ingresos_origen.UsuarioModifica = correo;
+        DB.Attach(th_ingresos_origen!).State = EntityState.Modified;
+        try
+        {
+            await DB.SaveChangesAsync();
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            if (!Exists(th_ingresos_origen!.Id))
+            {
+                NavigationManager.NavigateTo("notfound");
+            }
+            else
+            {
+                throw;
+            }
+        }
+         
+        NavigationManager.NavigateTo("/th_origenes");
+    }
+
+    bool Exists(string id)
+    {
+        return DB.th_condicionescredito.Any(e => e.Id == id);
+    }
+}

@@ -1,0 +1,144 @@
+﻿@page "/ventas/Facturas/crear"
+@rendermode InteractiveServer
+@inject KalanDB DB
+@inject NavigationManager NavigationManager
+@inject SweetAlertService Swal
+
+<h1>Crear Factura a Cliente</h1>
+<div class="row">
+    <div class="col-12 col-sm-12 col-md-12 col-lg-4 col-xl-2">
+        <Buscador TValue="string" Etiqueta="Id Cliente" ItemChanged="@((item)=>th_Cliente = item)" TItem="th_clientes" @bind-Value="cuentascobrar.cliente_Id" SearchItems="SearchItemsClientes" SearchExacto="SearchExactoClientes" Llave="NombreCorto"></Buscador>
+    </div>
+    <div class="col-12 col-sm-12 col-md-12 col-lg-8 col-xl-5">
+        @if (th_Cliente != null)
+        {
+            <ReadOnly Etiqueta="Razón Social" Value="@th_Cliente.RazonSocial"></ReadOnly>
+        }
+        else
+        {
+            <ReadOnly Etiqueta="Razón Social" Value=" "></ReadOnly>
+        }
+    </div>
+</div>
+<div class="row">
+    <div class="col-12 col-sm-12 col-md-6 col-lg-4 col-xl-2">
+        <Texto MaxLength="36" Etiqueta="Factura" @bind-Value="Factura"></Texto>
+    </div>
+    <div class="col-12 col-sm-12 col-md-6 col-lg-4 col-xl-2">
+        <Fecha Etiqueta="Fecha" @bind-Value="Fecha" @bind-Value:after="@(()=>InvokeAsync(StateHasChanged))"></Fecha>
+    </div>
+    <div class="col-12 col-sm-12 col-md-6 col-lg-4 col-xl-2">
+        <Numerico Etiqueta="Monto de la Factura" Min="0" @bind-Value="Monto"></Numerico>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12 col-sm-12 col-md-12 col-lg-6 col-xl-3">
+        <Texto Etiqueta="UUID" MaxLength="36" @bind-Value="UUID"></Texto>
+    </div>
+    <div class="col-12 col-sm-12 col-md-6 col-lg-3 col-xl-2">
+        <div class="form-floating">
+            <select @bind="MetodoPago" class="form-select">
+                <option value="" selected disabled>Método de Pago</option>
+                @foreach (var item in kalanDB.th_metodopago)
+                {
+                    <option value="@item.Id">@item.Id</option>
+                }
+            </select>
+            <label>Método de Pago</label>
+        </div>
+    </div>
+   <div class="col-12 col-sm-12 col-md-12 col-lg-6 col-xl-3">
+        <Monedas @bind-ValueFecha="Fecha"
+                 @bind-ValueTipoCambio="cuentascobrar.tipocambio_Id"
+                 @bind-ValueMoneda="cuentascobrar.moneda_Id">
+        </Monedas>
+    </div>
+</div>
+ 
+<div class="row">
+    <div class="col-12 col-sm-12 col-md-12 col-lg-12 col-xl-12">
+        <TextoLargo MaxLength="400" rows="3" Etiqueta="Comentarios" @bind-Value="Comentario"></TextoLargo>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12 col-sm-12 col-md-12 col-lg-3 col-xl-2">
+        <button @onclick="Guardar" class="btn btn-primary">Guardar</button>
+    </div>
+</div>
+
+@code {
+    [CascadingParameter] private Task<AuthenticationState> authenticationStateTask { get; set; }
+    private th_cuentascobrar cuentascobrar { get; set; } = new();
+    private th_clientes th_Cliente { get; set; }
+    private KalanDB kalanDB
+    {
+        get
+        {
+            return new KalanDB(DB.connectionString);
+        }
+    }
+    private DateTime Fecha { get; set; }
+    private decimal Monto { get; set; }
+    private string Comentario { get; set; }
+    private string Factura { get; set; }
+    private string UUID { get; set; }
+    private string MetodoPago { get; set; }
+    protected override async Task OnInitializedAsync()
+    {
+        Fecha = DateTime.Now.Date;
+        Comentario = "";
+    }
+    private async Task<IEnumerable<th_clientes>> SearchItemsClientes(string value)
+    {
+        return DB.th_clientes.Where(c => c.NombreCorto.Contains(value) || c.RazonSocial.Contains(value)).ToList().AsEnumerable();
+    }
+    private async Task<IEnumerable<th_clientes>> SearchExactoClientes(string value)
+    {
+        return DB.th_clientes.Where(c => c.NombreCorto == value).ToList().AsEnumerable();
+    }
+
+    private async Task Guardar()
+    {
+        if (th_Cliente == null)
+        {
+            await Swal.FireAsync("Error", "Debe seleccionar un cliente", SweetAlertIcon.Error);
+            return;
+        }
+        if (string.IsNullOrEmpty(MetodoPago))
+        {
+            await Swal.FireAsync("Error", "Debe seleccionar el método de pago", SweetAlertIcon.Error);
+            return;
+        }
+        if (string.IsNullOrEmpty(Factura))
+        {
+            await Swal.FireAsync("Error", "Debe capturar la factura", SweetAlertIcon.Error);
+            return;
+        }
+        if (Monto <= 0)
+        {
+            await Swal.FireAsync("Error", "El monto debe ser mayor a 0", SweetAlertIcon.Error);
+            return;
+        }
+        var _authState = await authenticationStateTask;
+        var user = _authState.User;
+        var correo = ((System.Security.Claims.ClaimsIdentity)user.Identity).Name;
+        cuentascobrar.Fecha = Fecha;
+        cuentascobrar.Factura = Factura;
+        cuentascobrar.metodopago_Id = MetodoPago;
+        cuentascobrar.UUID = UUID;
+        cuentascobrar.Id = Guid.NewGuid().ToString();
+        cuentascobrar.Original = Monto;
+        cuentascobrar.Observaciones = Comentario;
+        cuentascobrar.cliente_Id = th_Cliente.Id;
+        cuentascobrar.UsuarioCreacion = correo;
+        cuentascobrar.FechaCreacion = DateTime.Now;
+        cuentascobrar.Activo = true;
+        cuentascobrar.Disponible = Monto;
+        DB.th_cuentascobrar.Add(cuentascobrar);
+        DB.SaveChanges();
+        await Swal.FireAsync("Guardado", $"La factura {cuentascobrar.Factura} ha sido guardada", SweetAlertIcon.Success);
+        NavigationManager.NavigateTo("/ventas/Facturas/listado");
+    }
+}

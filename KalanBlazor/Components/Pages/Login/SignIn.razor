@@ -1,0 +1,195 @@
+﻿@page "/login"
+@using System.ComponentModel.DataAnnotations
+@using Microsoft.AspNetCore.Authentication
+@using Microsoft.AspNetCore.Identity
+@using KalanBlazor.Data 
+@using Microsoft.AspNetCore.Authentication.Cookies
+@using Microsoft.AspNetCore.Components.Authorization
+@using System.Security.Claims 
+@inject NavigationManager NavigationManager
+@inject SweetAlertService Swal;
+@inject SignInManager<ApplicationUser> SignInManager
+@inject NavigationManager NavigationManager
+
+@rendermode InteractiveServer
+
+<div class="container position-sticky z-index-sticky top-0">
+	<div class="row">
+		<div class="col-12">
+
+		</div>
+	</div>
+</div>
+<main class="main-content  mt-0">
+	<section>
+		<div class="page-header min-vh-75">
+			<div class="container">
+				<div class="row">
+					<div class="col-xl-5 col-lg-6 col-md-7 d-flex flex-column mx-auto">
+						<div class="card card-plain mt-0">
+							<div class="card-header pb-0 text-left bg-transparent">
+								<div class="card card-login mt-10">
+									<div class="text-center">
+										<img src="_content/shared.kalan.componentes/img/logo.jpeg" alt="Logo" style="width: 100px; height: auto;">
+									</div>
+									<h4 class="font-weight-bolder text-info text-gradient">Bienvenido</h4>
+									<div class="card-body">
+										<form role="form">
+											<label>Email</label>
+											<div class="mb-3">
+												<input type="email" class="form-control" @bind="this.xx" placeholder="Email" aria-label="Email" aria-describedby="email-addon">
+											</div>
+											<label>Password</label>
+											<div class="mb-3">
+												<input type="Password" class="form-control" @bind="this.ss" placeholder="Password" aria-label="Password" aria-describedby="password-addon">
+											</div>
+											<div class="form-check form-switch">
+												<input class="form-check-input" type="checkbox" @bind="this.ff" id="rememberMe">
+												<label class="form-check-label" for="rememberMe">Recordar contraseña</label>
+											</div>
+											<div class="text-center">
+												<button @onclick="LogeArte" type="button" class="btn bg-gradient-info w-100 mt-4 mb-0">Ingresar</button>
+												<p></p>
+												<p style="color: #D57A88;font-weight:bold;font-size:12px"> ¿Olvidaste tus datos? </p>
+											</div>
+										</form>
+									</div>
+									<div class="card-footer text-center pt-0 px-lg-2 px-1">
+										<p class="mb-10 text-sm mx-auto" style="color: #D57A88;font-weight:bold;font-size:12px"></p>
+									</div>
+								</div>
+							</div>
+						</div>
+						<div class="col-md-6">
+							<div class="oblique position-absolute top-0 h-100 d-md-block d-none me-n8" style="z-index:-1;">
+								<div class="oblique-image bg-cover position-absolute fixed-top ms-auto h-100 z-index-0 ms-n8" style="background-image: url('_content/shared.kalan.componentes/img/curved-images/curved6.jpg'); background-size: contain; background-repeat: no-repeat;">
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</section>
+</main>
+@code {
+	[CascadingParameter] private Task<AuthenticationState> authenticationStateTask { get; set; }
+	[CascadingParameter]
+	private HttpContext HttpContext { get; set; } = default!;
+	[Parameter]
+	[SupplyParameterFromQuery]
+	public string xx { get; set; }
+	[Parameter]
+	[SupplyParameterFromQuery]
+	public string ss { get; set; }
+	[Parameter]
+	[SupplyParameterFromQuery]
+	public bool ff { get; set; }
+	private AesEncryption encryption = new AesEncryption();
+	protected override async Task OnInitializedAsync()
+	{
+		if (HttpContext != null && string.IsNullOrEmpty(ss) == false && string.IsNullOrEmpty(xx) == false)
+		{
+			await Logearte();
+			//			NavigationManager.NavigateTo("/");
+		}
+		else
+		{
+			if (HttpContext == null && string.IsNullOrEmpty(ss) == false && string.IsNullOrEmpty(xx) == false)
+			{
+				if (authenticationStateTask != null)
+				{
+					var _authState = await authenticationStateTask;
+					if (_authState.User.Identity.IsAuthenticated)
+					{
+						NavigationManager.NavigateTo("/");
+					}
+				}
+				else{
+					await Swal.FireAsync("Error", "Usuario o contraseña incorrectos", SweetAlertIcon.Error);
+				}
+				this.ss = "";
+				this.xx = "";				
+			}
+		}
+		if (authenticationStateTask != null)
+		{
+			var _authState = await authenticationStateTask;
+			if (_authState.User.Identity.IsAuthenticated)
+			{
+				NavigationManager.NavigateTo("/");
+			}
+		}
+	}
+	protected override async Task OnAfterRenderAsync(bool firstRender)
+	{
+		if (firstRender)
+		{
+			if (HttpContext!=null && string.IsNullOrEmpty(ss) == false && string.IsNullOrEmpty(xx) == false)
+			{
+				await Logearte();
+				//			NavigationManager.NavigateTo("/");
+			}
+			else
+			{
+				if (HttpContext == null && string.IsNullOrEmpty(ss) == false && string.IsNullOrEmpty(xx) == false)
+				{
+					this.ss = "";
+					this.xx = "";
+					if (authenticationStateTask != null)
+					{
+						var _authState = await authenticationStateTask;
+						if (_authState.User.Identity.IsAuthenticated)
+						{
+							NavigationManager.NavigateTo("/");
+						}
+					}
+					else{
+						await Swal.FireAsync("Error", "Usuario o contraseña incorrectos", SweetAlertIcon.Error);
+					}
+
+				}
+			}
+			StateHasChanged();
+		}
+	}
+	private async Task LogeArte()
+	{
+		NavigationManager.NavigateTo($"Login?xx={encryption.EncryptPassword(xx)}&ss={encryption.EncryptPassword(ss)}&ff={ff}", true);
+	}
+	private async Task Logearte()
+	{
+		if (HttpContext != null)
+		{
+			try
+			{
+				this.xx = encryption.DecryptPassword(this.xx);
+				this.ss = encryption.DecryptPassword(this.ss);
+				var _logeado = await SignInManager
+									.PasswordSignInAsync(this.xx,
+										this.ss,
+										isPersistent: ff,
+										lockoutOnFailure: false);
+				
+				this.xx = "";
+				this.ss = "";
+				if (_logeado.Succeeded)
+				{
+					return;
+					//NavigationManager.NavigateTo("/", true);
+				}
+				else
+				{
+					StateHasChanged();
+					//await Swal.FireAsync("Error", "Usuario o contraseña incorrectos", SweetAlertIcon.Error);
+				}
+			}
+			catch (Exception ex)
+			{
+				StateHasChanged();
+				//await Swal.FireAsync("Error", ex.Message, SweetAlertIcon.Error);
+				return;
+			}
+		}
+	}
+}

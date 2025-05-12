@@ -1,0 +1,103 @@
+﻿@page "/Compras/Facturas/listado"
+
+@rendermode InteractiveServer
+@inject KalanDB DB
+@inject Excel Excel
+@inject NavigationManager NavigationManager
+
+<h1>Listado de Facturas a Proveedores</h1>
+
+
+<div class="row">
+    <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+        <Fecha Etiqueta="Fecha Inicio" Max="@DateTime.Now" @bind-Value="FechaInicio"></Fecha>
+    </div>
+    <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+        <Fecha Etiqueta="Fecha Fin" Max="@DateTime.Now" @bind-Value="FechaFin"></Fecha>
+    </div>
+    <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+        <button @onclick="Reporte" class="btn btn-primary">Buscar</button>
+    </div>
+    <div class="col-12 col-sm-12 col-md-12 col-lg-4 col-xl-4">
+    </div>
+    <div class="col-12 col-sm-12 col-md-12 col-lg-2 col-xl-2">
+        <DescargarArchivo Archivo="@ExcelListado" Etiqueta="Exportar"></DescargarArchivo>
+    </div>
+</div>
+<QuickGrid Pagination="@pagination" Class="table small" Items="listado.AsQueryable()">
+    <TemplateColumn Title="Documento" Context="th_cuentaspagar" Sortable="true">
+        <button class="btn btn-sm btn-outline-info" @onclick="@(()=>Navegar($"/Compras/Facturas/ver?Id={th_cuentaspagar.Id}"))">@th_cuentaspagar.Factura</button>
+        @if (th_cuentaspagar.Activo)
+        {
+            <button class="btn btn-sm btn-danger" @onclick="@(()=>Navegar($"/Compras/Facturas/Cancelar?Id={th_cuentaspagar.Id}"))"><i class="fa-solid fa-trash-can"></i></button>
+        }        
+        @if (th_cuentaspagar.Disponible > 0)
+        {
+            <button class="btn btn-sm btn-outline-secondary" @onclick="@(()=>Navegar($"/Compras/Facturas/Pagar?Id={th_cuentaspagar.Id}"))"><i class="fa-solid fa-cash-register"></i></button>
+        }
+    </TemplateColumn>
+    <PropertyColumn Property="@(c => c.UUID)" Title="UUID" Sortable="true" />
+    <PropertyColumn Property="@(c => c.metodopago_Id)" Title="Método Pago" Sortable="true" />
+    <TemplateColumn Title="Proveedor" Context="th_cuentaspagar" Sortable="true">
+        @th_cuentaspagar.proveedor.NombreCorto-@th_cuentaspagar.proveedor.RazonSocial
+    </TemplateColumn>
+    <PropertyColumn Property="@(c => c.Fecha)" Title="Fecha" Format="d" Sortable="true" />
+    <PropertyColumn Property="@(c => c.Original)" Title="Monto Original" Format="c" Align="Align.Center" Sortable="true" />
+    <PropertyColumn Property="@(c => c.Disponible)" Title="Monto Disponible" Format="c" Align="Align.Center" Sortable="true" />
+    <TemplateColumn Title="Activo" Context="th_cuentaspagar">
+        <Switch disabled Label=" " @bind-Value="th_cuentaspagar.Activo"></Switch>
+    </TemplateColumn>
+    <PropertyColumn Property="@(c => c.UsuarioCreacion)" Title="Usuario" Sortable="true" />
+</QuickGrid>
+<Paginator State="@pagination" />
+@code {
+    PaginationState pagination = new PaginationState { ItemsPerPage = 10 };
+    private DateTime FechaInicio { get; set; }
+    private DateTime FechaFin { get; set; }
+    private List<ListadoFacturas> listadoExcel = new List<ListadoFacturas>();
+    private List<th_cuentaspagar> listado = new List<th_cuentaspagar>();
+
+    private ArchivoGral ExcelListado
+    {
+        get
+        {
+            var reporteExcel = listado.Select(x => new ListadoFacturas
+                {
+                    Observaciones = x.Observaciones,
+                    UUID = x.UUID,
+                    MetodoPago = x.metodopago_Id,
+                    Activo = x.Activo,
+                    Factura = x.Factura,
+                    Fecha = x.Fecha,
+                    Monto_Disponible = x.Disponible,
+                    Monto_Original = x.Original,
+                    Proveedor = $"{x.proveedor.NombreCorto}-{x.proveedor.RazonSocial}",
+                    Usuario = x.UsuarioCreacion
+                }).ToList();
+            var bytes = Excel.ExportExcel(reporteExcel, "Facturas a Proveedores");
+            return new ArchivoGral { Nombre = "FacturasProveedores.xlsx", Datos = bytes };
+        }
+    }
+    protected override async Task OnInitializedAsync()
+    {
+        FechaInicio = DateTime.Now.AddMonths(-1).Date;
+        FechaFin = DateTime.Now.Date;
+        Reporte();
+    }
+    private void Reporte()
+    {
+        this.listado = (from x in DB.th_cuentaspagar
+                           where x.Fecha >= FechaInicio && x.Fecha <= FechaFin
+                           select x)
+        .Include(x => x.metodopago)
+        .Include(x => x.proveedor)
+        .IgnoreAutoIncludes()
+        .AsNoTracking()
+        .OrderByDescending(x => x.FechaCreacion)
+        .ToList();
+    }
+    private void Navegar(string url)
+    {
+        NavigationManager.NavigateTo(url, true);
+    }
+}
