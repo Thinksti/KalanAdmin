@@ -1,0 +1,122 @@
+﻿@page "/Dashboard/Permisos"
+@inject IConfiguration Configuration
+@inject NavigationManager Navigation
+
+
+
+<Contenido Titulo="Permisos">
+
+    <Rows>
+        @* CARD ALTA PERFIL *@
+        <Cols Col="3">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Alta Perfil</h5>
+                    <table>
+                        <tr>
+                            <td>Resgistrar Nuevo Perfil </td>
+                        </tr>
+                        <tr>
+                            <td><button class="btn btn-primary" @* @onclick="IrACrearPerfil" *@><i class="fa-solid fa-plus" style="color: white; margin-right: 10px;"></i> Crear nuevo registro</button></td>
+                        </tr>
+                    </table>
+
+                </div>
+            </div>
+        </Cols>
+        
+
+        @* CARD GESTION DE PERFILES *@
+        <Cols Col="3">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Gestionar Perfiles</h5>
+                    <table>
+                        <tr>
+                            <td>Tabla para gestionar los perfiles </td>
+                        </tr>
+                        <tr>
+                            <td><button class="btn btn-primary" @* @onclick="IrAGestionPerfil" *@><i class="fa-solid fa-plus" style="color: white; margin-right: 10px;"></i> Ir a tabla de perfiles</button></td>
+                        </tr>
+                    </table>
+
+                </div>
+            </div>
+        </Cols>
+
+
+
+
+        @* CARD ALTA PERMISOS *@    
+
+        <Cols Col="3">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Alta de Permisos</h5>
+                    <table>
+                        <tr>
+                            <td>Registrar nuevo permiso </td>
+                        </tr>
+                        <tr>
+                            <td><button class="btn btn-primary" @* @onclick="IrAltaPermiso" *@><i class="fa-solid fa-plus" style="color: white; margin-right: 10px;"></i> Crear nuevo perfil</button></td>
+                        </tr>
+                    </table>
+
+                </div>
+            </div>
+        </Cols>
+
+
+
+        @*  CARD GESTION DE PERMISOS DE PERMISOS POR PERFIL *@
+
+        <Cols Col="3">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Gestionar los Permisos</h5>
+                    <table>
+                        <tr>
+                            <td>Tabla de registros por perfil </td>
+                        </tr>
+                        <tr>
+                            <td><button class="btn btn-primary" @* @onclick="IrAGestionPermisos" *@><i class="fa-solid fa-plus" style="color: white; margin-right: 10px;"></i> Gestionar permisos </button></td>
+                        </tr>
+                    </table>
+
+                </div>
+            </div>
+        </Cols>
+
+
+
+    </Rows>
+
+
+</Contenido>
+
+
+@code {
+    // void IrACrearPerfil()
+    // {
+    //     Navigation.NavigateTo("/AltaPerfil");
+    // }
+
+    // void IrAGestionPerfil()
+    // {
+    //     Navigation.NavigateTo("/GestionPerfiles");
+
+    // }
+
+    // void IrAltaPermiso()
+    // {
+    //     Navigation.NavigateTo("/AltaPermiso");
+
+    // }
+    // void IrAGestionPermisos()
+    // {
+    //     Navigation.NavigateTo("/GestionPermisos");
+
+    // }
+    // private string mensaje = "";
+   
+}
