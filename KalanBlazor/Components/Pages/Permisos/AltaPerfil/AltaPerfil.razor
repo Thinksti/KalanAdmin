@@ -1,9 +1,11 @@
-﻿@page "/AltaPerfil"
+﻿@page "/Permisos/AltaPerfil"
+
+@rendermode InteractiveServer
 @using static KalanBlazor.BL.Permisos.AltaPerfil.InsertarPerfil
 @using Microsoft.Extensions.Configuration
 @inject IConfiguration Configuration
 @inject LoadingService LoadingService
-@inject NavigationManager Navigation
+@inject NavigationManager NavigationManager
 @inject IJSRuntime JS
 
 <Contenido Titulo="Alta Perfil">
@@ -82,7 +84,7 @@
     //Metodo para retornar a la pagina de permisos
     void RegresarAPermisos()
     {
-        Navigation.NavigateTo("/Permisos");
+        NavigationManager.NavigateTo("/Permisos/Menu");
     }
 
     // Metodo para redirigir a la pagina de permisos esperando unos segundos
@@ -93,7 +95,7 @@
             await modalExitoRef.HideModal();
             await Task.Delay(100); // Pequeña demora (en milisegundos)
         }
-        Navigation.NavigateTo("/Permisos");
+        NavigationManager.NavigateTo("/Permisos/Menu");
     }
 
 
@@ -124,6 +126,8 @@
     {
         try
         {
+            Console.WriteLine($"[LOG FRONTEND] Guardando perfil: Name={Name}, UsuarioCreacion={UsuarioCreacion}");
+
             string cadenaConexion = Configuration.GetConnectionString("DefaultConnection");
             BL.Permisos.AltaPerfil.InsertarPerfil.Insertar(cadenaConexion, Name, UsuarioCreacion);
             await MostrarModalExito();
