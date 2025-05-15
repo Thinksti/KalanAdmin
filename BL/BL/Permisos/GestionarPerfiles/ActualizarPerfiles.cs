@@ -4,6 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Shared.Kalan.Contextos;
+using KalanBlazor.BL.Permisos.GestionarPerfiles.Models;
+
+
 
 namespace KalanBlazor.BL.Permisos.GestionarPerfiles
 {
@@ -55,25 +58,6 @@ namespace KalanBlazor.BL.Permisos.GestionarPerfiles
             CadenaConexion = cadenaConexion;
             DateTime fechaInicial = DateTime.Now;
             DateTime fechaFinal = DateTime.Now;
-        }
-
-
-        /// <summary>
-        /// Clase que representa un perfil de usuario en el sistema.
-        /// </summary>  
-        public class GestPerfil
-        {
-            public string Id { get; set; }
-            public int Numero { get; set; }
-            public string Nombre { get; set; }
-            public bool Activo { get; set; }
-            public string UsuarioCreacion { get; set; } = null!;
-
-            public DateTime FechaCreacion { get; set; }
-
-            public string? UsuarioModifica { get; set; }
-
-            public DateTime? FechaModifica { get; set; }
         }
 
 

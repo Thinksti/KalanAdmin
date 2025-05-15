@@ -36,7 +36,7 @@
                             <td>Tabla para gestionar los perfiles </td>
                         </tr>
                         <tr>
-                            <td><button class="btn btn-primary" @* @onclick="IrAGestionPerfil" *@><i class="fa-solid fa-plus" style="color: white; margin-right: 10px;"></i> Ir a tabla de perfiles</button></td>
+                            <td><button class="btn btn-primary" @onclick="IrAGestionPerfil" ><i class="fa-solid fa-plus" style="color: white; margin-right: 10px;"></i> Ir a tabla de perfiles</button></td>
                         </tr>
                     </table>
 
@@ -101,11 +101,11 @@
         NavigationManager.NavigateTo("/Permisos/AltaPerfil");
     }
 
-    // void IrAGestionPerfil()
-    // {
-    //     Navigation.NavigateTo("/GestionPerfiles");
+    void IrAGestionPerfil()
+    {
+        NavigationManager.NavigateTo("/Permisos/GestionarPerfiles");
         
-    // }
+    }
 
     // void IrAltaPermiso()
     // {

@@ -68,10 +68,6 @@
 	  <ProjectReference Include="..\BL\BL.csproj" />
 	</ItemGroup>
 
-	<ItemGroup>
-	  <Folder Include="Components\Pages\Permisos\GestionarPerfiles\" />
-	</ItemGroup>
-
 	<PropertyGroup>
 	 
 		<UserSecretsId>11804d38-9ee1-425d-959e-8a9cc6d9862f</UserSecretsId>

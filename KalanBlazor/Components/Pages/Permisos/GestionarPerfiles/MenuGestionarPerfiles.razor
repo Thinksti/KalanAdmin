@@ -1,0 +1,495 @@
+﻿@page "/Permisos/GestionarPerfiles"
+@using KalanBlazor.BL.Permisos.GestionarPerfiles
+@inject IConfiguration Configuration
+@inject IJSRuntime JS
+@inject NavigationManager Navigation
+@using Microsoft.Extensions.Configuration
+@using KalanBlazor.BL.Permisos.GestionarPerfiles.Models
+
+
+
+
+
+<Contenido Titulo="Gestion de perfiles" >
+    @* Boton de crear nuevo registro *@
+    <Rows>
+        <Cols Col="4">
+            <div style="display: flex; align-items: center;">
+
+
+                <button class="btn btn-primary" @onclick="RedirigirAltaPerfil"><i class="fa-solid fa-plus" style="color: white; margin-right: 10px;"></i> Crear nuevo registro</button>
+            </div>
+        </Cols>
+    </Rows>
+
+    @* TABLA QUE MUESTRE LA GESTION DE LOS PERFILES *@
+    <Rows>
+        <Cols Col="12">
+            <table>
+                <thead class="NColumnas">
+                    <tr>
+                        <th class="p-2">Numero</th>
+                        <th class="p-2">Id</th>
+                        <th class="p-2">Nombre del perfil</th>
+                        <th class="p-2">Activo</th>
+                        <th class="p-2">Acción</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (perfiles != null && perfiles.Any())
+                    {
+                        foreach (var perfil in perfiles)
+                        {
+                            <tr>
+                                <td class="px-3 py-2">@perfil.Numero</td>
+                                <td class="px-3 py-2">@perfil.Id</td> 
+                                <td class="px-3 py-2">@perfil.Nombre</td>
+                                <td class="px-3 py-2">
+                                    @if (perfil.Activo)
+                                    {
+                                        <button class="btn btn-outline-success btn-sm me-2">
+                                            <i class="fa-solid fa-circle-check" style="color: #63E6BE;"></i>
+                                        </button>
+
+                                    }
+                                    else
+                                    {
+                                        <button class="btn btn-sm btn-outline-danger me-2">
+                                            <i class="fa-solid fa-circle-xmark" style="color: red;"></i>
+
+                                        </button>
+                                    }
+                                </td>
+                                <td class="px-3 py-2">
+                                    <button id="miBotonEditar" class="btn btn-outline-warning" @onclick="() => EditarPerfil(perfil)"><i class="fa-solid fa-pen"></i></button>
+                                    <button id="miBotonEliminar" class="btn btn-sm btn-outline-danger me-2" @onclick="() => ConfirmarEliminar(perfil)">
+                                        <i class=" fa-solid fa-trash"></i>
+
+                                    </button>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="4" style="text-align:center;">No hay perfiles para mostrar.</td>
+                        </tr>
+                    }
+
+                </tbody> 
+            </table>
+        </Cols>
+    </Rows>
+</Contenido>
+
+
+
+@* Modal para editar el perfil *@
+<Modal @ref="modalEditarPerfil" Title="Editar Perfil">
+    <ChildContent>
+
+        <Rows>
+            <Cols Col="12">
+                <label style="margin-top: 10px; font-weight: bold;">Nombre del Perfil <br /></label>
+                <InputText class="form-control" @bind-Value="perfilEditar.Nombre" />
+            </Cols>
+        </Rows>
+        <Rows>
+            <select class="form-select" @bind="ActivoStr">
+                <option value="true">Sí</option>
+                <option value="false">No</option>a
+            </select>
+
+
+        </Rows>
+        <Rows>
+            <Cols Col="6">
+                <button type="button" class="btn btn-success" @onclick="ActualizarPerfil">Guardar</button>
+            </Cols>
+            <Cols Col="6">
+                <button type="button" class="btn btn-success" @onclick="OcultarModalEP">Cancelar</button>
+            </Cols>
+        </Rows>
+    </ChildContent>
+</Modal>
+
+
+<br/>
+
+@* Modal para eliminar el perfil *@
+<Modal @ref="modalEliminarPerfil" Title="Eliminar Perfil">
+    <ChildContent>
+        <Card Titulo="Estas seguro que deseas ELIMINAR el perfil">
+            <Rows>
+                <Cols Col="6">
+                    <button type="button" class="btn btn-success" @onclick="EliminarPerfilConfirmado">Eliminar</button>
+                </Cols>
+                <Cols Col="6">
+                    <button type="button" class="btn btn-success" @onclick="() => modalEliminarPerfil.HideModal()">Cancelar</button>
+                </Cols> 
+            </Rows>
+        </Card>
+    </ChildContent>
+</Modal>
+
+
+<br />
+
+
+
+@* Modal para mostrar que el perfil se guardo correctamenete *@
+<Modal @ref="modalExitoRef" Title="Éxito">
+    <ChildContent>
+
+        <Rows>
+            <Cols Col="6">
+                El perfil se Actualizó correctamente.
+            </Cols>
+        </Rows>
+        <Rows>
+            <Cols Col="6">
+                <button type="button" class="btn btn-success" @onclick="RedirigirAGP">OK</button>
+            </Cols>
+        </Rows>  
+    </ChildContent>
+</Modal>
+
+
+@* Modal para mostrar que el perfil se elimino correctamenete *@
+<Modal @ref="modalExitoEliminacion" Title="Éxito">
+    <ChildContent>
+
+        <Rows>
+            <Cols Col="6">
+                El perfil se Eliminó correctamente.
+            </Cols>
+        </Rows>
+        <Rows>
+            <Cols Col="6">
+                <button type="button" class="btn btn-success" @onclick="RedirigirAGestP">OK</button>
+            </Cols>
+        </Rows>
+    </ChildContent>
+</Modal>
+
+
+
+<style>
+    .Ncolumnas
+    {
+    background-color: #f2f2f2;
+    color: #D3758F;
+
+    }
+
+    .bg-rosita {
+    background-color: #d3758f;
+    color: white;
+    }
+
+    .modal-tittle
+    {
+    color: white;
+    }
+
+    /* PARA EL HOVER DEL BOTON DE ELIMINAR */
+    #miBotonEliminar:hover {
+    background-color: red !important; /* Fondo rojo al pasar el ratón */
+    border-color: red !important; /* Borde rojo al pasar el ratón */
+    color: white !important; /* Texto blanco al pasar el ratón (opcional) */
+    }
+    /*PARA EL HOVER DE MI BOTON DE EDITAR*/
+    #miBotonEditar:hover {
+    background-color: #ffd700 !important; /* Fondo rojo al pasar el ratón */
+    border-color: #ffd700 !important; /* Borde rojo al pasar el ratón */
+    color: white !important; /* Texto blanco al pasar el ratón (opcional) */
+    }
+
+</style>
+
+@code {
+
+    @inject NavigationManager Navigation
+
+    private BL.Permisos.GestionarPerfiles.CargarPerfiles cargarperfiles { get; set; }
+    private BL.Permisos.GestionarPerfiles.EliminarPerfil eliminarperfil { get; set; }
+    private BL.Permisos.GestionarPerfiles.ActualizarPerfiles actualizarperfiles { get; set; }
+
+    //private BL.Rolespermisos.GestionPerfil gestionperfil { get; set; }
+    #region Variables para poder obtener el acceso a la lista en BL
+    private List<GestPerfil> perfiles;
+    private string cadenaConexion;
+    #endregion
+
+    #region variables para los modales
+    //Variables para la actualiazcion del perfil
+    private string Name = "";
+    private bool Activo = false;
+
+    // Variables para el mensaje de error
+    private string mensaje = "";
+    private string estiloMensaje = "";
+
+    //variables para mantener estado de los datos que se editan o eliminan
+    private GestPerfil perfilEditar = new GestPerfil();
+    private GestPerfil perfilAEliminar;
+
+    //Variables para el modal de editar
+    private bool mostrarModalEP = false;
+    private Modal modalEditarPerfil;
+
+    // Variables para el modal de eliminación
+    private bool mostrarModalElimP = false;
+    private Modal modalEliminarPerfil;
+
+
+    //variables de los modales
+
+    private bool mostrarModalExito = false;
+    private bool mostrarModalExitoEliminacion = false;
+    private Modal modalExitoRef;
+    private Modal modalExitoEliminacion;
+    #endregion
+
+
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        var gp = new CargarPerfiles (Configuration.GetConnectionString("DefaultConnection")); // Asegúrate de tener la cadena de conexión correcta en tu Configuration
+        perfiles = gp.ResGestionPerfiles();
+    }
+
+    // REDIRECCION A OTRO COMPONENTE PARA DAR DE ALTA OTRO PERFIL
+
+    #region Redirecciones a otros componentes
+    private async Task RedirigirAltaPerfil()
+    {
+        await Task.Delay(100);
+        Navigation.NavigateTo("/Permisos/AltaPerfil", forceLoad: true);
+    }
+    private async Task RedirigirAGestionPerfiles()
+    {
+        await Task.Delay(100);
+        Navigation.NavigateTo("/Permisos/GestionPerfiles", forceLoad: true);
+    }
+    private async Task RedirigirAGP()
+    {
+        if (modalExitoRef != null)
+        {
+            await modalExitoRef.HideModal();
+            await Task.Delay(100); // Pequeña demora (en milisegundos)
+        }
+        Navigation.NavigateTo("/Permisos/GestionPerfiles");
+    }
+    private async Task RedirigirAGestP()
+    {
+        if (modalExitoEliminacion != null)
+        {
+            await modalExitoEliminacion.HideModal();
+            await Task.Delay(100); // Pequeña demora (en milisegundos)
+        }
+        Navigation.NavigateTo("/Permisos/GestionPerfiles");
+    }
+    #endregion
+
+
+    // REGION PARA LAS OPCIONES DE EDITAR
+    #region Para la logica de editar
+    /// <summary>
+    /// Metodo para editar el perfil
+    /// </summary>
+    /// <returns></returns>
+    private async Task EditarPerfil(GestPerfil perfil)
+    {
+        perfilEditar = new GestPerfil
+            {
+                Id = perfil.Id,
+                Nombre = perfil.Nombre,
+                Activo = perfil.Activo,         
+            };
+
+        await MostrarModalEP();
+    }
+
+    /// <summary>
+    /// Metodo para actualizar el perfil y enviar los datos al backend
+    /// </summary>
+    /// <returns></returns>
+    async Task ActualizarPerfil()
+    {
+        try
+        {
+            Console.WriteLine($"Enviando datos al backend: Id={perfilEditar.Id}, Nombre={perfilEditar.Nombre}, Activo={perfilEditar.Activo}");
+
+            // Opcional: Log en consola del navegador
+            await JS.InvokeVoidAsync("console.log", $"Nombre: {perfilEditar.Nombre}, Activo: {perfilEditar.Activo}");
+
+            string cadenaConexion = Configuration.GetConnectionString("DefaultConnection");
+            BL.Permisos.GestionarPerfiles.ActualizarPerfiles.ActualizarPerfil.Actualizar(cadenaConexion, perfilEditar.Id, perfilEditar.Nombre, perfilEditar.Activo);
+            var gp = new CargarPerfiles(cadenaConexion);
+            perfiles = gp.ResGestionPerfiles();
+
+
+            await OcultarModalEP();
+            await MostrarModalExito();
+        }
+        catch (Exception ex)
+        {
+            mensaje = "❌ Error al guardar el perfil: " + ex.Message;
+            estiloMensaje = "text-danger";
+        }
+    }
+
+    private async Task MostrarModalEP()
+    {
+        mostrarModalEP = true;
+        await InvokeAsync(StateHasChanged);
+        if (modalEditarPerfil != null)
+        {
+            await modalEditarPerfil.ShowModal();
+        }
+    }
+
+    private async Task OcultarModalEP()
+    {
+        mostrarModalEP = false;
+        await InvokeAsync(StateHasChanged);
+        if (modalEditarPerfil != null)
+        {
+            await modalEditarPerfil.HideModal();
+        }
+    }
+
+    private async Task MostrarModalExito()
+    {
+        mostrarModalExito = true;
+        await InvokeAsync(StateHasChanged);
+        if (modalExitoRef != null)
+        {
+            await modalExitoRef.ShowModal();
+        }
+    }
+
+    private async Task OcultarModalExito()
+    {
+        mostrarModalExito = false;
+        await InvokeAsync(StateHasChanged);
+        if (modalExitoRef != null)
+        {
+            await modalExitoRef.HideModal();
+        }
+    }
+
+    /// <summary>
+    /// Permite cerrar el modal de edición
+    /// </summary>
+
+    #endregion
+
+
+    /// <summary>
+    /// Comprueba el valor seleccionado en el combobox de Sí o No
+    /// </summary>
+    private string ActivoStr
+    {
+        get => perfilEditar.Activo ? "true" : "false";
+        set => perfilEditar.Activo = value == "true";
+    }
+
+
+    // REGION PARA LAS OPCIONES DE ELIMINAR
+    #region Logicas para eliminar perfiles
+
+    private async Task ConfirmarEliminar(GestPerfil perfil)
+    {
+        perfilAEliminar = perfil;
+        if (modalEliminarPerfil != null)
+        {
+            await modalEliminarPerfil.ShowModal();
+        }
+    }
+
+    private async Task EliminarPerfilConfirmado()
+    {
+        if (perfilAEliminar != null)
+        {
+            string cadenaConexion = Configuration.GetConnectionString("DefaultConnection");
+            var servicio = new BL.Permisos.GestionarPerfiles.EliminarPerfil(cadenaConexion);
+            var servicioCargar = new BL.Permisos.GestionarPerfiles.CargarPerfiles(cadenaConexion);
+            bool eliminado = servicio.EliminarPerfilPorID(perfilAEliminar.Id);
+
+            if (eliminado)
+            {
+                perfiles = servicioCargar.ResGestionPerfiles(); // Actualiza lista
+                await modalEliminarPerfil.HideModal();
+                await modalExitoEliminacion.ShowModal();
+            }
+            else
+            {
+                mensaje = "❌ No se pudo eliminar el perfil.";
+                estiloMensaje = "text-danger";
+            }
+        }
+    }
+
+    private async Task MostrarModalElimP()
+    {
+        mostrarModalElimP = true;
+        await InvokeAsync(StateHasChanged);
+        if (modalEditarPerfil != null)
+        {
+            await modalEditarPerfil.ShowModal();
+        }
+    }
+
+    /// <summary>
+    /// Nos permite abrir el modal de confirmación de eliminación
+    /// </summary>
+
+    private async Task MostrarModalEliminar()
+    {
+        mostrarModalElimP = true;
+        await InvokeAsync(StateHasChanged);
+        if (modalEditarPerfil != null)
+        {
+            await modalEditarPerfil.ShowModal();
+        }
+    }
+
+    private async Task OcultarModalEliminar()
+    {
+        mostrarModalElimP = false;
+        await InvokeAsync(StateHasChanged);
+        if (modalEditarPerfil != null)
+        {
+            await modalEditarPerfil.HideModal();
+        }
+    }
+
+    private async Task MostrarModalExitoEliminacion()
+    {
+        mostrarModalExito = true;
+        await InvokeAsync(StateHasChanged);
+        if (modalExitoRef != null)
+        {
+            await modalExitoRef.ShowModal();
+        }
+    }
+
+    private async Task OcultarModalExitoEliminacion()
+    {
+        mostrarModalExito = false;
+        await InvokeAsync(StateHasChanged);
+        if (modalExitoRef != null)
+        {
+            await modalExitoRef.HideModal();
+        }
+    }
+
+    #endregion
+
+
+}
+            
