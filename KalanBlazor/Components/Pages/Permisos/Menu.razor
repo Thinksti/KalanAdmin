@@ -1,5 +1,6 @@
 ﻿@page "/Permisos/Menu"
 @inject IConfiguration Configuration
+@rendermode InteractiveServer
 @inject NavigationManager NavigationManager
 
 
@@ -17,7 +18,13 @@
                             <td>Resgistrar Nuevo Perfil </td>
                         </tr>
                         <tr>
-                            <td><button class="btn btn-primary" @onclick="IrACrearPerfil"><i class="fa-solid fa-plus" style="color: white; margin-right: 10px;"></i> Crear nuevo registro</button></td>
+                            <td>
+                               @*  <button class="btn btn-primary" @onclick="IrACrearPerfil"><i class="fa-solid fa-plus" style="color: white; margin-right: 10px;"></i> Crear nuevo registro</button> *@
+                                <a class="btn btn-primary" href="/Permisos/AltaPerfil">
+                                    <i class="fa-solid fa-plus" style="color: white; margin-right: 10px;"></i>
+                                    Crear nuevo registro
+                                </a>
+                            </td>
                         </tr>
                     </table>
 
@@ -36,7 +43,13 @@
                             <td>Tabla para gestionar los perfiles </td>
                         </tr>
                         <tr>
-                            <td><button class="btn btn-primary" @onclick="IrAGestionPerfil" ><i class="fa-solid fa-plus" style="color: white; margin-right: 10px;"></i> Ir a tabla de perfiles</button></td>
+                            <td>
+                                @* <a class="btn btn-primary" href="/Permisos/GestionarPerfiles">
+                                    <i class="fa-solid fa-plus" style="color: white; margin-right: 10px;"></i>
+                                    Ir a tabla de perfiles
+                                </a> *@
+                                <button class="btn btn-primary" @onclick="IrAGestionPerfil" ><i class="fa-solid fa-plus" style="color: white; margin-right: 10px;"></i> Ir a tabla de perfiles</button>
+                            </td>
                         </tr>
                     </table>
 
@@ -58,7 +71,13 @@
                             <td>Registrar nuevo permiso </td>
                         </tr>
                         <tr>
-                            <td><button class="btn btn-primary" @* @onclick="IrAltaPermiso" *@><i class="fa-solid fa-plus" style="color: white; margin-right: 10px;"></i> Crear nuevo perfil</button></td>
+                            <td>
+                                <a class="btn btn-primary" href="/Permisos/AltaPermiso">
+                                    <i class="fa-solid fa-plus" style="color: white; margin-right: 10px;"></i>
+                                    Crear nuevo perfil
+                                </a>
+                                <button class="btn btn-primary" @* @onclick="IrAltaPermiso" *@><i class="fa-solid fa-plus" style="color: white; margin-right: 10px;"></i> Crear nuevo perfil</button>
+                             </td>
                         </tr>
                     </table>
 
@@ -79,7 +98,13 @@
                             <td>Tabla de registros por perfil </td>
                         </tr>
                         <tr>
-                            <td><button class="btn btn-primary" @* @onclick="IrAGestionPermisos" *@><i class="fa-solid fa-plus" style="color: white; margin-right: 10px;"></i> Gestionar permisos </button></td>
+                            <td>
+                                <a class="btn btn-primary" href="/Permisos/GestionPermisos">
+                                    <i class="fa-solid fa-plus" style="color: white; margin-right: 10px;"></i>
+                                    Gestionar permisos
+                                </a>
+                                <button class="btn btn-primary" @* @onclick="IrAGestionPermisos" *@><i class="fa-solid fa-plus" style="color: white; margin-right: 10px;"></i> Gestionar permisos </button>
+                            </td>
                         </tr>
                     </table>
 
@@ -96,6 +121,8 @@
 
 
 @code {
+   
+
     void IrACrearPerfil()
     {
         NavigationManager.NavigateTo("/Permisos/AltaPerfil");

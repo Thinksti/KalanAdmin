@@ -3,8 +3,12 @@
 @inject IConfiguration Configuration
 @inject IJSRuntime JS
 @inject NavigationManager Navigation
+@rendermode InteractiveServer
+
 @using Microsoft.Extensions.Configuration
 @using KalanBlazor.BL.Permisos.GestionarPerfiles.Models
+@using Shared.Kalan.Components.Pages.Componentes.Modal
+
 
 
 
@@ -16,8 +20,11 @@
         <Cols Col="4">
             <div style="display: flex; align-items: center;">
 
-
-                <button class="btn btn-primary" @onclick="RedirigirAltaPerfil"><i class="fa-solid fa-plus" style="color: white; margin-right: 10px;"></i> Crear nuevo registro</button>
+                <a class="btn btn-primary" href="/Permisos/AltaPerfil">
+                    <i class="fa-solid fa-plus" style="color: white; margin-right: 10px;"></i>
+                    Crear nuevo registro
+                </a>
+               
             </div>
         </Cols>
     </Rows>
@@ -98,9 +105,8 @@
         <Rows>
             <select class="form-select" @bind="ActivoStr">
                 <option value="true">Sí</option>
-                <option value="false">No</option>a
+                <option value="false">No</option>
             </select>
-
 
         </Rows>
         <Rows>
@@ -251,9 +257,6 @@
     private Modal modalExitoRef;
     private Modal modalExitoEliminacion;
     #endregion
-
-
-
 
     protected override async Task OnInitializedAsync()
     {

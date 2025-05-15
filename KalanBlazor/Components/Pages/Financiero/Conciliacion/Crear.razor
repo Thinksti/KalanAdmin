@@ -286,6 +286,7 @@
         var _authState = await authenticationStateTask;
         var user = _authState.User;
         var correo = ((System.Security.Claims.ClaimsIdentity)user.Identity).Name;
+
         Spinner.IsLoading = true;
         conciliacion = DB.th_concilacion.FirstOrDefault(x=>x.banco_Id==th_banco.Id && x.FechaInicial==FechaInicio && x.FechaFinal==FechaFin);
         if (conciliacion == null)

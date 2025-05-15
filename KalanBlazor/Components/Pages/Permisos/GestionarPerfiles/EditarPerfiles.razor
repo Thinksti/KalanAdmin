@@ -1,0 +1,42 @@
+﻿@* @page "/Permisos/GestionarPerfiles/EditarPerfil"
+@inject IConfiguration Configuration
+
+@* <Contenido Titulo="Alta Perfil">
+
+    @* Seccion para seleccionar el nombre que se le asignara el perfil *@
+@*     <Rows>
+        <Cols Col="12">
+            <label style="margin-top: 10px; font-weight: bold;">Nombre del Perfil <br /></label>
+            <Texto Etiqueta="Perfil" @bind-Value="Name" />
+        </Cols>
+    </Rows>
+
+    @* Seccion para seleccionar el nombre que se le asignara el perfil *@
+@*     <Rows>
+        <Cols Col="12">
+            <label style="margin-top: 10px; font-weight: bold;">Correo Electrónico del Usuario <br /></label>
+            <Texto Etiqueta="Estatus Activo" />
+        </Cols>
+    </Rows> *@
+
+    @* Botones para guardar o cancelar el añadir un nuevo perfil *@
+@*     <Rows>
+        <Cols Col="6">
+            <button class="btn btn-primary" @onclick="GuardarPerfil">Guardar</button>
+        </Cols>
+        <Cols Col="6">
+            <button class="btn btn-primary" @onclick="RegresarAPermisos">Cancelar</button>
+        </Cols>
+    </Rows> *@
+
+    @* Seccion para mostrar el mensaje de exito o error al guardar el perfil *@
+@*     @if (!string.IsNullOrEmpty(mensaje))
+    {
+        <div class="@estiloMensaje" style="margin-top: 15px;">@mensaje</div>
+    } *@
+@* </Contenido> *@
+
+
+@code {
+
+}
