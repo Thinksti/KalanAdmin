@@ -260,6 +260,10 @@
 
                 totalValorComplementos = facturasConComplementos.SumaTotalValorComplementos();
                 #endregion
+
+                
+                var connStr = Configuration.GetConnectionString("DefaultConnection");
+                Console.WriteLine($"Cadena de conexión utilizada: {connStr}");
             }
             catch (Exception ex)
             {

@@ -18,13 +18,6 @@
         </Cols>
     </Rows>
 
-    @* Seccion para seleccionar el nombre que se le asignara el perfil *@
-    <Rows>
-        <Cols Col="12">
-            <label style="margin-top: 10px; font-weight: bold;">Correo Electrónico del Usuario <br /></label>
-            <Texto Etiqueta="Ingrese el correo electrónico" @bind-Value="UsuarioCreacion" />
-        </Cols>
-    </Rows>
 
     @* Botones para guardar o cancelar el añadir un nuevo perfil *@
     <Rows>
@@ -63,6 +56,7 @@
 
 
 @code {
+    [CascadingParameter] private Task<AuthenticationState> authenticationStateTask { get; set; }
     #region Variables para mandar al backend y los errores o exitos
     private string Name = "";
     private string UsuarioCreacion = "";
@@ -126,10 +120,13 @@
     {
         try
         {
-            Console.WriteLine($"[LOG FRONTEND] Guardando perfil: Name={Name}, UsuarioCreacion={UsuarioCreacion}");
+            Console.WriteLine($"[LOG FRONTEND] Guardando perfil: Name={Name}");
+            var _authState = await authenticationStateTask;
+            var user = _authState.User;
+            var correo = ((System.Security.Claims.ClaimsIdentity)user.Identity).Name;
 
             string cadenaConexion = Configuration.GetConnectionString("DefaultConnection");
-            BL.Permisos.AltaPerfil.InsertarPerfil.Insertar(cadenaConexion, Name, UsuarioCreacion);
+            BL.Permisos.AltaPerfil.InsertarPerfil.Insertar(cadenaConexion, Name, correo);
             await MostrarModalExito();
         }
         catch (Exception ex)

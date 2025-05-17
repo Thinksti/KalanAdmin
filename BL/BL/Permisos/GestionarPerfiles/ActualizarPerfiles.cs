@@ -18,7 +18,7 @@ namespace KalanBlazor.BL.Permisos.GestionarPerfiles
         /// </summary>
         public static class ActualizarPerfil
         {
-            public static void Actualizar(string cadenaConexion, string Id, string nuevoNombre, bool Activo)
+            public static void Actualizar(string cadenaConexion, string Id, string nuevoNombre, bool Activo, string correoModifica)
             {
 
                 Console.WriteLine($"[LOG BACKEND] Actualizando perfil: Id={Id}, Nombre={nuevoNombre}, Activo={Activo}");
@@ -32,9 +32,14 @@ namespace KalanBlazor.BL.Permisos.GestionarPerfiles
                     // Actualizar los campos
                     rolExistente.Name = nuevoNombre;
                     rolExistente.Activo = Activo; // Asignar el valor de Activo según sea necesario
+                    rolExistente.UsuarioModifica = correoModifica;
+                    rolExistente.FechaModifica = DateTime.Now;
                     //context.SaveChanges();
                     context.Entry(rolExistente).Property(r => r.Name).IsModified = true;
                     context.Entry(rolExistente).Property(r => r.Activo).IsModified = true;
+                    context.Entry(rolExistente).Property(r => r.UsuarioModifica).IsModified = true;
+                    context.Entry(rolExistente).Property(r => r.FechaModifica).IsModified = true;
+
 
 
                     int cambios = context.SaveChanges();

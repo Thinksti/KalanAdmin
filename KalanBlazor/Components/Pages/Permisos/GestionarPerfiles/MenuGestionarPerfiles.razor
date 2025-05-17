@@ -4,7 +4,6 @@
 @inject IJSRuntime JS
 @inject NavigationManager Navigation
 @rendermode InteractiveServer
-
 @using Microsoft.Extensions.Configuration
 @using KalanBlazor.BL.Permisos.GestionarPerfiles.Models
 @using Shared.Kalan.Components.Pages.Componentes.Modal
@@ -216,6 +215,8 @@
 
 @code {
 
+    [CascadingParameter] private Task<AuthenticationState> authenticationStateTask { get; set; }
+
     @inject NavigationManager Navigation
 
     private BL.Permisos.GestionarPerfiles.CargarPerfiles cargarperfiles { get; set; }
@@ -272,11 +273,11 @@
         await Task.Delay(100);
         Navigation.NavigateTo("/Permisos/AltaPerfil", forceLoad: true);
     }
-    private async Task RedirigirAGestionPerfiles()
-    {
-        await Task.Delay(100);
-        Navigation.NavigateTo("/Permisos/GestionPerfiles", forceLoad: true);
-    }
+    // private async Task RedirigirAGestionPerfiles()
+    // {
+    //     await Task.Delay(100);
+    //     Navigation.NavigateTo("/Permisos/GestionPerfiles", forceLoad: true);
+    // }
     private async Task RedirigirAGP()
     {
         if (modalExitoRef != null)
@@ -284,7 +285,7 @@
             await modalExitoRef.HideModal();
             await Task.Delay(100); // Pequeña demora (en milisegundos)
         }
-        Navigation.NavigateTo("/Permisos/GestionPerfiles");
+        Navigation.NavigateTo("/Permisos/GestionarPerfiles");
     }
     private async Task RedirigirAGestP()
     {
@@ -329,8 +330,13 @@
             // Opcional: Log en consola del navegador
             await JS.InvokeVoidAsync("console.log", $"Nombre: {perfilEditar.Nombre}, Activo: {perfilEditar.Activo}");
 
+            // Para obtener el correo que modifica
+            var _authState = await authenticationStateTask;
+            var user = _authState.User;
+            var correoModifica = ((System.Security.Claims.ClaimsIdentity)user.Identity).Name;
+            //-----------------------------------
             string cadenaConexion = Configuration.GetConnectionString("DefaultConnection");
-            BL.Permisos.GestionarPerfiles.ActualizarPerfiles.ActualizarPerfil.Actualizar(cadenaConexion, perfilEditar.Id, perfilEditar.Nombre, perfilEditar.Activo);
+            BL.Permisos.GestionarPerfiles.ActualizarPerfiles.ActualizarPerfil.Actualizar(cadenaConexion, perfilEditar.Id, perfilEditar.Nombre, perfilEditar.Activo, correoModifica);
             var gp = new CargarPerfiles(cadenaConexion);
             perfiles = gp.ResGestionPerfiles();
 

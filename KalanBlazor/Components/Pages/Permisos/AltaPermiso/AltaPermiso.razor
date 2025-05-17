@@ -1,0 +1,267 @@
+﻿@page "/AltaPermiso"
+@using KalanBlazor.BL.Permisos.AltaPermiso
+@inject NavigationManager Navigation
+@inject IConfiguration Configuration
+@inject UserService UserService
+@rendermode InteractiveServer
+
+
+<Contenido Titulo="Alta de Permisos">
+
+    <Rows>
+        <Cols Col="6">
+            <div style="align-items: center;">
+                <Rows>
+                    <Cols Col="6">
+                        <label style="margin-top: 10px; font-weight: bold;">
+                            Perfil <br />
+                        </label>
+
+
+@*                         <Combo TItem="AltaPermiso.MostrarPerfil" TValue="string"
+                               Items="perfiles"
+                               ItemValue="Id"
+                               TextValue="Nombre"
+                               Value="@SelectedPerfil"
+                               ValueChanged="@((string val) => SelectedPerfil = val)"
+                               Etiqueta="Perfil" />
+ *@
+                    </Cols>
+                </Rows>
+
+                <Rows>
+                    <Cols Col="6">
+                        <label style="margin-top: 10px; font-weight: bold;">
+                            Modulo <br />
+                        </label>
+                   @*      <Combo TItem="AltaPermiso.MostrarModulo" TValue="string"
+                               Items="modulos"
+                               ItemValue="Id"
+                               TextValue="Modulo"
+                               Value="@SelectedModulo"
+                               ValueChanged="OnModuloChanged"
+                               Etiqueta="Módulo" /> *@
+                    </Cols>
+
+                </Rows>
+                <Rows>
+                    <Cols Col="6">
+                        <label style="margin-top: 10px; font-weight: bold;">
+                            Submodulo <br />
+                        </label>
+
+                       @*  @if (submodulos != null && submodulos.Any())
+                        {
+                            @* <Combo TItem="AltaPermiso.MostrarSubModulo" TValue="string"
+                                   Items="submodulos"
+                                   ItemValue="Id"
+                                   TextValue="SubModulo"
+                                   Value="@SelectedSubmodulo"
+                                   ValueChanged="@OnSubmoduloChanged"
+                                   Etiqueta="Submódulo" /> 
+                        } *@
+                        else
+                        {
+                            <p style="color: gray; font-style: italic;">
+                                Selecciona primero un módulo para ver los submódulos disponibles.
+                            </p>
+                        }
+
+                    </Cols>
+
+                </Rows>
+
+                <Rows>
+@* 
+                    @if (mostrarPantallas != null && mostrarPantallas.Any())
+                    {
+                        @foreach (var pantalla in mostrarPantallas)
+                        {
+                            <Check Value="@pantalla.Activo"
+                                   ValueChanged="@((bool val) => OnPantallaChanged(pantalla, val))"
+                                   Label="@Separarpalabras(pantalla.Pantalla)" />
+                        }
+                    }
+                    else
+                    {
+                         <p style="color: gray; font-style: italic;">
+                            Selecciona primero un módulo para ver los submódulos disponibles.
+                        </p> 
+                    } *@
+
+                    <br />
+                </Rows>
+            </div>
+
+
+            <Rows>
+                <Cols Col="6">
+                    <button class="btn btn-primary"@*  @onclick="GuardarPermisos *@">Guardar</button>
+                </Cols>
+                <Cols Col="6">
+                    <button class="btn btn-primary">Cancelar</button>
+                </Cols>
+            </Rows>
+
+        </Cols>
+    </Rows>
+</Contenido>
+
+
+@code {
+    [CascadingParameter] private Task<AuthenticationState> authenticationStateTask { get; set; }
+
+    private string SelectedPerfil { get; set; } = "";
+    private string SelectedModulo { get; set; } = "";
+    private string SelectedSubmodulo { get; set; } = "";
+    private bool miBool = false;
+
+    private string mensaje = "";
+    private string estiloMensaje = "";
+
+    private string? perfilSeleccionadoId;
+
+
+    #region Esta región contiene las variables que se utilizan para mostrar los perfiles, modulos, submodulos y pantallas
+
+    // private List<CargarPerfil.MostrarPerfil> perfiles;
+
+    // private List<CargarModulo.MostrarModulo> modulos;
+
+    // private List<CargarSubmodulo.MostrarSubModulo> submodulos = new();
+
+    // private List<CargarPantalla.MostrarPantalla> mostrarPantallas = new();
+
+    #endregion
+
+
+
+
+    #region para la logica de Insertar la pantalla por cada una seleccioanda y guardarlo:
+    // private async Task GuardarPermisos()
+    // {
+    //     if (string.IsNullOrEmpty(SelectedPerfil))
+    //     {
+    //         mensaje = "Debes seleccionar al menos un modulo ";
+    //         return;
+    //     }
+
+    //     var pantallasSeleccionadas = mostrarPantallas
+    //         .Where(p => p.Activo)
+    //         .ToList();
+    //     try
+    //     {
+
+    //         if (!pantallasSeleccionadas.Any())
+    //         {
+    //             mensaje = "Debes seleccionar al menos una pantalla ";
+    //             return;
+    //         }
+    //     }
+    //     catch (Exception ex)
+    //     {
+    //         mensaje = "❌ Error al guardar el permiso: " + ex.Message;
+    //         estiloMensaje = "text-danger";
+    //     }
+
+
+    //     var ap = new AltaPermiso(Configuration.GetConnectionString("DefaultConnection"));
+
+    //     foreach (var pantalla in pantallasSeleccionadas)
+    //     {
+    //         AltaPermiso.InsertarPantallasPorPerfil.InsertarRolPantalla(
+    //             ap.CadenaConexion,
+    //             SelectedPerfil,
+    //             pantalla.Id
+    //         );
+    //     }
+
+    //     mensaje = "Permisos guardados correctamente";
+    //     Navigation.NavigateTo("/Permisos");
+    // }
+
+
+
+    #endregion
+
+
+
+
+    /// <summary>
+    /// Metodo que se ejecuta al inicializar el componente
+    /// </summary>
+    /// <returns></returns>
+    protected override async Task OnInitializedAsync()
+    {
+
+        // var ap = new AltaPermiso(Configuration.GetConnectionString("DefaultConnection"));
+        // perfiles = ap.MostrarPerfiles();
+        // modulos = ap.MostrarModulos();
+        // submodulos = ap.MostrarSubmodulosPorModulo(SelectedModulo);
+        // mostrarPantallas = ap.MostrarPantallaPorSubModulo(SelectedSubmodulo);
+    }
+
+
+    ///  <summary>
+    /// Metodo que se ejecuta cuando se cambia el modulo
+    /// </summary>
+    private async Task OnModuloChanged(string moduloId)
+    {
+        // SelectedModulo = moduloId;
+
+        // var ap = new AltaPermiso(Configuration.GetConnectionString("DefaultConnection"));
+        // submodulos = ap.MostrarSubmodulosPorModulo(moduloId);
+
+        // SelectedSubmodulo = "";
+        // StateHasChanged();
+    }
+
+    /// <summary>
+    /// Metodo que se ejecuta cuando se cambia el submodulo
+    /// </summary>
+    private async Task OnSubmoduloChanged(string submoduloId)
+    {
+        // SelectedSubmodulo = submoduloId;
+
+
+        // var ap = new AltaPermiso(Configuration.GetConnectionString("DefaultConnection"));
+        // mostrarPantallas = ap.MostrarPantallaPorSubModulo(submoduloId);
+
+
+        // StateHasChanged();
+    }
+
+
+    /// <summary>
+    /// Metodo que se ejecuta cuando se cambia el valor de la pantalla
+    /// </summary>
+    // private void OnPantallaChanged(AltaPermiso.MostrarPantalla pantalla, bool ActivoCambioDeValor)
+    // {
+    //     pantalla.Activo = ActivoCambioDeValor;
+    //     StateHasChanged();
+    // }
+
+
+
+    /// <summary>
+    /// Metodo para separar las palabras de la pantalla y ponerle un espacio
+    /// </summary>
+    private string Separarpalabras(string texto)
+    {
+        return System.Text.RegularExpressions.Regex.Replace(
+            texto,
+            "(\\B[A-Z])",
+            " $1"
+        );
+    }
+
+
+    /// <summary>
+    /// Metodo para guardar el permiso
+    /// </summary>
+    void RegresarAPermisos()
+    {
+        Navigation.NavigateTo("/Permisos");
+    }
+
+}
