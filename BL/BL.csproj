@@ -20,7 +20,7 @@
   </ItemGroup>
 
   <ItemGroup>
-	<PackageReference Include="Shared.Kalan" Version="2025.2.18.2334" />
+	<PackageReference Include="Shared.Kalan" Version="2025.5.15.2340" />
 	<PackageReference Include="Shared.Utilerias" Version="2025.2.15.1953" />
 	  <PackageReference Include="System.ServiceModel.Duplex" Version="6.0.*" />
 	  <PackageReference Include="System.ServiceModel.Federation" Version="8.1.1" />

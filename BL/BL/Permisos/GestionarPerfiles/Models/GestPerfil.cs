@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Shared.Kalan.Contextos;
+using Shared.Kalan.Contexto;
 
 namespace KalanBlazor.BL.Permisos.GestionarPerfiles.Models
 {

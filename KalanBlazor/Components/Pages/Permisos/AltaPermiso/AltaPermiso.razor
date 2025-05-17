@@ -1,4 +1,4 @@
-﻿@page "/AltaPermiso"
+﻿@page "/Permisos/AltaPermiso"
 @using KalanBlazor.BL.Permisos.AltaPermiso
 @inject NavigationManager Navigation
 @inject IConfiguration Configuration
@@ -18,14 +18,14 @@
                         </label>
 
 
-@*                         <Combo TItem="AltaPermiso.MostrarPerfil" TValue="string"
+                        <Combo TItem="CargarPerfil.MostrarPerfil" TValue="string"
                                Items="perfiles"
                                ItemValue="Id"
                                TextValue="Nombre"
                                Value="@SelectedPerfil"
                                ValueChanged="@((string val) => SelectedPerfil = val)"
                                Etiqueta="Perfil" />
- *@
+
                     </Cols>
                 </Rows>
 
@@ -34,13 +34,13 @@
                         <label style="margin-top: 10px; font-weight: bold;">
                             Modulo <br />
                         </label>
-                   @*      <Combo TItem="AltaPermiso.MostrarModulo" TValue="string"
+                        <Combo TItem="CargarModulo.MostrarModulo" TValue="string"
                                Items="modulos"
                                ItemValue="Id"
                                TextValue="Modulo"
                                Value="@SelectedModulo"
                                ValueChanged="OnModuloChanged"
-                               Etiqueta="Módulo" /> *@
+                               Etiqueta="Módulo" />
                     </Cols>
 
                 </Rows>
@@ -50,16 +50,16 @@
                             Submodulo <br />
                         </label>
 
-                       @*  @if (submodulos != null && submodulos.Any())
+                        @if (submodulos != null && submodulos.Any())
                         {
-                            @* <Combo TItem="AltaPermiso.MostrarSubModulo" TValue="string"
+                             <Combo TItem="CargarSubmodulo.MostrarSubModulo" TValue="string"
                                    Items="submodulos"
                                    ItemValue="Id"
                                    TextValue="SubModulo"
                                    Value="@SelectedSubmodulo"
                                    ValueChanged="@OnSubmoduloChanged"
                                    Etiqueta="Submódulo" /> 
-                        } *@
+                        }
                         else
                         {
                             <p style="color: gray; font-style: italic;">
@@ -72,7 +72,7 @@
                 </Rows>
 
                 <Rows>
-@* 
+
                     @if (mostrarPantallas != null && mostrarPantallas.Any())
                     {
                         @foreach (var pantalla in mostrarPantallas)
@@ -87,7 +87,7 @@
                          <p style="color: gray; font-style: italic;">
                             Selecciona primero un módulo para ver los submódulos disponibles.
                         </p> 
-                    } *@
+                    }
 
                     <br />
                 </Rows>
@@ -124,13 +124,13 @@
 
     #region Esta región contiene las variables que se utilizan para mostrar los perfiles, modulos, submodulos y pantallas
 
-    // private List<CargarPerfil.MostrarPerfil> perfiles;
+    private List<CargarPerfil.MostrarPerfil> perfiles;
 
-    // private List<CargarModulo.MostrarModulo> modulos;
+    private List<CargarModulo.MostrarModulo> modulos;
 
-    // private List<CargarSubmodulo.MostrarSubModulo> submodulos = new();
+    private List<CargarSubmodulo.MostrarSubModulo> submodulos = new();
 
-    // private List<CargarPantalla.MostrarPantalla> mostrarPantallas = new();
+    private List<CargarPantalla.MostrarPantalla> mostrarPantallas = new();
 
     #endregion
 
@@ -138,47 +138,47 @@
 
 
     #region para la logica de Insertar la pantalla por cada una seleccioanda y guardarlo:
-    // private async Task GuardarPermisos()
-    // {
-    //     if (string.IsNullOrEmpty(SelectedPerfil))
-    //     {
-    //         mensaje = "Debes seleccionar al menos un modulo ";
-    //         return;
-    //     }
+    private async Task GuardarPermisos()
+    {
+        if (string.IsNullOrEmpty(SelectedPerfil))
+        {
+            mensaje = "Debes seleccionar al menos un modulo ";
+            return;
+        }
 
-    //     var pantallasSeleccionadas = mostrarPantallas
-    //         .Where(p => p.Activo)
-    //         .ToList();
-    //     try
-    //     {
+        var pantallasSeleccionadas = mostrarPantallas
+            .Where(p => p.Activo)
+            .ToList();
+        try
+        {
 
-    //         if (!pantallasSeleccionadas.Any())
-    //         {
-    //             mensaje = "Debes seleccionar al menos una pantalla ";
-    //             return;
-    //         }
-    //     }
-    //     catch (Exception ex)
-    //     {
-    //         mensaje = "❌ Error al guardar el permiso: " + ex.Message;
-    //         estiloMensaje = "text-danger";
-    //     }
+            if (!pantallasSeleccionadas.Any())
+            {
+                mensaje = "Debes seleccionar al menos una pantalla ";
+                return;
+            }
+        }
+        catch (Exception ex)
+        {
+            mensaje = "❌ Error al guardar el permiso: " + ex.Message;
+            estiloMensaje = "text-danger";
+        }
 
 
-    //     var ap = new AltaPermiso(Configuration.GetConnectionString("DefaultConnection"));
+        var gp = new InsertarPantallasPorPerfil(Configuration.GetConnectionString("DefaultConnection"));
 
-    //     foreach (var pantalla in pantallasSeleccionadas)
-    //     {
-    //         AltaPermiso.InsertarPantallasPorPerfil.InsertarRolPantalla(
-    //             ap.CadenaConexion,
-    //             SelectedPerfil,
-    //             pantalla.Id
-    //         );
-    //     }
+        foreach (var pantalla in pantallasSeleccionadas)
+        {
+            InsertarPantallasPorPerfil.InsertarRolPantalla(
+                gp.CadenaConexion,
+                SelectedPerfil,
+                pantalla.Id
+            );
+        }
 
-    //     mensaje = "Permisos guardados correctamente";
-    //     Navigation.NavigateTo("/Permisos");
-    // }
+        mensaje = "Permisos guardados correctamente";
+        Navigation.NavigateTo("/Permisos");
+    }
 
 
 
@@ -194,11 +194,17 @@
     protected override async Task OnInitializedAsync()
     {
 
-        // var ap = new AltaPermiso(Configuration.GetConnectionString("DefaultConnection"));
-        // perfiles = ap.MostrarPerfiles();
-        // modulos = ap.MostrarModulos();
-        // submodulos = ap.MostrarSubmodulosPorModulo(SelectedModulo);
-        // mostrarPantallas = ap.MostrarPantallaPorSubModulo(SelectedSubmodulo);
+        var cperf = new CargarPerfil(Configuration.GetConnectionString("DefaultConnection"));
+        perfiles = cperf.MostrarPerfiles();
+
+        var cm = new CargarModulo(Configuration.GetConnectionString("DefaultConnection"));
+        modulos = cm.MostrarModulos();
+
+        var cs = new CargarSubmodulo(Configuration.GetConnectionString("DefaultConnection"));
+        submodulos = cs.MostrarSubmodulosPorModulo(SelectedModulo);
+
+        var cpant = new CargarPantalla(Configuration.GetConnectionString("DefaultConnection"));
+        mostrarPantallas = cpant.MostrarPantallaPorSubModulo(SelectedSubmodulo);
     }
 
 
@@ -207,13 +213,13 @@
     /// </summary>
     private async Task OnModuloChanged(string moduloId)
     {
-        // SelectedModulo = moduloId;
+        SelectedModulo = moduloId;
 
-        // var ap = new AltaPermiso(Configuration.GetConnectionString("DefaultConnection"));
-        // submodulos = ap.MostrarSubmodulosPorModulo(moduloId);
+        var mostSubModulo = new CargarSubmodulo(Configuration.GetConnectionString("DefaultConnection"));
+        submodulos = mostSubModulo.MostrarSubmodulosPorModulo(moduloId);
 
-        // SelectedSubmodulo = "";
-        // StateHasChanged();
+        SelectedSubmodulo = "";
+        StateHasChanged();
     }
 
     /// <summary>
@@ -221,25 +227,25 @@
     /// </summary>
     private async Task OnSubmoduloChanged(string submoduloId)
     {
-        // SelectedSubmodulo = submoduloId;
+        SelectedSubmodulo = submoduloId;
 
 
-        // var ap = new AltaPermiso(Configuration.GetConnectionString("DefaultConnection"));
-        // mostrarPantallas = ap.MostrarPantallaPorSubModulo(submoduloId);
+        var mostPantalla = new CargarPantalla(Configuration.GetConnectionString("DefaultConnection"));
+        mostrarPantallas = mostPantalla.MostrarPantallaPorSubModulo(submoduloId);
 
 
-        // StateHasChanged();
+        StateHasChanged();
     }
 
 
     /// <summary>
     /// Metodo que se ejecuta cuando se cambia el valor de la pantalla
     /// </summary>
-    // private void OnPantallaChanged(AltaPermiso.MostrarPantalla pantalla, bool ActivoCambioDeValor)
-    // {
-    //     pantalla.Activo = ActivoCambioDeValor;
-    //     StateHasChanged();
-    // }
+    private void OnPantallaChanged(CargarPantalla.MostrarPantalla pantalla, bool ActivoCambioDeValor)
+    {
+        pantalla.Activo = ActivoCambioDeValor;
+        StateHasChanged();
+    }
 
 
 

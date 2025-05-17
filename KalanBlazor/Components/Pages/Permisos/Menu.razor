@@ -19,11 +19,7 @@
                         </tr>
                         <tr>
                             <td>
-                               @*  <button class="btn btn-primary" @onclick="IrACrearPerfil"><i class="fa-solid fa-plus" style="color: white; margin-right: 10px;"></i> Crear nuevo registro</button> *@
-                                <a class="btn btn-primary" href="/Permisos/AltaPerfil">
-                                    <i class="fa-solid fa-plus" style="color: white; margin-right: 10px;"></i>
-                                    Crear nuevo registro
-                                </a>
+                               <button class="btn btn-primary" @onclick="IrACrearPerfil"><i class="fa-solid fa-plus" style="color: white; margin-right: 10px;"></i> Crear nuevo registro</button>
                             </td>
                         </tr>
                     </table>
@@ -44,10 +40,6 @@
                         </tr>
                         <tr>
                             <td>
-                                @* <a class="btn btn-primary" href="/Permisos/GestionarPerfiles">
-                                    <i class="fa-solid fa-plus" style="color: white; margin-right: 10px;"></i>
-                                    Ir a tabla de perfiles
-                                </a> *@
                                 <button class="btn btn-primary" @onclick="IrAGestionPerfil" ><i class="fa-solid fa-plus" style="color: white; margin-right: 10px;"></i> Ir a tabla de perfiles</button>
                             </td>
                         </tr>
@@ -72,11 +64,7 @@
                         </tr>
                         <tr>
                             <td>
-                                <a class="btn btn-primary" href="/Permisos/AltaPermiso">
-                                    <i class="fa-solid fa-plus" style="color: white; margin-right: 10px;"></i>
-                                    Crear nuevo perfil
-                                </a>
-                                <button class="btn btn-primary" @* @onclick="IrAltaPermiso" *@><i class="fa-solid fa-plus" style="color: white; margin-right: 10px;"></i> Crear nuevo perfil</button>
+                                <button class="btn btn-primary" @onclick="IrAltaPermiso"><i class="fa-solid fa-plus" style="color: white; margin-right: 10px;"></i> Crear nuevo perfil</button>
                              </td>
                         </tr>
                     </table>
@@ -95,14 +83,10 @@
                     <h5 class="card-title">Gestionar los Permisos</h5>
                     <table>
                         <tr>
-                            <td>Tabla de registros por perfil </td>
+                            <td>Tabla de permisos por perfil </td>
                         </tr>
                         <tr>
                             <td>
-                                <a class="btn btn-primary" href="/Permisos/GestionPermisos">
-                                    <i class="fa-solid fa-plus" style="color: white; margin-right: 10px;"></i>
-                                    Gestionar permisos
-                                </a>
                                 <button class="btn btn-primary" @* @onclick="IrAGestionPermisos" *@><i class="fa-solid fa-plus" style="color: white; margin-right: 10px;"></i> Gestionar permisos </button>
                             </td>
                         </tr>
@@ -134,16 +118,16 @@
         
     }
 
-    // void IrAltaPermiso()
-    // {
-    //     Navigation.NavigateTo("/AltaPermiso");
+    void IrAltaPermiso()
+    {
+        NavigationManager.NavigateTo("/Permisos/AltaPermiso");
 
-    // }
+    }
     // void IrAGestionPermisos()
     // {
     //     Navigation.NavigateTo("/GestionPermisos");
 
     // }
      private string mensaje = "";
-   
+    
 }
