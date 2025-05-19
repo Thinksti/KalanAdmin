@@ -1,6 +1,6 @@
 ﻿using KalanBlazor.BL.Compras.Interfaces;
 using Microsoft.EntityFrameworkCore; 
-using Shared.Kalan.Contextos;
+using Shared.Kalan.Contexto;
 using Shared.Kalan.Entidades;
 using Shared.Utilerias.Correo;
 

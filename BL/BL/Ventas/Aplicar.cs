@@ -1,5 +1,5 @@
 ﻿using KalanBlazor.BL.Ventas.Interfaces;
-using Shared.Kalan.Contextos;
+using Shared.Kalan.Contexto;
 using Shared.Kalan.Entidades;
 
 namespace KalanBlazor.BL.Ventas

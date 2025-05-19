@@ -377,7 +377,7 @@ namespace KalanBlazor.BL.Ventas
                 }
             }
             DsXML = DsXML2;
-            using var contexto = new Shared.Kalan.Contextos.KalanDB(ConnectionString);
+            using var contexto = new Shared.Kalan.Contexto.KalanDB(ConnectionString);
 
             foreach (DataRow rw9 in DsXML.Tables["Comprobante"].Rows)
             {
@@ -560,7 +560,7 @@ namespace KalanBlazor.BL.Ventas
 
         public string ImprimirAcuse(List<AcuseDatos> datos, string Documento, string carpetaPDF)
         {
-            using var contexto = new Shared.Kalan.Contextos.KalanDB(ConnectionString);
+            using var contexto = new Shared.Kalan.Contexto.KalanDB(ConnectionString);
             FileInfo DllInfo2 = new FileInfo(Assembly.GetEntryAssembly().Location);
             var rutaReporte = Path.Combine(DllInfo2.Directory.FullName, "Reportes\\Acuse.rdlc");
             foreach (var item in datos)
@@ -620,7 +620,7 @@ namespace KalanBlazor.BL.Ventas
 
         public async Task<DTOs.Ventas.CFDi.CancelarResponse2> CancelarSAT(string Documento, string Motivo)
         {
-            using var contexto = new Shared.Kalan.Contextos.KalanDB(ConnectionString);
+            using var contexto = new Shared.Kalan.Contexto.KalanDB(ConnectionString);
             var sellos = contexto.th_facturacion_sellos.FirstOrDefault();
             string password = sellos.Sello_Password;
             var factura = contexto.th_venta_factura.Where(i => i.UUID == Documento).Include(x => x.cliente).FirstOrDefault();
@@ -937,7 +937,7 @@ namespace KalanBlazor.BL.Ventas
 
         public string GenerarXML(string Documento)
         {
-            using var contexto = new Shared.Kalan.Contextos.KalanDB(ConnectionString);
+            using var contexto = new Shared.Kalan.Contexto.KalanDB(ConnectionString);
 
             var factura = contexto.th_venta_factura
                 .Where(x => x.Factura == Documento)
@@ -1219,7 +1219,7 @@ namespace KalanBlazor.BL.Ventas
 
         public string GenerarXMLComplemento(int Id_Ingreso)
         {
-            using var contexto = new Shared.Kalan.Contextos.KalanDB(ConnectionString);
+            using var contexto = new Shared.Kalan.Contexto.KalanDB(ConnectionString);
 
             var ingreso = contexto.th_ingresos
                 .Where(x => x.Ingreso == Id_Ingreso)

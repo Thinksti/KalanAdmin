@@ -2,7 +2,7 @@
 using KalanBlazor.BL.Financiero.Interfaces;
 using KalanBlazor.DTOs.Financiero;
 using Microsoft.EntityFrameworkCore;
-using Shared.Kalan.Contextos;
+using Shared.Kalan.Contexto;
 using Shared.Kalan.Entidades;
 
 namespace KalanBlazor.BL.Financiero
